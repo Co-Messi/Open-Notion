@@ -926,12 +926,13 @@
   height: auto;
 }
 .tabbar {
-  height: 38px;
+  /* Notion 7.37 tab strip: 36px tall, no transitions; tabs and buttons sized as measured below. */
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
   background: var(--sidebar-bg);
-  box-shadow: inset 0 -1px 0 var(--border-secondary-translucent);
+  box-shadow: inset 0 -1px 0 var(--tab-line);
   font-size: 14px;
   user-select: none;
   position: relative;
@@ -981,9 +982,14 @@
   height: 28px;
   color: var(--icon-secondary);
 }
+/* Back and forward are 24px; the sidebar toggle stays 28px. */
+.tabbar-nav .icon-btn.tb-history {
+  width: 24px;
+  height: 24px;
+}
 .tabbar-nav .icon-btn.disabled {
   color: var(--icon-tertiary);
-  opacity: 0.5;
+  opacity: 0.4;
   pointer-events: none;
 }
 .tabs {
@@ -1003,29 +1009,18 @@
   color: var(--text-secondary);
   cursor: default;
   position: relative;
-  transition: background 80ms ease;
-}
-.tab::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 9px;
-  bottom: 9px;
-  width: 1px;
-  background: var(--border-secondary-translucent);
+  /* Inactive tabs sit on the sunken surface with 1px inset leading and bottom borders. */
+  box-shadow: inset 1px 0 0 var(--tab-line), inset 0 -1px 0 var(--tab-line);
 }
 .tab:hover {
   background: var(--hover);
 }
+/* The active tab takes the page background and has no borders, so it joins the page below. */
 .tab.active {
   background: var(--bg-primary);
   color: var(--text-primary);
-  box-shadow: inset 1px 0 0 var(--border-secondary-translucent), inset -1px 0 0 var(--border-secondary-translucent);
+  box-shadow: none;
   z-index: 1;
-}
-.tab.active::before,
-.tab.active + .tab::before {
-  display: none;
 }
 .tab-icon {
   width: 16px;
@@ -1051,7 +1046,7 @@
 .tab-close {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1066,9 +1061,9 @@
 .tab-close:hover {
   background: var(--theme-gray-tint-2);
 }
-.tab-new {
-  width: 30px !important;
-  height: 30px !important;
+.tabs .tab-new {
+  width: 24px;
+  height: 24px;
   align-self: center;
   margin-inline-start: 4px;
   color: var(--icon-secondary);
