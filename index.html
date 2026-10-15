@@ -36,29 +36,17 @@
     />
     <meta name="twitter:image" content="https://open-notion-app.vercel.app/landing/og.jpg" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"
-    />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin-opsz-normal.woff2" crossorigin />
     <link rel="preload" as="image" href="/landing/demo-poster.webp" type="image/webp" />
 
-    <script>
-      // Apply the saved theme before first paint so there is no flash.
-      (function () {
-        try {
-          var t = localStorage.getItem('opennotion.landing.theme');
-          if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-        } catch (e) {}
-        document.documentElement.classList.add('js');
-      })();
-    </script>
+    <!-- Applies the saved theme before first paint. A blocking classic script from our own origin,
+         so the page can use a strict Content-Security-Policy without inline scripts. -->
+    <script src="/landing/theme.js"></script>
   </head>
   <body class="landing-body">
     <div id="root"></div>
     <noscript>
-      <p style="font: 16px/1.5 system-ui, sans-serif; padding: 24px; text-align: center">
+      <p class="noscript-note">
         OpenNotion is an open source workspace that runs in your browser.
         <a href="/app/">Open the app</a> or
         <a href="https://github.com/Co-Messi/Open-Notion">view the code on GitHub</a>.

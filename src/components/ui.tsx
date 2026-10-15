@@ -361,17 +361,27 @@ export function SearchIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-/** Formats a timestamp like Notion's "Edited" labels. */
+/** Formats a timestamp like Notion's "Edited" labels, in the user's locale. */
 export function relTime(t: number): string {
   const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 60) return 'Just now';
+  const loc = typeof navigator !== 'undefined' && navigator.language ? navigator.language : undefined;
+  const english = !loc || /^en(-|$)/i.test(loc);
+  if (s < 60) return english ? 'Just now' : rtf(loc, 0, 'second');
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return rtf(loc, -m, 'minute');
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return rtf(loc, -h, 'hour');
   const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d ago`;
-  return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  if (d < 7) return rtf(loc, -d, 'day');
+  return new Date(t).toLocaleDateString(loc, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function rtf(loc: string | undefined, n: number, unit: Intl.RelativeTimeFormatUnit): string {
+  try {
+    return new Intl.RelativeTimeFormat(loc, { numeric: 'auto', style: 'narrow' }).format(n, unit);
+  } catch {
+    return new Intl.RelativeTimeFormat(undefined, { numeric: 'auto', style: 'narrow' }).format(n, unit);
+  }
 }
 
 export function useHotkey(handler: (e: KeyboardEvent) => void, deps: any[] = []) {

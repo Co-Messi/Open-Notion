@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { openPage, updateView } from '../store/actions';
 import type { Page } from '../store/types';
 import { Popover, Menu } from '../components/ui';
-import { PropIcon, weekStartsMonday } from './cells';
-import { ymd, todayYmd, monthLabel, dayOf, timeOf, diffDays, fmtTimeShort } from './logic';
+import { PropIcon } from './cells';
+import { ymd, todayYmd, monthLabel, dayOf, timeOf, diffDays, fmtTimeShort, weekStartDay, weekdayName, fmtMonthDay } from './logic';
 import { addRowAt, shiftRowDate } from './dbActions';
 import { RowMenu, RowIcon, startPointerDrag, type ViewProps } from './shared';
 
@@ -84,9 +84,9 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
     );
   }
 
-  const monday = weekStartsMonday();
+  const weekStart = weekStartDay();
   const first = new Date(ym.y, ym.m, 1);
-  const lead = (first.getDay() - (monday ? 1 : 0) + 7) % 7;
+  const lead = (first.getDay() - weekStart + 7) % 7;
   const daysInMonth = new Date(ym.y, ym.m + 1, 0).getDate();
   const weekCount = Math.ceil((lead + daysInMonth) / 7);
   const weeks: Date[][] = [];
@@ -95,7 +95,7 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
     for (let i = 0; i < 7; i++) wk.push(new Date(ym.y, ym.m, 1 - lead + w * 7 + i));
     weeks.push(wk);
   }
-  const dows = monday ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dows = Array.from({ length: 7 }, (_, i) => weekdayName((weekStart + i) % 7, 'short'));
   const today = todayYmd();
 
   const shift = (n: number) => setYm(({ y, m }) => {
@@ -168,7 +168,7 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
                         <Plus size={14} />
                       </span>
                       <span className={'db-cal-num' + (k === today ? ' today' : '')}>
-                        {d.getDate() === 1 && !other ? monthLabel(d.getFullYear(), d.getMonth()).slice(0, 3) + ' 1' : d.getDate()}
+                        {d.getDate() === 1 && !other ? fmtMonthDay(d.getFullYear(), d.getMonth(), 1) : d.getDate()}
                       </span>
                     </div>
                   </div>

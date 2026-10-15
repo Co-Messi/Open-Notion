@@ -16,24 +16,25 @@ export const COVERS: { name: string; value: string }[] = [
   { name: 'Aurora', value: 'radial-gradient(circle at 20% 30%, #7f7fd5 0%, #86a8e7 45%, #91eae4 100%)' },
   { name: 'Night', value: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' },
 ];
-const U = (id: string) => `https://images.unsplash.com/${id}?w=1600&q=80&auto=format&fit=crop`;
+/** Small illustrations shipped with the app (public/covers). Nothing is fetched from another site. */
+const L = (file: string) => `/covers/${file}.webp`;
 export const PHOTOS: { name: string; value: string }[] = [
-  { name: 'Mountains', value: U('photo-1506905925346-21bda4d32df4') },
-  { name: 'Valley', value: U('photo-1469474968028-56623f02e42e') },
-  { name: 'Lake', value: U('photo-1501785888041-af3ef285b470') },
-  { name: 'Hills', value: U('photo-1497436072909-60f360e1d4b1') },
-  { name: 'Night sky', value: U('photo-1519681393784-d120267933ba') },
-  { name: 'Forest', value: U('photo-1441974231531-c6227db76b6e') },
-  { name: 'Beach', value: U('photo-1507525428034-b723cf961d3e') },
-  { name: 'Woods', value: U('photo-1470071459604-3b5ec3a7fe05') },
-  { name: 'Code', value: U('photo-1517694712202-14dd9538aa97') },
-  { name: 'Desk', value: U('photo-1484480974693-6ca0a78fb36b') },
-  { name: 'Books', value: U('photo-1456513080510-7bf3a84b82f8') },
-  { name: 'Library', value: U('photo-1481627834876-b7833e8f5570') },
-  { name: 'Ocean', value: U('photo-1518837695005-2083093ee35b') },
-  { name: 'Peaks', value: U('photo-1454496522488-7a8e488e8606') },
-  { name: 'Coast', value: U('photo-1500964757637-c85e8a162699') },
-  { name: 'Shore', value: U('photo-1494500764479-0c8f2919a3d8') },
+  { name: 'Mountains', value: L('mountains') },
+  { name: 'Valley', value: L('valley') },
+  { name: 'Lake', value: L('lake') },
+  { name: 'Hills', value: L('hills') },
+  { name: 'Night sky', value: L('night-sky') },
+  { name: 'Forest', value: L('forest') },
+  { name: 'Beach', value: L('beach') },
+  { name: 'Woods', value: L('woods') },
+  { name: 'Code', value: L('code') },
+  { name: 'Desk', value: L('desk') },
+  { name: 'Books', value: L('books') },
+  { name: 'Library', value: L('library') },
+  { name: 'Ocean', value: L('ocean') },
+  { name: 'Peaks', value: L('peaks') },
+  { name: 'Coast', value: L('coast') },
+  { name: 'Shore', value: L('shore') },
 ];
 const SOLIDS: { name: string; value: string }[] = [
   { name: 'Red', value: '#e16259' },
@@ -67,14 +68,14 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
               <div key={c.name} className="cover-swatch" title={c.name} style={{ background: c.value }} onClick={() => onPick(c.value)} />
             ))}
           </div>
-          <div className="ep-cat" style={{ padding: '4px 14px 0' }}>Photos</div>
+          <div className="ep-cat" style={{ padding: '4px 14px 0' }}>Images</div>
           <div className="cover-grid">
             {PHOTOS.map(c => (
               <div
                 key={c.name}
                 className="cover-swatch"
                 title={c.name}
-                style={{ backgroundImage: `url("${c.value.replace('w=1600', 'w=400')}")` }}
+                style={{ backgroundImage: `url("${c.value}")` }}
                 onClick={() => onPick(c.value)}
               />
             ))}

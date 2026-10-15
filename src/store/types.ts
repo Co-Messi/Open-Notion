@@ -101,7 +101,7 @@ export interface Property {
   name: string;
   type: PropType;
   options?: SelectOption[];
-  numberFormat?: 'number' | 'percent' | 'dollar' | 'euro';
+  numberFormat?: 'number' | 'percent' | 'dollar' | 'euro' | 'pound' | 'yen' | 'yuan' | 'rupee' | 'won' | 'franc' | 'canadian_dollar' | 'australian_dollar';
   width?: number;
 }
 

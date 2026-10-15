@@ -227,7 +227,7 @@ function Cover({
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(page.coverPos ?? 50);
   useEffect(() => setPos(page.coverPos ?? 50), [page.coverPos]);
-  const isImage = /^(data:|https?:|url\()/.test(page.cover || '');
+  const isImage = /^(data:|https?:|blob:|\/|url\()/.test(page.cover || '');
   const bg = isImage ? `url("${page.cover!.replace(/^url\(["']?|["']?\)$/g, '')}")` : page.cover;
   return (
     <div

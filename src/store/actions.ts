@@ -352,8 +352,35 @@ export function isTrashedDeep(d: { pages: Record<string, Page> }, id: string): b
   return !d.pages[id];
 }
 
-/** Ordered child pages of a page, derived from its content (including nested blocks). */
+/*
+ * Performance note. Every transaction builds a new Tx that shallow copies the `pages` and
+ * `blocks` maps, so a keystroke costs O(number of pages + blocks) in pointer copies, and every
+ * `useDoc` selector reruns on every emit. That is acceptable for now: a copy of a few thousand
+ * pointers takes well under a millisecond, undo snapshots share all unchanged objects, and the
+ * expensive parts (JSON.stringify and the localStorage write) are already debounced. What does
+ * not scale is work that walks block trees once per sidebar row, so `childPagesOf` below is
+ * memoized per document snapshot: the maps are replaced on every transaction, which makes the
+ * `pages` and `blocks` objects a free, exact cache key.
+ */
+const childPagesCache = new WeakMap<object, WeakMap<object, Map<string, string[]>>>();
+
+/**
+ * Ordered child pages of a page, derived from its content (including nested blocks). The result
+ * is cached per document snapshot and shared between callers: treat it as read only.
+ */
 export function childPagesOf(d: { pages: Record<string, Page>; blocks: Record<string, Block> }, pageId: string): string[] {
+  let byBlocks = childPagesCache.get(d.pages);
+  if (!byBlocks) childPagesCache.set(d.pages, (byBlocks = new WeakMap()));
+  let byId = byBlocks.get(d.blocks);
+  if (!byId) byBlocks.set(d.blocks, (byId = new Map()));
+  const hit = byId.get(pageId);
+  if (hit) return hit;
+  const out = Object.freeze(computeChildPages(d, pageId)) as string[];
+  byId.set(pageId, out);
+  return out;
+}
+
+function computeChildPages(d: { pages: Record<string, Page>; blocks: Record<string, Block> }, pageId: string): string[] {
   const p = d.pages[pageId];
   if (!p) return [];
   if (p.isDatabase) return (p.rows || []).filter(r => d.pages[r] && !d.pages[r].trashed);

@@ -8,8 +8,8 @@ import { setRowProp, OPTION_COLORS } from '../store/actions';
 import type { ColorName, Page, Property, PropType, SelectOption } from '../store/types';
 import { Popover, Switch } from '../components/ui';
 import {
-  optionStyle, dotColor, optionById, fmtNumber, fmtDateValue, fmtTimestamp, fmtDate, parseYmd, ymd, todayYmd, monthLabel,
-  COLOR_LABEL, readPref, rawValue, dayOf, timeOf, withTime,
+  optionStyle, dotColor, optionById, fmtNumber, fmtDateValue, fmtTimestamp, fmtDate, parseYmd, ymd, todayYmd, shortMonthLabel, weekStartDay, weekdayName, getLocale, parseLooseDate, orderRange,
+  COLOR_LABEL, rawValue, dayOf, timeOf, withTime,
 } from './logic';
 import { createOption, updateOption, deleteOption } from './dbActions';
 import { useFocusLater } from './focus';
@@ -247,7 +247,7 @@ function TextEditor({ rowId, prop, anchor, width, onClose }: { rowId: string; pr
     const t = textRef.current;
     let val: any = t;
     if (prop.type === 'number') {
-      const n = parseFloat(t.replace(/[$€,%\s]/g, ''));
+      const n = parseFloat(t.replace(/[^\d.eE+-]/g, ''));
       val = t.trim() === '' || Number.isNaN(n) ? undefined : prop.numberFormat === 'percent' && /%/.test(t) ? n / 100 : n;
     } else if (t === '') val = undefined;
     if (val !== initial) setRowProp(rowId, prop.id, val);
@@ -499,19 +499,22 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
 /* ------------------------------------------------------------------ */
 
 export function weekStartsMonday() {
-  return readPref('on:week-monday') === '1';
+  return weekStartDay() === 1;
 }
 
 export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeEnd?: string; onPick: (d: string) => void }) {
   const init = parseYmd(value) || new Date();
   const [ym, setYm] = useState({ y: init.getFullYear(), m: init.getMonth() });
-  const monday = weekStartsMonday();
+  const weekStart = weekStartDay();
   const first = new Date(ym.y, ym.m, 1);
-  const lead = (first.getDay() - (monday ? 1 : 0) + 7) % 7;
+  const lead = (first.getDay() - weekStart + 7) % 7;
   const start = new Date(ym.y, ym.m, 1 - lead);
   const days: Date[] = [];
   for (let i = 0; i < 42; i++) days.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
-  const dows = monday ? ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const dows = Array.from({ length: 7 }, (_, i) => {
+    const n = weekdayName((weekStart + i) % 7, 'short');
+    return /^en/i.test(getLocale() || 'en') ? n.slice(0, 2) : n;
+  });
   const today = todayYmd();
   const shift = (n: number) => setYm(({ y, m }) => {
     const d = new Date(y, m + n, 1);
@@ -520,7 +523,7 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
   return (
     <div className="datepicker">
       <div className="dp-head">
-        <span>{monthLabel(ym.y, ym.m).replace(/^(\w{3})\w*/, '$1')}</span>
+        <span>{shortMonthLabel(ym.y, ym.m)}</span>
         <div className="nav">
           <span className="db-dp-today" role="button" onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
             Today
@@ -554,14 +557,7 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
   );
 }
 
-function parseLoose(s: string): string | null {
-  const t = s.trim();
-  if (!t) return null;
-  const iso = parseYmd(t);
-  if (iso && /^\d{4}-\d{2}-\d{2}$/.test(t)) return ymd(iso);
-  const d = new Date(t);
-  return Number.isNaN(d.getTime()) ? null : ymd(d);
-}
+const parseLoose = (s: string): string | null => parseLooseDate(s);
 
 export function DateEditor({ rowId, propId }: { rowId: string; propId: string }) {
   const value = useDoc(d => d.pages[rowId]?.props?.[propId], Object.is) as { start: string; end?: string } | undefined;
@@ -582,7 +578,7 @@ export function DateEditor({ rowId, propId }: { rowId: string; propId: string })
       setRowProp(rowId, propId, undefined);
       return;
     }
-    if (e && e < s) [s, e] = [e, s];
+    [s, e] = orderRange(s, e);
     setRowProp(rowId, propId, e && e !== s ? { start: s, end: e } : { start: s });
   };
   const defStart = () => (timeOn ? '09:00' : '');
