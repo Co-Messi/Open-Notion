@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fixture from '../test/fixtures/doc-v2-current.json';
 import { CLIP_LIMITS, cleanHtml, normalizeClipboardBlocks, normalizeDoc, normalizeDocWithReport, NotADocError } from './normalize';
-import { expectDocInvariants, htmlProblems } from '../test/invariants';
+import { expectDocInvariants, htmlProblems } from '../test/docInvariants';
 import type { Doc } from './types';
 import { createSeed } from './seed';
 import { BAD_URLS, XSS, hostileDocJson } from '../test/hostile';

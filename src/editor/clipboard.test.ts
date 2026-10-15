@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import fixture from '../test/fixtures/doc-v2-current.json';
-import { htmlProblems } from '../test/invariants';
+import { htmlProblems } from '../test/docInvariants';
 
 const DOC_KEY = 'on:doc:v2';
 const PAGE = 'x64uwgofpnh3';
