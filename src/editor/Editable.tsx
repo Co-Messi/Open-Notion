@@ -59,6 +59,10 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
   const committed = useRef<string | null>(null);
   const composing = useRef(false);
 
+  // Runs after every render, not only when `html` changes: a shortcut typed in one IME
+  // composition is committed and transformed in the same batch, so the prop can stay ''
+  // while the DOM still shows what was typed. Comparing with what was last committed
+  // catches that case.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -75,7 +79,7 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
     }
     committed.current = html;
     el.dataset.empty = String(isEmpty(el));
-  }, [html]);
+  });
 
   const commitRef = useRef<() => void>(() => {});
   const commit = () => {

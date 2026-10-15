@@ -189,28 +189,62 @@ describe('full width shortcuts', () => {
     ['［］', 'todo'],
     ['「', 'quote'],
   ];
+  /** What the browser does for one inserted piece of text: update the DOM, then fire input. */
+  const insert = (el: HTMLElement, text: string, data: string) => {
+    typeText(el, text);
+    act(() => {
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data }));
+    });
+  };
+  const space = String.fromCharCode(0x3000);
+
   for (const [prefix, type] of cases) {
     it(`${prefix} plus a full width space makes ${type}`, () => {
       load([['t', 'text', '']]);
       const el = editable('t');
-      const space = String.fromCharCode(0x3000);
-      typeText(el, prefix + space);
-      act(() => {
-        expect(tryMarkdown(el, 't', space)).toBe(true);
-      });
+      insert(el, prefix, prefix.slice(-1));
+      insert(el, prefix + space, space);
       expect(getDoc().blocks.t.type).toBe(type);
       expect(getDoc().blocks.t.html).toBe('');
+      // The typed shortcut also disappears from the page, not only from the store.
+      expect(editable('t').textContent).toBe('');
     });
   }
 
-  it('an ASCII prefix with a full width space works too', () => {
+  it('tryMarkdown reads the full width prefix before the caret', () => {
     load([['t', 'text', '']]);
     const el = editable('t');
-    typeText(el, '## ');
+    typeText(el, '＃＃' + space);
     act(() => {
-      expect(tryMarkdown(el, 't', ' ')).toBe(true);
+      expect(tryMarkdown(el, 't', space)).toBe(true);
     });
     expect(getDoc().blocks.t.type).toBe('h2');
+  });
+
+  it('a shortcut typed in a single IME composition is applied and cleared from the page', () => {
+    load([['t', 'text', '']]);
+    const el = editable('t');
+    const composed = '＞' + String.fromCharCode(0x3000);
+    act(() => {
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '' }));
+    });
+    typeText(el, composed);
+    act(() => {
+      el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: composed }));
+    });
+    expect(getDoc().blocks.t.type).toBe('toggle');
+    expect(editable('t').textContent).toBe('');
+  });
+
+  it('an ASCII prefix with a full width space works too, and ASCII shortcuts still work', () => {
+    load([['t', 'text', ''], ['u', 'text', '']]);
+    insert(editable('t'), '##', '#');
+    insert(editable('t'), '##' + space, space);
+    expect(getDoc().blocks.t.type).toBe('h2');
+    insert(editable('u'), '-', '-');
+    insert(editable('u'), '- ', ' ');
+    expect(getDoc().blocks.u.type).toBe('bulleted');
+    expect(editable('u').textContent).toBe('');
   });
 
   it('a full width slash committed by an IME opens the slash menu', () => {

@@ -101,7 +101,7 @@ function Cell({
       if (off !== null) setCaret(el, off);
     }
     committed.current = html;
-  }, [html]);
+  });
 
   const commit = () => {
     const el = ref.current;
