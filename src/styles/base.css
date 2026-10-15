@@ -1,0 +1,179 @@
+/* Semantic aliases over the theme tokens (theme.css). */
+:root,
+.theme-light,
+.theme-dark {
+  --text-primary: var(--on-text-primary);
+  --text-secondary: var(--on-text-secondary);
+  --text-tertiary: var(--on-text-tertiary);
+  --text-disabled: var(--on-text-disabled);
+  --text-accent: var(--on-text-accent-primary);
+  --icon-primary: var(--on-icon-primary);
+  --icon-secondary: var(--on-icon-secondary);
+  --icon-tertiary: var(--on-icon-tertiary);
+  --border-primary: var(--on-border-primary);
+  --border-translucent: var(--on-border-primary-translucent);
+  --border-secondary-translucent: var(--on-border-secondary-translucent);
+  --bg-primary: var(--on-background-primary);
+  --bg-secondary: var(--on-background-secondary);
+  --bg-tertiary: var(--on-background-tertiary);
+  --bg-elevated: var(--on-background-elevated);
+  --hover: var(--on-state-hover);
+  --pressed: var(--on-state-pressed);
+  --button-hover: var(--on-button-hovered-background);
+  --popover-bg: var(--on-popover-background);
+  --sidebar-bg: var(--on-background-secondary);
+  --sidebar-selected: var(--on-sidebar-item-selected-background);
+  --blue: var(--on-palette-ui-blue-600);
+  --blue-hover: var(--on-blue-button-hovered-background);
+  --select-blue: var(--on-palette-ui-blue-200);
+  --select-blue-strong: var(--on-palette-ui-blue-300);
+  --link-deco: var(--on-link-decoration-color);
+  --code-bg: var(--on-code-block-background);
+  --overlay: var(--on-overlay-smokescreen);
+  --shadow-menu: var(--on-shadow-mdprimary-outline);
+  --shadow-modal: var(--on-shadow-outline-scrim);
+  --shadow-card: var(--on-shadow-outline-sm);
+  --title-placeholder: var(--on-page-title-placeholder-text-color);
+  --favorite: var(--on-topbar-favorite);
+
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica,
+    "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-serif: Lyon-Text, Georgia, ui-serif, serif;
+  --font-mono: iawriter-mono, Nitti, Menlo, Courier, monospace;
+  --font-code: SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
+}
+
+/* Block and inline colors: text uses `<color>.text.secondary`, backgrounds `<color>.background.secondary`. */
+:root,
+.theme-light,
+.theme-dark {
+  --color-gray: var(--on-gray-text-secondary);
+  --color-brown: var(--on-brown-text-secondary);
+  --color-orange: var(--on-orange-text-secondary);
+  --color-yellow: var(--on-yellow-text-secondary);
+  --color-green: var(--on-green-text-secondary);
+  --color-blue: var(--on-blue-text-secondary);
+  --color-purple: var(--on-purple-text-secondary);
+  --color-pink: var(--on-pink-text-secondary);
+  --color-red: var(--on-red-text-secondary);
+  --bgcolor-gray: var(--on-gray-background-secondary);
+  --bgcolor-brown: var(--on-brown-background-secondary);
+  --bgcolor-orange: var(--on-orange-background-secondary);
+  --bgcolor-yellow: var(--on-yellow-background-secondary);
+  --bgcolor-green: var(--on-green-background-secondary);
+  --bgcolor-blue: var(--on-blue-background-secondary);
+  --bgcolor-purple: var(--on-purple-background-secondary);
+  --bgcolor-pink: var(--on-pink-background-secondary);
+  --bgcolor-red: var(--on-red-background-secondary);
+  /* Database option tags */
+  --tag-default-bg: var(--on-gray-background-secondary);
+  --tag-default-fg: var(--on-gray-text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: auto;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--on-palette-ui-blue-300);
+}
+
+.c-gray { color: var(--color-gray); }
+.c-brown { color: var(--color-brown); }
+.c-orange { color: var(--color-orange); }
+.c-yellow { color: var(--color-yellow); }
+.c-green { color: var(--color-green); }
+.c-blue { color: var(--color-blue); }
+.c-purple { color: var(--color-purple); }
+.c-pink { color: var(--color-pink); }
+.c-red { color: var(--color-red); }
+.bg-gray { background: var(--bgcolor-gray); }
+.bg-brown { background: var(--bgcolor-brown); }
+.bg-orange { background: var(--bgcolor-orange); }
+.bg-yellow { background: var(--bgcolor-yellow); }
+.bg-green { background: var(--bgcolor-green); }
+.bg-blue { background: var(--bgcolor-blue); }
+.bg-purple { background: var(--bgcolor-purple); }
+.bg-pink { background: var(--bgcolor-pink); }
+.bg-red { background: var(--bgcolor-red); }
+
+/* Scrollbars like the macOS web app */
+.scroller {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--on-gray-background-tertiary-translucent) transparent;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* Generic icon button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--icon-secondary);
+  flex-shrink: 0;
+  user-select: none;
+  transition: background 20ms ease-in;
+}
+.icon-btn:hover {
+  background: var(--hover);
+}
+.icon-btn:active {
+  background: var(--pressed);
+}
+
+.kbd {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-tertiary);
+  border-radius: 4px;
+  padding: 0 4px;
+  background: var(--on-gray-background-secondary-translucent);
+}
