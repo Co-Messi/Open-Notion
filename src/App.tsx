@@ -60,7 +60,7 @@ export function App() {
         location.replace('#/home');
         return;
       }
-      setUi({ route: r, selectedBlocks: [] });
+      setUi({ route: r, selectedBlocks: [], peekRowId: null });
       if (r.name === 'page') {
         visitPage(r.pageId);
         expandSidebarTo(r.pageId);
@@ -92,6 +92,13 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
+      if (e.key === 'Escape' && getUi().peekRowId && !getUi().selectedBlocks.length && !document.querySelector('.popover, .modal-overlay')) {
+        const ae = document.activeElement as HTMLElement | null;
+        if (!ae || !(ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
+          setUi({ peekRowId: null });
+          return;
+        }
+      }
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
       const k = e.key.toLowerCase();
