@@ -13,7 +13,9 @@
     "dev": "vite --port 5174 --strictPort",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview --port 5175"
+    "preview": "vite preview --port 5175",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "lucide-react": "0.511.0",
@@ -24,7 +26,10 @@
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.5",
     "@vitejs/plugin-react": "4.5.0",
+    "fake-indexeddb": "6.0.1",
+    "jsdom": "26.1.0",
     "typescript": "5.8.3",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "vitest": "3.2.4"
   }
 }

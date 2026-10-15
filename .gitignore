@@ -7,3 +7,4 @@ dist
 *.bak
 launch/
 .vercel
+.roast/

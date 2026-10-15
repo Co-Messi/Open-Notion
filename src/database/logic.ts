@@ -4,24 +4,23 @@ import type { ColorName, DbView, Filter, Page, Property, PropType, SelectOption 
 /* Colors                                                              */
 /* ------------------------------------------------------------------ */
 
-const ABBR: Record<string, string> = {
-  gray: 'gra', brown: 'bro', orange: 'ora', yellow: 'yel', green: 'gre', blue: 'blu', purple: 'pur', pink: 'pin', red: 'red',
-};
+/** Colors that have their own theme tokens; anything else falls back to gray. */
+const KNOWN_COLORS = new Set<string>(['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red']);
 
 export function optionStyle(color: ColorName | undefined): { background: string; color: string } {
-  const a = color && ABBR[color];
-  if (!a) return { background: 'var(--on-gray-background-secondary-translucent)', color: 'var(--text-primary)' };
-  return { background: `var(--on-${color}-background-tertiary)`, color: `var(--on-${color}-text-primary)` };
+  const a = !!color && KNOWN_COLORS.has(color);
+  if (!a) return { background: 'var(--theme-gray-tint-2)', color: 'var(--text-primary)' };
+  return { background: `var(--theme-${color}-wash-3)`, color: `var(--theme-${color}-ink-strong)` };
 }
 
 export function dotColor(color: ColorName | undefined): string {
-  const a = color && ABBR[color];
-  return a ? `var(--on-${color}-icon-secondary)` : 'var(--on-gray-icon-secondary)';
+  const a = !!color && KNOWN_COLORS.has(color);
+  return a ? `var(--theme-${color}-glyph)` : 'var(--theme-gray-glyph)';
 }
 
 export function columnTint(color: ColorName | undefined): string {
-  const a = color && ABBR[color];
-  return a ? `var(--on-${color}-background-primary)` : 'var(--on-gray-background-primary)';
+  const a = !!color && KNOWN_COLORS.has(color);
+  return a ? `var(--theme-${color}-wash-1)` : 'var(--theme-gray-wash-1)';
 }
 
 export const COLOR_LABEL: Record<ColorName, string> = {

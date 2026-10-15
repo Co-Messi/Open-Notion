@@ -189,8 +189,8 @@ export function BoardView(vp: ViewProps) {
                 {g.opt ? (
                   <OptionPill opt={g.opt} status={status} />
                 ) : (
-                  <span className="db-pill" style={{ background: 'var(--on-gray-background-secondary-translucent)', color: 'var(--text-secondary)' }}>
-                    {status && <span className="db-dot" style={{ background: 'var(--on-gray-icon-secondary)' }} />}
+                  <span className="db-pill" style={{ background: 'var(--theme-gray-tint-2)', color: 'var(--text-secondary)' }}>
+                    {status && <span className="db-dot" style={{ background: 'var(--theme-gray-glyph)' }} />}
                     <span className="db-pill-text">No {groupProp.name}</span>
                   </span>
                 )}

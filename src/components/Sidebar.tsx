@@ -497,7 +497,7 @@ function UpcomingEvents() {
         if (!db.isDatabase || isTrashedDeep(d, db.id)) continue;
         const dateProp = db.schema?.find(s => s.type === 'date');
         if (!dateProp) continue;
-        const color = db.icon ? 'var(--on-blue-icon-secondary)' : 'var(--on-purple-icon-secondary)';
+        const color = db.icon ? 'var(--theme-blue-glyph)' : 'var(--theme-purple-glyph)';
         for (const rid of db.rows || []) {
           const r = d.pages[rid];
           const v = r?.props?.[dateProp.id];

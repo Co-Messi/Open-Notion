@@ -469,7 +469,7 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
             }}
             onBlur={() => !text && onDone()}
           />
-          <span className="icon-btn" role="button" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--on-gray-background-secondary-translucent)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
+          <span className="icon-btn" role="button" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--theme-gray-tint-2)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
             <ArrowUp size={14} />
           </span>
         </div>
