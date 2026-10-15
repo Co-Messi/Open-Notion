@@ -1,4 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { useDialog } from './ui';
 
 export interface Choice {
   id: string;
@@ -55,24 +56,20 @@ export function DialogHost() {
     },
     () => current,
   );
-  const defaultBtn = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!req) return;
-    defaultBtn.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        req.resolve(null);
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [req]);
   if (!req) return null;
+  return <ConfirmView req={req} />;
+}
+
+function ConfirmView({ req }: { req: Request }) {
+  const defaultBtn = useRef<HTMLButtonElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  useDialog(box, () => req.resolve(null));
+  useEffect(() => {
+    defaultBtn.current?.focus();
+  }, [req]);
   return (
     <div className="modal-overlay light confirm-overlay" onMouseDown={() => req.resolve(null)}>
-      <div className="modal confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" onMouseDown={e => e.stopPropagation()}>
+      <div ref={box} className="modal confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" onMouseDown={e => e.stopPropagation()}>
         <div id="confirm-title" className="confirm-title">
           {req.title}
         </div>

@@ -6,7 +6,7 @@ import {
 import { useDoc, getDoc } from '../store/store';
 import { setRowProp, OPTION_COLORS } from '../store/actions';
 import type { ColorName, Page, Property, PropType, SelectOption } from '../store/types';
-import { Popover, Switch } from '../components/ui';
+import { Popover, Switch, pressable } from '../components/ui';
 import {
   optionStyle, dotColor, optionById, fmtNumber, fmtDateValue, fmtTimestamp, fmtDate, parseYmd, ymd, todayYmd, shortMonthLabel, weekStartDay, weekdayName, getLocale, parseLooseDate, orderRange,
   COLOR_LABEL, rawValue, dayOf, timeOf, withTime,
@@ -46,7 +46,8 @@ export function OptionPill({ opt, status, onRemove }: { opt: SelectOption; statu
       {onRemove && (
         <span
           className="db-pill-x"
-          role="button"
+          {...pressable()}
+          aria-label={'Remove ' + opt.name}
           onMouseDown={e => e.preventDefault()}
           onClick={e => {
             e.stopPropagation();
@@ -72,8 +73,9 @@ export function CheckboxBox({ on, onToggle }: { on: boolean; onToggle?: () => vo
   return (
     <span
       className={'db-checkbox' + (on ? ' on' : '')}
-      role="checkbox"
+      {...(onToggle ? pressable(undefined, 'checkbox') : { role: 'checkbox' })}
       aria-checked={on}
+      aria-label="Checked"
       onClick={e => {
         if (!onToggle) return;
         e.stopPropagation();
@@ -175,7 +177,7 @@ export function PropValue({ row, prop, mode }: { row: Page; prop: Property; mode
           {(mode === 'table' || mode === 'props') && (
             <span
               className="db-link-open"
-              role="button"
+              {...pressable()}
               title="Open link"
               onClick={e => {
                 e.stopPropagation();
@@ -335,7 +337,8 @@ export function SelectEditor({ dbId, rowId, propId, onClose }: { dbId: string; r
       {selected.includes(o.id) && !multi && <Check size={14} className="db-opt-check" />}
       <span
         className="db-opt-more"
-        role="button"
+        aria-label="Option menu"
+        {...pressable()}
         onClick={e => {
           e.stopPropagation();
           setOptMenu({ id: o.id, rect: e.currentTarget.getBoundingClientRect() });
@@ -361,7 +364,7 @@ export function SelectEditor({ dbId, rowId, propId, onClose }: { dbId: string; r
 
   return (
     <div className="db-select-editor">
-      <div className="db-sel-input" onClick={() => inputRef.current?.focus()}>
+      <div {...pressable()} className="db-sel-input" onClick={() => inputRef.current?.focus()}>
         {selected.map(id => {
           const o = optionById(prop, id);
           return o ? <OptionPill key={id} opt={o} status={status} onRemove={() => remove(id)} /> : null;
@@ -439,7 +442,7 @@ export function OptionMenu({ dbId, propId, opt, onClose }: { dbId: string; propI
         />
       </div>
       <div className="menu">
-        <div
+        <div {...pressable()}
           className="menu-item"
           onClick={() => {
             onClose();
@@ -452,7 +455,7 @@ export function OptionMenu({ dbId, propId, opt, onClose }: { dbId: string; propI
         <div className="menu-sep" />
         <div className="menu-label">Colors</div>
         {OPTION_COLORS.map((c: ColorName) => (
-          <div key={c} className="menu-item" onClick={() => updateOption(dbId, propId, opt.id, { color: c })}>
+          <div {...pressable()} key={c} className="menu-item" onClick={() => updateOption(dbId, propId, opt.id, { color: c })}>
             <span className="mi-icon"><span className="db-swatch" style={optionStyle(c)} /></span>
             <span className="mi-text">{COLOR_LABEL[c]}</span>
             {opt.color === c && <span className="mi-right"><Check size={14} /></span>}
@@ -475,7 +478,7 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
           <span key={id} className="db-person-chip">
             <Avatar name={id === 'me' ? userName : id} size={18} />
             {id === 'me' ? userName : id}
-            <span role="button" className="db-pill-x" onClick={() => setRowProp(rowId, propId, sel.filter(x => x !== id))}>
+            <span {...pressable()} aria-label="Remove" className="db-pill-x" onClick={() => setRowProp(rowId, propId, sel.filter(x => x !== id))}>
               <X size={12} />
             </span>
           </span>
@@ -484,7 +487,7 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
       </div>
       <div className="menu">
         <div className="menu-label">Select as many as you like</div>
-        <div className="menu-item" onClick={() => setRowProp(rowId, propId, has ? sel.filter(x => x !== 'me') : [...sel, 'me'])}>
+        <div {...pressable()} className="menu-item" onClick={() => setRowProp(rowId, propId, has ? sel.filter(x => x !== 'me') : [...sel, 'me'])}>
           <span className="mi-icon"><Avatar name={userName} /></span>
           <span className="mi-text">{userName}</span>
           {has && <span className="mi-right"><Check size={14} /></span>}
@@ -525,11 +528,11 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
       <div className="dp-head">
         <span>{shortMonthLabel(ym.y, ym.m)}</span>
         <div className="nav">
-          <span className="db-dp-today" role="button" onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
+          <span className="db-dp-today" {...pressable()} onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
             Today
           </span>
-          <span className="icon-btn" role="button" onClick={() => shift(-1)}><ChevronLeft size={16} /></span>
-          <span className="icon-btn" role="button" onClick={() => shift(1)}><ChevronRight size={16} /></span>
+          <span className="icon-btn" {...pressable()} aria-label="Previous month" onClick={() => shift(-1)}><ChevronLeft size={16} /></span>
+          <span className="icon-btn" {...pressable()} aria-label="Next month" onClick={() => shift(1)}><ChevronRight size={16} /></span>
         </div>
       </div>
       <div className="dp-grid">
@@ -540,7 +543,7 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
           const k = ymd(d);
           const inRange = value && rangeEnd && k > value && k < rangeEnd;
           return (
-            <div
+            <div {...pressable()}
               key={k}
               className={
                 'dp-day' + (d.getMonth() !== ym.m ? ' other' : '') + (k === today ? ' today' : '') +
@@ -675,16 +678,16 @@ export function DateEditor({ rowId, propId }: { rowId: string; propId: string })
       </div>
       <DatePicker value={dayOf(start) || undefined} rangeEnd={dayOf(end) || undefined} onPick={pick} />
       <div className="db-date-foot">
-        <div className="menu-item" onClick={() => toggleEnd(!endOn)}>
+        <div {...pressable()} className="menu-item" onClick={() => toggleEnd(!endOn)}>
           <span className="mi-text">End date</span>
           <Switch on={endOn} onChange={toggleEnd} />
         </div>
-        <div className="menu-item" onClick={() => toggleTime(!timeOn)}>
+        <div {...pressable()} className="menu-item" onClick={() => toggleTime(!timeOn)}>
           <span className="mi-text">Include time</span>
           <Switch on={timeOn} onChange={toggleTime} />
         </div>
         <div className="menu-sep" />
-        <div
+        <div {...pressable()}
           className="menu-item"
           onClick={() => {
             write(undefined, undefined);

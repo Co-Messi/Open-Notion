@@ -155,18 +155,34 @@ export function SlashMenu() {
     listRef.current?.querySelector('.menu-item.active')?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
+  // The caret stays in the editable, so the highlighted option is exposed through it.
+  const activeId = results[active] ? 'slash-opt-' + results[active].id : undefined;
+  useEffect(() => {
+    const el = s ? editableFor(s.blockId) : null;
+    if (!el || !activeId) return;
+    el.setAttribute('aria-controls', 'slash-listbox');
+    el.setAttribute('aria-activedescendant', activeId);
+    return () => {
+      el.removeAttribute('aria-controls');
+      el.removeAttribute('aria-activedescendant');
+    };
+  }, [s, activeId]);
+
   if (!s || results.length === 0) return null;
   let last = '';
   return createPortal(
     <div ref={boxRef} className="popover" style={{ ...pos, width: 324 }} onMouseDown={e => e.preventDefault()}>
-      <div className="menu" ref={listRef} style={{ maxHeight: 340 }}>
+      <div className="menu" ref={listRef} id="slash-listbox" role="listbox" aria-label="Insert a block" style={{ maxHeight: 340 }}>
         {results.map((item, idx) => {
           const head = !q && item.section !== last ? item.section : q && idx === 0 ? 'Results' : null;
           last = item.section;
           return (
-            <div key={item.id}>
-              {head && <div className="menu-label">{head}</div>}
+            <div key={item.id} role="presentation">
+              {head && <div className="menu-label" role="presentation">{head}</div>}
               <div
+                id={'slash-opt-' + item.id}
+                role="option"
+                aria-selected={idx === active}
                 className={'menu-item' + (idx === active ? ' active' : '')}
                 onMouseMove={() => idx !== active && setActive(idx)}
                 onClick={() => choose(item)}
@@ -182,7 +198,7 @@ export function SlashMenu() {
       <div className="menu-footer" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 14px' }}>
         <span>Type '/' on the page</span>
         <span>
-          esc <span style={{ marginLeft: 4 }}>Close menu</span>
+          esc <span style={{ marginInlineStart: 4 }}>Close menu</span>
         </span>
       </div>
     </div>,

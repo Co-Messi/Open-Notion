@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Popover, type Anchor } from './ui';
+import { Popover, type Anchor, pressable } from './ui';
 import { showToast } from '../store/store';
 import { ImageError, ingestImage } from '../lib/images';
 import { recordError } from '../lib/diagnostics';
@@ -53,7 +53,7 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
     <Popover anchor={anchor} onClose={onClose} className="cover-picker" placement="bottom-end">
       <div className="ep-tabs">
         {(['gallery', 'upload', 'link'] as const).map(t => (
-          <div key={t} className={'ep-tab' + (tab === t ? ' on' : '')} onClick={() => setTab(t)}>
+          <div {...pressable()} key={t} className={'ep-tab' + (tab === t ? ' on' : '')} onClick={() => setTab(t)}>
             {t === 'gallery' ? 'Gallery' : t === 'upload' ? 'Upload' : 'Link'}
           </div>
         ))}
@@ -67,7 +67,7 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
           <div className="ep-cat" style={{ padding: '10px 14px 0' }}>Color & Gradient</div>
           <div className="cover-grid">
             {[...SOLIDS, ...COVERS].map(c => (
-              <div key={c.name} className="cover-swatch" title={c.name} style={{ background: c.value }} onClick={() => onPick(c.value)} />
+              <div key={c.name} className="cover-swatch" {...pressable()} title={c.name} style={{ background: c.value }} onClick={() => onPick(c.value)} />
             ))}
           </div>
           <div className="ep-cat" style={{ padding: '4px 14px 0' }}>Images</div>
@@ -75,7 +75,7 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
             {PHOTOS.map(c => (
               <div
                 key={c.name}
-                className="cover-swatch"
+                className="cover-swatch" {...pressable()}
                 title={c.name}
                 style={{ backgroundImage: `url("${c.value}")` }}
                 onClick={() => onPick(c.value)}

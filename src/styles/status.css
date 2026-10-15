@@ -188,7 +188,7 @@ body.has-status-banner .toast {
 .recovery-card .recovery-detail {
   font-size: 12px;
   line-height: 16px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   word-break: break-word;
 }
 .recovery-card .recovery-error {

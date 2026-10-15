@@ -3,7 +3,7 @@ import { ArrowUpRight, Maximize2, Plus } from 'lucide-react';
 import { usePage, useDoc } from '../store/store';
 import { openPage, setRowProp } from '../store/actions';
 import type { Page } from '../store/types';
-import { Tooltip } from '../components/ui';
+import { Tooltip, pressable } from '../components/ui';
 import { StoredImg } from '../components/StoredImage';
 import { isImageIcon } from '../lib/url';
 import { applyView, rawValue, readPref, writePref, isEmptyValue } from './logic';
@@ -146,7 +146,7 @@ function DbHeader({ db, isLink }: { db: Page; isLink?: boolean }) {
         }}
       />
       <Tooltip label="Open as full page">
-        <span className="icon-btn db-open-full" role="button" onClick={() => openPage(db.id)}>
+        <span className="icon-btn db-open-full" {...pressable()} onClick={() => openPage(db.id)}>
           <Maximize2 size={14} />
         </span>
       </Tooltip>
@@ -182,11 +182,11 @@ export function PageProperties({ pageId }: { pageId: string }) {
         const readOnly = p.type === 'created_time' || p.type === 'last_edited_time';
         return (
           <div className="pp-row" key={p.id}>
-            <div className="pp-name" role="button" onClick={e => setMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
+            <div className="pp-name" {...pressable()} onClick={e => setMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
               <span className="pp-icon"><PropIcon type={p.type} size={16} /></span>
               <span className="pp-label">{p.name}</span>
             </div>
-            <div
+            <div {...pressable()}
               className={'pp-value' + (readOnly ? ' readonly' : '') + (editor?.propId === p.id ? ' editing' : '')}
               onClick={e => {
                 if (p.type === 'checkbox') setRowProp(page.id, p.id, !rawValue(page, p));
@@ -198,7 +198,7 @@ export function PageProperties({ pageId }: { pageId: string }) {
           </div>
         );
       })}
-      <div className="pp-add" role="button" onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
+      <div className="pp-add" {...pressable()} onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
         <Plus size={16} /> Add a property
       </div>
       <div className="pp-divider" />

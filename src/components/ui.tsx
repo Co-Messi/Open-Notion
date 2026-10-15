@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { attrSel } from '../lib/dom';
 
@@ -13,6 +13,132 @@ function rectOf(a: Anchor): { left: number; top: number; right: number; bottom: 
   return { left: a.x, top: a.y, right: a.x + w, bottom: a.y + h, width: w, height: h };
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Keyboard helpers shared by every control that is not a <button>      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Props that make a div or span behave like a button: focusable, announced with a role, and
+ * activated by Enter or Space. Without an argument it clicks the element, so the existing
+ * onClick (including e.currentTarget based anchoring) runs unchanged.
+ */
+export function pressable(onActivate?: (e: React.KeyboardEvent<HTMLElement>) => void, role: string = 'button') {
+  return {
+    role,
+    tabIndex: 0,
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.target !== e.currentTarget || e.nativeEvent.isComposing) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        // A menu opened by this key press listens on window; it must not see the same event.
+        e.stopPropagation();
+        if (onActivate) onActivate(e);
+        else e.currentTarget.click();
+      }
+    },
+  };
+}
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusables(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(el => !el.closest('[aria-hidden="true"]') && el.getAttribute('aria-disabled') !== 'true');
+}
+
+/* ------------------------------------------------------------------ */
+/* Layer stack: one Escape closes only the topmost popover or modal     */
+/* ------------------------------------------------------------------ */
+
+interface Layer {
+  close: () => void;
+  root: React.RefObject<HTMLElement | null>;
+}
+const layers: Layer[] = [];
+
+function onLayerKey(e: KeyboardEvent) {
+  const top = layers[layers.length - 1];
+  if (!top) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    top.close();
+    return;
+  }
+  if (e.key === 'Tab' && !e.defaultPrevented) {
+    // Keep Tab inside the topmost layer, and pull focus in when it sits behind the layer.
+    const root = top.root.current;
+    if (!root) return;
+    const items = focusables(root);
+    const active = document.activeElement as HTMLElement | null;
+    const inside = !!active && root.contains(active);
+    if (items.length === 0) {
+      e.preventDefault();
+      return;
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (!inside) {
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+    } else if (e.shiftKey && (active === first || active === root)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+}
+
+/** Registers an open popover or modal on the layer stack. Returns nothing; cleans up on unmount. */
+export function useLayer(onClose: () => void, root: React.RefObject<HTMLElement | null>) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const layer: Layer = { close: () => closeRef.current(), root };
+    layers.push(layer);
+    if (layers.length === 1) window.addEventListener('keydown', onLayerKey, true);
+    return () => {
+      const i = layers.indexOf(layer);
+      if (i >= 0) layers.splice(i, 1);
+      if (layers.length === 0) window.removeEventListener('keydown', onLayerKey, true);
+    };
+  }, [root]);
+}
+
+/**
+ * Remembers what had focus when a layer opened and gives it back on close, but only when focus
+ * was lost with the layer (so an editor that kept the caret is never disturbed).
+ */
+function useFocusReturn() {
+  // Read during render: an autoFocus child takes focus before any layout effect runs.
+  const [opener] = useState(() => (typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)));
+  useLayoutEffect(() => {
+    return () => {
+      // Wait until the layer's DOM is gone: only then is it clear whether focus was lost with it.
+      setTimeout(() => {
+        const a = document.activeElement;
+        if (opener && opener !== document.body && opener.isConnected && (!a || a === document.body)) opener.focus({ preventScroll: true });
+      }, 0);
+    };
+  }, []);
+}
+
+/**
+ * Focus handling for a modal dialog: joins the layer stack, moves focus inside (unless an
+ * autofocus control already did), traps Tab and returns focus to the opener on close.
+ */
+export function useDialog(root: React.RefObject<HTMLElement | null>, onClose: () => void) {
+  useFocusReturn();
+  useLayer(onClose, root);
+  useEffect(() => {
+    const el = root.current;
+    if (el && !el.contains(document.activeElement)) (focusables(el)[0] || el).focus({ preventScroll: true });
+  }, [root]);
+}
+
 export type Placement = 'bottom-start' | 'bottom-end' | 'top-start' | 'right-start' | 'left-start' | 'bottom-center' | 'center';
 
 interface PopoverProps {
@@ -23,8 +149,8 @@ interface PopoverProps {
   width?: number;
   className?: string;
   children: ReactNode;
-  /** Keep focus in the page (used by editor menus that must not steal focus). */
-  noFocusTrap?: boolean;
+  /** Accessible name. When set the popover is exposed as a dialog. */
+  label?: string;
   /** Clicking the layer behind the popover closes it. */
   closeOnOutside?: boolean;
   /** Transparent layer that blocks clicks outside (Notion behaviour). */
@@ -43,6 +169,7 @@ export function Popover({
   closeOnOutside = true,
   layer = true,
   style,
+  label,
 }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -94,17 +221,8 @@ export function Popover({
     return () => ro.disconnect();
   }, [anchor, placement, offset]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        closeRef.current();
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, []);
+  useFocusReturn();
+  useLayer(onClose, ref);
 
   return createPortal(
     <>
@@ -124,6 +242,8 @@ export function Popover({
       <div
         ref={ref}
         className={'popover ' + className}
+        role={label ? 'dialog' : undefined}
+        aria-label={label}
         style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width, visibility: pos ? 'visible' : 'hidden', ...style }}
         onMouseDown={e => e.stopPropagation()}
       >
@@ -171,6 +291,8 @@ export function Menu({ items, onClose, search, searchPlaceholder = 'Search actio
   const [active, setActive] = useState(0);
   const [sub, setSub] = useState<{ id: string; rect: DOMRect } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const uid = useId();
+  const itemDomId = (id: string) => uid + '-' + id;
   const filtered = q
     ? items.filter(i => {
         const text = (typeof i.label === 'string' ? i.label : '') + ' ' + (i.keywords || '');
@@ -222,28 +344,65 @@ export function Menu({ items, onClose, search, searchPlaceholder = 'Search actio
     el?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
+  // A menu without a search box owns focus so that aria-activedescendant is announced, unless it
+  // was opened from an editable (the caret must stay where it is).
+  useEffect(() => {
+    const a = document.activeElement as HTMLElement | null;
+    if (search || (a && (a.isContentEditable || /^(INPUT|TEXTAREA)$/.test(a.tagName)))) return;
+    // The popover is hidden until it is placed, and a hidden element cannot take focus yet.
+    const raf = requestAnimationFrame(() => listRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   let lastSection: string | undefined;
   const subItem = sub ? items.find(i => i.id === sub.id) : null;
+  const activeItem = selectable[active];
+  const activeDomId = activeItem ? itemDomId(activeItem.id) : undefined;
   return (
     <>
       {search && (
         <div className="menu-search icon">
           <SearchIcon size={14} />
-          <input autoFocus={autoFocusSearch} value={q} onChange={e => setQ(e.target.value)} placeholder={searchPlaceholder} />
+          <input
+            autoFocus={autoFocusSearch}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder={searchPlaceholder}
+            role="combobox"
+            aria-label={searchPlaceholder}
+            aria-expanded="true"
+            aria-autocomplete="list"
+            aria-controls={uid + '-menu'}
+            aria-activedescendant={activeDomId}
+          />
         </div>
       )}
       {header}
-      <div className="menu" ref={listRef} style={{ maxHeight }}>
-        {filtered.length === 0 && <div className="menu-empty">No results</div>}
+      <div
+        className="menu"
+        ref={listRef}
+        id={uid + '-menu'}
+        role="menu"
+        tabIndex={-1}
+        aria-label={typeof header === 'string' ? header : search ? searchPlaceholder : 'Menu'}
+        aria-activedescendant={search ? undefined : activeDomId}
+        style={{ maxHeight }}
+      >
+        {filtered.length === 0 && <div className="menu-empty" role="presentation">No results</div>}
         {filtered.map(item => {
           const idx = selectable.indexOf(item);
           const showSection = item.section && item.section !== lastSection;
           lastSection = item.section ?? lastSection;
           return (
             <React.Fragment key={item.id}>
-              {item.separatorBefore && !q && <div className="menu-sep" />}
-              {showSection && !q && <div className="menu-label">{item.section}</div>}
+              {item.separatorBefore && !q && <div className="menu-sep" role="separator" />}
+              {showSection && !q && <div className="menu-label" role="presentation">{item.section}</div>}
               <div
+                id={itemDomId(item.id)}
+                role="menuitem"
+                aria-disabled={item.disabled || undefined}
+                aria-haspopup={item.submenu ? 'menu' : undefined}
                 data-mid={item.id}
                 className={
                   'menu-item' +
@@ -281,12 +440,13 @@ export function Menu({ items, onClose, search, searchPlaceholder = 'Search actio
 /* Misc                                                                */
 /* ------------------------------------------------------------------ */
 
-export function Switch({ on, onChange }: { on: boolean; onChange?: (v: boolean) => void }) {
+export function Switch({ on, onChange, label }: { on: boolean; onChange?: (v: boolean) => void; label?: string }) {
   return (
     <span
       className={'switch' + (on ? ' on' : '')}
-      role="switch"
+      {...pressable(undefined, 'switch')}
       aria-checked={on}
+      aria-label={label}
       onClick={e => {
         e.stopPropagation();
         onChange?.(!on);
@@ -308,6 +468,23 @@ export function Tooltip({ label, shortcut, children }: { label: string; shortcut
     setRect(null);
   };
   const child = React.cloneElement(children, {
+    // Icon only controls take their accessible name from the tooltip text.
+    'aria-label': children.props['aria-label'] ?? label,
+    onFocus: (e: React.FocusEvent) => {
+      const t = e.currentTarget as HTMLElement;
+      let visible = false;
+      try {
+        visible = t.matches(':focus-visible');
+      } catch {
+        /* selector unsupported */
+      }
+      if (visible) setRect(t.getBoundingClientRect());
+      children.props.onFocus?.(e);
+    },
+    onBlur: (e: React.FocusEvent) => {
+      hide();
+      children.props.onBlur?.(e);
+    },
     onMouseEnter: (e: React.MouseEvent) => {
       show(e);
       children.props.onMouseEnter?.(e);

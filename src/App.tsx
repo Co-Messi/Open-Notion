@@ -25,6 +25,7 @@ import { parseHash } from './store/route';
 import { storageGet, storageSet } from './lib/storage';
 import { isImageIcon } from './lib/url';
 import { StoredImg } from './components/StoredImage';
+import { pressable } from './components/ui';
 
 function useTheme() {
   const theme = useSettings(s => s.theme);
@@ -172,10 +173,14 @@ export function App() {
   );
 }
 
-function Toast() {
+export function Toast() {
   const t = useUi(u => u.toast);
-  if (!t) return null;
-  return <div className="toast">{t}</div>;
+  // The live region stays mounted so a message that appears later is announced.
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true" data-toast-live style={{ position: 'fixed', left: 0, bottom: 0, width: 0, height: 0 }}>
+      {t && <div className="toast">{t}</div>}
+    </div>
+  );
 }
 
 function ChatView() {
@@ -217,7 +222,7 @@ function LibraryView() {
         {pages.map(id => {
           const p = all[id];
           return (
-            <div key={id} className="lib-row" onClick={() => openPage(id)}>
+            <div {...pressable()} key={id} className="lib-row" onClick={() => openPage(id)}>
               <span style={{ width: 20, display: 'flex', justifyContent: 'center', color: 'var(--icon-secondary)' }}>{isImageIcon(p.icon) ? <StoredImg src={p.icon} style={{ width: 18, height: 18, objectFit: 'cover', borderRadius: 3 }} /> : p.icon || (p.isDatabase ? '▦' : '📄')}</span>
               <span className="grow">{pageTitle(p)}</span>
               <span className="muted">Edited {new Date(p.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
@@ -246,7 +251,7 @@ function SidePeek() {
   const idx = rows.indexOf(rowId);
   const close = () => setUi({ peekRowId: null });
   return (
-    <div className="side-peek" style={{ width }} onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}>
+    <div className="side-peek" role="complementary" aria-label="Side peek" style={{ width }} onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}>
       <div
         className="peek-resizer"
         onPointerDown={e => {
@@ -265,23 +270,23 @@ function SidePeek() {
       />
       <div className="peek-top">
         <Tooltip label="Close" shortcut="Esc">
-          <div className="icon-btn" onClick={close}>
+          <div {...pressable()} className="icon-btn" onClick={close}>
             <ChevronsRight size={18} />
           </div>
         </Tooltip>
         <Tooltip label="Open as full page">
-          <div className="icon-btn" onClick={() => openPage(rowId)}>
+          <div {...pressable()} className="icon-btn" onClick={() => openPage(rowId)}>
             <Maximize2 size={15} />
           </div>
         </Tooltip>
-        <div className="icon-btn" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
+        <div {...pressable()} aria-label="Previous page" aria-disabled={idx <= 0} className="icon-btn" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
           <ChevronUp size={18} />
         </div>
-        <div className="icon-btn" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
+        <div {...pressable()} aria-label="Next page" aria-disabled={idx >= rows.length - 1} className="icon-btn" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
           <ChevronDown size={18} />
         </div>
         <span style={{ flex: 1 }} />
-        <div className="icon-btn" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())}>
+        <div {...pressable()} aria-label="More actions" className="icon-btn" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())}>
           <MoreHorizontal size={18} />
         </div>
       </div>

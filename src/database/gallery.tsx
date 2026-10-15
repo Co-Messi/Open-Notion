@@ -6,7 +6,8 @@ import type { Block, Page } from '../store/types';
 import { PropValue } from './cells';
 import { visibleProps, isEmptyValue, htmlText } from './logic';
 import { addRowAt } from './dbActions';
-import { TitleEditor, RowMenu, RowIcon, type ViewProps } from './shared';
+import { TitleEditor, RowMenu, RowIcon, rowItemProps, type ViewProps } from './shared';
+import { pressable } from '../components/ui';
 import { CoverBox } from '../components/StoredImage';
 
 function ContentPreview({ page, blocks }: { page: Page; blocks: Record<string, Block> }) {
@@ -46,7 +47,7 @@ export function GalleryView({ dbId, view, rows, schema, defaults, editingTitle, 
           key={row.id}
           data-row-id={row.id}
           className="db-gcard"
-          role="button"
+          {...rowItemProps(row, rect => setRowMenu({ rowId: row.id, rect }))}
           onClick={() => editingTitle !== row.id && openPage(row.id, { peek: true })}
           onContextMenu={e => {
             e.preventDefault();
@@ -82,7 +83,7 @@ export function GalleryView({ dbId, view, rows, schema, defaults, editingTitle, 
           </div>
         </div>
       ))}
-      <div className="db-gcard db-gcard-new" role="button" onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
+      <div className="db-gcard db-gcard-new" {...pressable()} onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
         <Plus size={16} /> New page
       </div>
       {rowMenu && <RowMenu rowId={rowMenu.rowId} rect={rowMenu.rect} onClose={() => setRowMenu(null)} />}

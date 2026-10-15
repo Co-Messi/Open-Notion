@@ -52,6 +52,7 @@ export function CodeBlock({ block, readOnly }: { block: Block; readOnly?: boolea
           data-editable-id={block.id}
           data-nav=""
           spellCheck={false}
+          aria-label={'Code' + (block.language ? ', ' + block.language : '')}
           readOnly={readOnly}
           defaultValue={code}
           onChange={e => commit(e.target.value)}

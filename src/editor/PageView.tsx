@@ -10,7 +10,7 @@ import { CoverPicker, COVERS } from '../components/CoverPicker';
 import { setCaret, caretOffset } from './caret';
 import { PageProperties, DatabaseFull } from '../database/DatabaseView';
 import { importMarkdownIntoPage } from '../lib/exporter';
-import { relTime } from '../components/ui';
+import { relTime, pressable } from '../components/ui';
 import { sanitizeInline } from '../lib/html';
 import { handleInlineLinkClick } from './Editable';
 import { isImageIcon } from '../lib/url';
@@ -136,7 +136,8 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
             {hasIcon && (
               <div
                 className="page-icon"
-                role="button"
+                {...pressable()}
+                aria-label="Change page icon"
                 onClick={e => !readOnly && setIconPicker(e.currentTarget.getBoundingClientRect())}
                 style={peek ? { marginTop: hasCover ? undefined : 40 } : undefined}
               >
@@ -167,7 +168,7 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
             {page.locked && (
               <div className="page-locked-banner">
                 <Lock size={12} /> Page is locked.{' '}
-                <span className="btn-link" style={{ fontSize: 12 }} onClick={() => updatePage(pageId, { locked: false })}>
+                <span {...pressable()} className="btn-link" style={{ fontSize: 12 }} onClick={() => updatePage(pageId, { locked: false })}>
                   Unlock
                 </span>
               </div>
@@ -351,6 +352,9 @@ function Title({ pageId, readOnly }: { pageId: string; readOnly: boolean }) {
       contentEditable={!readOnly}
       suppressContentEditableWarning
       data-title={pageId}
+      role="textbox"
+      aria-label="Page title"
+      aria-readonly={readOnly || undefined}
       data-nav=""
       data-placeholder={page.isDatabase ? 'Untitled' : 'New page'}
       spellCheck
@@ -408,7 +412,7 @@ function EmptyPageStarter({ pageId, onEmpty }: { pageId: string; onEmpty: () => 
   ];
   return (
     <div className="starter">
-      <div className="starter-hint" onClick={onEmpty}>
+      <div {...pressable()} className="starter-hint" onClick={onEmpty}>
         Press <span className="kbd">Enter</span> to continue with an empty page, or pick a template.
       </div>
       <div className="starter-grid">
@@ -458,7 +462,8 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
           <span
             className="icon-btn"
             style={{ width: 24, height: 24, fontSize: 12, color: 'var(--text-tertiary)' }}
-            role="button"
+            {...pressable()}
+            aria-label="Delete comment"
             onClick={() => transact(tx => tx.setPage(pageId, { comments: (tx.page(pageId).comments || []).filter(x => x.id !== c.id) }))}
           >
             ✕
@@ -479,7 +484,7 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
             }}
             onBlur={() => !text && onDone()}
           />
-          <span className="icon-btn" role="button" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--theme-gray-tint-2)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
+          <span className="icon-btn" {...pressable()} aria-label="Add comment" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--theme-gray-tint-2)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
             <ArrowUp size={14} />
           </span>
         </div>

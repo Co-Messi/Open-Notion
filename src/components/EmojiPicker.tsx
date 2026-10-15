@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Shuffle } from 'lucide-react';
-import { Popover, Tooltip, type Anchor } from './ui';
+import { Popover, Tooltip, type Anchor, pressable } from './ui';
 import { EMOJI_CATEGORIES } from '../lib/emojiData';
 import { showToast } from '../store/store';
 import { ICON_EDGE, ImageError, ingestImage } from '../lib/images';
@@ -51,11 +51,11 @@ export function EmojiPicker({
   return (
     <Popover anchor={anchor} onClose={onClose} className="emoji-picker" placement="bottom-start">
       <div className="ep-tabs">
-        <div className={'ep-tab' + (tab === 'emoji' ? ' on' : '')} onClick={() => setTab('emoji')}>
+        <div {...pressable()} className={'ep-tab' + (tab === 'emoji' ? ' on' : '')} onClick={() => setTab('emoji')}>
           Emoji
         </div>
         {allowUpload && (
-          <div className={'ep-tab' + (tab === 'upload' ? ' on' : '')} onClick={() => setTab('upload')}>
+          <div {...pressable()} className={'ep-tab' + (tab === 'upload' ? ' on' : '')} onClick={() => setTab('upload')}>
             Upload
           </div>
         )}
@@ -83,7 +83,7 @@ export function EmojiPicker({
               }}
             />
             <Tooltip label="Random">
-              <div className="icon-btn" style={{ width: 28, height: 28, boxShadow: 'inset 0 0 0 1px var(--border-translucent)' }} onClick={() => pick(randomEmoji())}>
+              <div {...pressable()} className="icon-btn" style={{ width: 28, height: 28, boxShadow: 'inset 0 0 0 1px var(--border-translucent)' }} onClick={() => pick(randomEmoji())}>
                 <Shuffle size={15} />
               </div>
             </Tooltip>
@@ -94,7 +94,7 @@ export function EmojiPicker({
                 <div className="ep-cat">{filtered.length ? 'Results' : 'No results'}</div>
                 <div className="ep-cells">
                   {filtered.map(([e, name]) => (
-                    <div key={e} className="ep-cell" title={name} onClick={() => pick(e)}>
+                    <div {...pressable()} key={e} className="ep-cell" title={name} onClick={() => pick(e)}>
                       {e}
                     </div>
                   ))}
@@ -107,7 +107,7 @@ export function EmojiPicker({
                     <div className="ep-cat">Recent</div>
                     <div className="ep-cells">
                       {rec.map(e => (
-                        <div key={'r' + e} className="ep-cell" onClick={() => pick(e)}>
+                        <div {...pressable()} key={'r' + e} className="ep-cell" onClick={() => pick(e)}>
                           {e}
                         </div>
                       ))}
@@ -119,7 +119,7 @@ export function EmojiPicker({
                     <div className="ep-cat">{cat}</div>
                     <div className="ep-cells">
                       {items.map(([e, name]) => (
-                        <div key={e} className="ep-cell" title={name} onClick={() => pick(e)}>
+                        <div {...pressable()} key={e} className="ep-cell" title={name} onClick={() => pick(e)}>
                           {e}
                         </div>
                       ))}
