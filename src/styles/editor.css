@@ -121,7 +121,8 @@
   margin-top: 80px;
   margin-bottom: 4px;
   opacity: 0;
-  transition: opacity 160ms ease;
+  /* Notion 7.37 page header controls fade over 100ms ease. */
+  transition: opacity 100ms ease;
   user-select: none;
 }
 .has-icon .page-controls,
