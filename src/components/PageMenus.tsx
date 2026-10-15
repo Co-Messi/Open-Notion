@@ -61,12 +61,15 @@ export function MovePagePopover({ pageId, anchor, onClose }: { pageId: string; a
   const d = getDoc();
   const [q, setQ] = useState('');
   // Candidate targets: every non-trashed, non-row page that is not the page itself or its descendant.
+  // Iterative walk with a visited set, so even a corrupted cyclic tree cannot overflow the stack.
   const descendants = new Set<string>();
-  const collect = (id: string) => {
+  const stack = [pageId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (descendants.has(id)) continue;
     descendants.add(id);
-    childPagesOf(d, id).forEach(collect);
-  };
-  collect(pageId);
+    stack.push(...childPagesOf(d, id));
+  }
   const candidates = Object.values(d.pages)
     .filter(p => !p.trashed && !p.dbId && !p.isDatabase && !descendants.has(p.id))
     .filter(p => pageTitle(p).toLowerCase().includes(q.toLowerCase()))
