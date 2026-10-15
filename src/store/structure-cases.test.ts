@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDoc, getUi, replaceDoc, transact } from './store';
+import { getDoc, getUi, replaceDoc, transact, undo } from './store';
+import { getRecentErrors } from '../lib/diagnostics';
 import * as A from './actions';
 import type { Block, BlockType, Doc, Page } from './types';
 import { checkInvariants } from '../test/invariants';
@@ -240,6 +241,18 @@ describe('H8: Enter, Backspace and Shift+Tab inside columns', () => {
     expect(d().blocks.a1.parent).toBe('ca');
     expect(d().blocks.b1.parent).toBe('cb');
     expect(JSON.stringify(d().blocks)).not.toBe(before);
+    columnsIntact();
+  });
+
+  it('a refused Backspace commits nothing: no empty undo step and no recorded error', () => {
+    twoColumns();
+    const errors = getRecentErrors().length;
+    A.updateBlock('a2', { html: 'edited' });
+    // a1 is the first block of a column and its document order neighbour is the title: refused.
+    expect(backspaceAtStart('a1', 'alpha', { title: 'Q' }).handled).toBe(true);
+    undo();
+    expect(d().blocks.a2.html).toBe('beta');
+    expect(getRecentErrors().length).toBe(errors);
     columnsIntact();
   });
 
