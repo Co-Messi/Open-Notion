@@ -8,6 +8,23 @@
 }
 
 /* ---------------- Sidebar ---------------- */
+/*
+ * Notion 7.37 docked collapse and expand: the container width goes to and from 0 over 200ms
+ * ease, clipping the panel, and the main view follows in the same frame. The container is never
+ * positioned, so the collapsed hover peek panel (absolute, placed against .app) escapes its
+ * clipping. It clips only while animating, so the resize handle can overhang the edge.
+ */
+.sidebar-container {
+  flex-shrink: 0;
+  height: 100%;
+  transition: width 200ms ease;
+}
+.sidebar-container.animating {
+  overflow: hidden;
+}
+.sidebar-container.resizing {
+  transition: none;
+}
 .sidebar {
   position: relative;
   flex-shrink: 0;
@@ -20,7 +37,8 @@
   font-size: 14px;
   user-select: none;
   z-index: 10;
-  transition: width 0ms;
+  /* On expand the panel fades in and slides from its collapsed position, 200ms ease. */
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 .sidebar.collapsed {
   position: absolute;
@@ -29,8 +47,12 @@
   height: auto;
   bottom: 0;
   transform: translateX(-100%);
-  transition: transform 200ms ease, opacity 200ms ease;
+  transition: none;
   opacity: 0;
+}
+.sidebar.collapsed.peek,
+.sidebar.collapsed.was-peek {
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 .sidebar.collapsed.peek {
   transform: translateX(0);
