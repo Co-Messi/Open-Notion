@@ -104,6 +104,7 @@ export function SlashMenu() {
       setCaret(el, st.start, off);
       const [before, after] = splitAtSelection(el);
       const html = sanitizeInline(before + after);
+      // Sanitized just above: the editable shows exactly what the store will hold.
       el.innerHTML = html;
       transact(tx => tx.setBlock(st.blockId, { html }), 'push');
     }
