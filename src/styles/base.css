@@ -19,6 +19,10 @@
   --bg-elevated: var(--theme-surface-raised);
   --hover: var(--theme-hover);
   --pressed: var(--theme-press);
+  /* Measured on Notion 7.37 in dark only (pressed peek header icon button, tab strip borders);
+     the light values are the ones OpenNotion already used. */
+  --icon-pressed: var(--theme-icon-press);
+  --tab-line: var(--theme-tab-line);
   --button-hover: var(--theme-button-hover);
   --popover-bg: var(--theme-popover);
   --sidebar-bg: var(--theme-surface-sunken);
