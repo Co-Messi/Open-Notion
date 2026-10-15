@@ -11,6 +11,7 @@ import { setCaret, caretOffset } from './caret';
 import { PageProperties, DatabaseFull } from '../database/DatabaseView';
 import { importMarkdownIntoPage } from '../lib/exporter';
 import { relTime } from '../components/ui';
+import { sanitizeInline } from '../lib/html';
 
 export function PageView({ pageId, peek = false }: { pageId: string; peek?: boolean }) {
   const page = usePage(pageId);
@@ -429,8 +430,9 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
   const name = getDoc().workspace.userName;
   const add = () => {
     if (!text.trim()) return;
-    const html = (quote ? `<i>“${quote}”</i> ` : '') + text.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    transact(tx => tx.setPage(pageId, { comments: [...(tx.page(pageId).comments || []), { id: uid(), html, createdAt: Date.now(), author: name }] }));
+    // Stored as plain text and rendered as React text, so a quoted block can never become markup.
+    const comment = { id: uid(), text: text.trim(), ...(quote ? { quote } : {}), createdAt: Date.now(), author: name };
+    transact(tx => tx.setPage(pageId, { comments: [...(tx.page(pageId).comments || []), comment] }));
     setText('');
     showToast('Comment added');
     onDone();
@@ -443,7 +445,15 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
           <div style={{ flex: 1 }}>
             <span className="who">{c.author}</span>
             <span className="when">{relTime(c.createdAt)}</span>
-            <div dangerouslySetInnerHTML={{ __html: c.html }} />
+            {c.text !== undefined ? (
+              <div>
+                {c.quote && <i>“{c.quote}” </i>}
+                {c.text}
+              </div>
+            ) : (
+              // Legacy comments stored html; it is sanitized again at render time.
+              <div dangerouslySetInnerHTML={{ __html: sanitizeInline(c.html || '') }} />
+            )}
           </div>
           <span
             className="icon-btn"
