@@ -9,7 +9,7 @@ import {
 } from './persist';
 import { getSaveState, setSaveState } from './saveState';
 import { describeStorageFailure, storageAvailable, storageGet, storageGetJson, storageRemove, storageSet, type StorageFailure } from '../lib/storage';
-import { recordError } from '../lib/diagnostics';
+import { DIAGNOSTICS_KEY, recordError } from '../lib/diagnostics';
 import { own } from '../lib/own';
 import { collectInlineImages, mapDocImages, storeInlineImages } from '../lib/images';
 
@@ -263,12 +263,13 @@ function writeDoc(): boolean {
     return false;
   }
   let res = storageSet(DOC_KEY, json);
-  if (!res.ok && res.reason === 'quota' && (storageGet(BACKUP_KEY) !== null || storageGet(REPAIRED_KEY) !== null)) {
-    // Safety copies must never cost the live workspace its save.
-    storageRemove(BACKUP_KEY);
-    storageRemove(REPAIRED_KEY);
-    recordError('save', 'Storage full: removed the rolling safety copies to save the workspace');
+  const spare = !res.ok && res.reason === 'quota' ? [BACKUP_KEY, REPAIRED_KEY, DIAGNOSTICS_KEY].filter(k => storageGet(k) !== null) : [];
+  if (spare.length) {
+    // Rolling safety copies and stored diagnostics must never cost the live workspace its
+    // save. The retry comes before the note, since recording it writes diagnostics again.
+    spare.forEach(k => storageRemove(k));
     res = storageSet(DOC_KEY, json);
+    recordError('save', `Storage full: removed the rolling safety copies and stored diagnostics ${res.ok ? 'to save the workspace' : 'and the workspace still did not fit'}`);
   }
   if (!res.ok) {
     fail(res.reason, res.error);
