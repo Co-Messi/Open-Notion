@@ -4,6 +4,8 @@ import { usePage, useDoc } from '../store/store';
 import { openPage, setRowProp } from '../store/actions';
 import type { Page } from '../store/types';
 import { Tooltip } from '../components/ui';
+import { StoredImg } from '../components/StoredImage';
+import { isImageIcon } from '../lib/url';
 import { applyView, rawValue, readPref, writePref, isEmptyValue } from './logic';
 import { addRowAt, setDbTitle } from './dbActions';
 import { PropIcon, PropValue, CellEditor, isEditable } from './cells';
@@ -120,7 +122,7 @@ function DbHeader({ db, isLink }: { db: Page; isLink?: boolean }) {
       {isLink && <ArrowUpRight size={16} className="db-link-arrow" />}
       {icon && (
         <span className="db-header-icon">
-          {icon.startsWith('data:') || icon.startsWith('http') ? <img src={icon} alt="" /> : icon}
+          {isImageIcon(icon) ? <StoredImg src={icon} /> : icon}
         </span>
       )}
       <div

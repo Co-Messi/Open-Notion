@@ -1,4 +1,4 @@
-import { getDoc, transact, Tx, setUi, showToast } from './store';
+import { getDoc, transact, Tx, setUi, showToast, recordVisit } from './store';
 import type { Block, BlockType, DbView, Doc, Page, Property, PropType, SelectOption, ColorName } from './types';
 import { htmlToText } from '../lib/html';
 import { forgetPagesInTabs } from './tabs';
@@ -884,10 +884,9 @@ export function toggleFavorite(id: string) {
   });
 }
 
+/** Records a visit in the history; never rewrites the workspace (see recordVisit). */
 export function visitPage(id: string) {
-  transact(tx => {
-    tx.recent = [{ id, at: Date.now() }, ...tx.recent.filter(r => r.id !== id)].slice(0, 30);
-  }, 'none');
+  recordVisit(id);
 }
 
 /* ------------------------------------------------------------------ */

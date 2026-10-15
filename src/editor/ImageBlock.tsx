@@ -4,11 +4,15 @@ import type { Block } from '../store/types';
 import { transact, showToast } from '../store/store';
 import { Popover } from '../components/ui';
 import { selectBlocks } from './controller';
+import { ImageError, ingestImage, useImageSrc } from '../lib/images';
+import { safeImageSrc } from '../lib/url';
+import { recordError } from '../lib/diagnostics';
 
 export function ImageBlock({ block, readOnly }: { block: Block; readOnly?: boolean }) {
   const [picker, setPicker] = useState<DOMRect | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
+  const img = useImageSrc(block.url);
 
   useEffect(() => {
     const on = (e: Event) => {
@@ -58,7 +62,17 @@ export function ImageBlock({ block, readOnly }: { block: Block; readOnly?: boole
   return (
     <div className="image-block">
       <div ref={frame} className="image-frame" style={{ width: block.width || '100%' }} onClick={() => selectBlocks([block.id])}>
-        <img src={block.url} alt={block.caption || ''} draggable={false} />
+        {img.src ? (
+          <img src={img.src} alt={block.caption || ''} draggable={false} />
+        ) : (
+          <div className="image-unavailable">
+            {img.state === 'loading' ? '' : (
+              <>
+                <ImageIcon size={18} strokeWidth={1.5} /> {img.state === 'missing' ? 'Image unavailable in this browser' : 'This image link is not allowed'}
+              </>
+            )}
+          </div>
+        )}
         {!readOnly && (
           <>
             <div className="image-handle l" onPointerDown={startResize('l')} />
@@ -95,6 +109,15 @@ export function ImagePicker({ anchor, onClose, onPick, title = 'Upload' }: { anc
   const [tab, setTab] = useState<'upload' | 'link'>('upload');
   const [url, setUrl] = useState('');
   const file = useRef<HTMLInputElement>(null);
+  const pickLink = () => {
+    const safe = safeImageSrc(url.trim());
+    if (!safe) {
+      showToast('That link cannot be used as an image');
+      return;
+    }
+    onPick(safe);
+    onClose();
+  };
   return (
     <Popover anchor={anchor} onClose={onClose} width={Math.max(360, Math.min(540, anchor.width))}>
       <div className="ep-tabs">
@@ -110,7 +133,7 @@ export function ImagePicker({ anchor, onClose, onPick, title = 'Upload' }: { anc
           <button className="btn secondary" onClick={() => file.current?.click()}>
             Upload file
           </button>
-          <div style={{ textAlign: 'center' }}>The maximum size per file is 3 MB (stored in your browser).</div>
+          <div style={{ textAlign: 'center' }}>Large images are resized and kept in this browser.</div>
           <input
             ref={file}
             type="file"
@@ -118,17 +141,17 @@ export function ImagePicker({ anchor, onClose, onPick, title = 'Upload' }: { anc
             hidden
             onChange={e => {
               const f = e.target.files?.[0];
+              e.target.value = '';
               if (!f) return;
-              if (f.size > 3 * 1024 * 1024) {
-                showToast('Image is too large (max 3 MB)');
-                return;
-              }
-              const r = new FileReader();
-              r.onload = () => {
-                onPick(String(r.result));
-                onClose();
-              };
-              r.readAsDataURL(f);
+              ingestImage(f)
+                .then(ref => {
+                  onPick(ref);
+                  onClose();
+                })
+                .catch(err => {
+                  recordError('images', err);
+                  showToast(err instanceof ImageError ? err.message : 'Could not add the image');
+                });
             }}
           />
         </div>
@@ -141,20 +164,14 @@ export function ImagePicker({ anchor, onClose, onPick, title = 'Upload' }: { anc
             value={url}
             onChange={e => setUrl(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Enter' && url.trim()) {
-                onPick(url.trim());
-                onClose();
-              }
+              if (e.key === 'Enter' && url.trim()) pickLink();
             }}
           />
           <button
             className="btn primary"
             style={{ alignSelf: 'center', width: 240 }}
             disabled={!url.trim()}
-            onClick={() => {
-              onPick(url.trim());
-              onClose();
-            }}
+            onClick={pickLink}
           >
             Embed image
           </button>

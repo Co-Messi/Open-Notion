@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Popover, type Anchor } from './ui';
 import { showToast } from '../store/store';
+import { ImageError, ingestImage } from '../lib/images';
+import { recordError } from '../lib/diagnostics';
 
 export const COVERS: { name: string; value: string }[] = [
   { name: 'Peach', value: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
@@ -94,14 +96,14 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
             hidden
             onChange={e => {
               const f = e.target.files?.[0];
+              e.target.value = '';
               if (!f) return;
-              if (f.size > 3 * 1024 * 1024) {
-                showToast('Image is too large (max 3 MB)');
-                return;
-              }
-              const r = new FileReader();
-              r.onload = () => onPick(String(r.result));
-              r.readAsDataURL(f);
+              ingestImage(f)
+                .then(onPick)
+                .catch(err => {
+                  recordError('images', err);
+                  showToast(err instanceof ImageError ? err.message : 'Could not use that image');
+                });
             }}
           />
           <div style={{ textAlign: 'center' }}>Images wider than 1500 pixels work best.</div>

@@ -13,6 +13,8 @@ import { BlockActionsMenu, turnIntoPage } from './BlockMenu';
 import { openPage, pageTitle, txInsertAfter, txInsertBlock, turnInto } from '../store/actions';
 import { PageIconView } from '../components/PageIcon';
 import { EmojiPicker } from '../components/EmojiPicker';
+import { StoredImg } from '../components/StoredImage';
+import { isImageIcon } from '../lib/url';
 import { CodeBlock } from './CodeBlock';
 import { ImageBlock } from './ImageBlock';
 import { TableBlock } from './TableBlock';
@@ -296,7 +298,7 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
             onMouseDown={e => e.preventDefault()}
             onClick={e => !readOnly && setIconPicker(e.currentTarget.getBoundingClientRect())}
           >
-            {b!.icon || '💡'}
+            {isImageIcon(b!.icon) ? <StoredImg src={b!.icon} className="callout-icon-img" /> : b!.icon || '💡'}
           </div>,
           editable,
         ];

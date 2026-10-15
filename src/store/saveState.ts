@@ -20,8 +20,11 @@ export interface SaveState {
   status: SaveStatus;
   /** Why the last write failed (only with status 'failed'). */
   failure: StorageFailure | null;
-  /** Why writes are disabled (only with status 'readonly'). */
-  readonlyReason: 'other-tab' | 'recovery' | null;
+  /**
+   * Why writes are disabled (only with status 'readonly'): another tab saved newer data,
+   * stored data needs recovery, or the data was saved by a newer build of the app.
+   */
+  readonlyReason: 'other-tab' | 'recovery' | 'newer-version' | null;
   /** Time of the last successful write of the doc. */
   lastSavedAt: number | null;
   /** Size in characters of the last serialized doc. */

@@ -1,14 +1,16 @@
 import { FileText, Database, Table2 } from 'lucide-react';
 import type { Page } from '../store/types';
 import { useDoc } from '../store/store';
+import { isImageIcon } from '../lib/url';
+import { StoredImg } from './StoredImage';
 
 /** A page's icon (emoji, image, or the default document glyph). */
 export function PageIconView({ page, size = 18, emojiSize }: { page: Page | undefined; size?: number; emojiSize?: number }) {
   const hasContent = useDoc(d => (page ? page.content.some(b => d.blocks[b] && (d.blocks[b].html || d.blocks[b].type !== 'text')) : false), Object.is);
   if (!page) return <FileText size={size} strokeWidth={1.5} />;
   if (page.icon) {
-    if (page.icon.startsWith('data:') || page.icon.startsWith('http')) {
-      return <img src={page.icon} alt="" style={{ width: size, height: size, objectFit: 'cover', borderRadius: 3 }} />;
+    if (isImageIcon(page.icon)) {
+      return <StoredImg src={page.icon} style={{ width: size, height: size, objectFit: 'cover', borderRadius: 3 }} />;
     }
     return (
       <span className="emoji" style={{ fontSize: emojiSize ?? size - 2, lineHeight: 1 }}>

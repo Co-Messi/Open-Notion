@@ -1,7 +1,13 @@
 import { getDoc, transact, showToast } from '../store/store';
 import { htmlToMarkdown, inlineMarkdownToHtml, htmlToText, escapeMdText, escapeMdUrl } from './html';
 import { pageTitle, txInsertBlock, txCreatePage } from '../store/actions';
-import type { Block, BlockType, Page, Property } from '../store/types';
+import type { Block, BlockType, Doc, Page, Property } from '../store/types';
+import { DOC_VERSION, migrateDoc } from '../store/migrate';
+import { normalizeDoc, NotADocError } from '../store/normalize';
+import { LAST_BACKUP_KEY } from '../store/persist';
+import { collectImageRefs, readImageAsDataUrl, refId, restoreImages } from './images';
+import { storageSet } from './storage';
+import { recordError } from './diagnostics';
 
 export function pageToMarkdown(pageId: string): string {
   const d = getDoc();
@@ -96,8 +102,99 @@ export function exportPageMarkdown(pageId: string) {
   download(`${(pageTitle(p) || 'Untitled').replace(/[\\/:*?"<>|]/g, '_')}.md`, pageToMarkdown(pageId));
 }
 
-export function exportWorkspaceJson() {
-  download('workspace.json', JSON.stringify(getDoc(), null, 2), 'application/json');
+/* ------------------------------------------------------------------ */
+/* JSON backups                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A backup is self contained: the workspace plus the bytes of every stored image it
+ * references, keyed by image id. Import also accepts the plain doc JSON of older exports.
+ */
+export const BACKUP_FORMAT = 'opennotion-backup';
+
+export interface WorkspaceBackup {
+  format: typeof BACKUP_FORMAT;
+  formatVersion: 1;
+  exportedAt: string;
+  doc: Doc;
+  images: Record<string, string>;
+}
+
+export class BackupError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BackupError';
+  }
+}
+
+/** Builds a backup of `doc` with its images embedded as data URLs. */
+export async function buildWorkspaceBackup(doc: Doc = getDoc()): Promise<{ json: string; images: number; missing: number }> {
+  const images: Record<string, string> = {};
+  let missing = 0;
+  for (const ref of collectImageRefs(doc)) {
+    const data = await readImageAsDataUrl(ref);
+    if (data) images[refId(ref)] = data;
+    else missing++;
+  }
+  // The visit history is browsing data, not content; it is left out of backups.
+  const backup: WorkspaceBackup = { format: BACKUP_FORMAT, formatVersion: 1, exportedAt: new Date().toISOString(), doc: { ...doc, version: DOC_VERSION, recent: [] }, images };
+  return { json: JSON.stringify(backup, null, 2), images: Object.keys(images).length, missing };
+}
+
+function stamp() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Downloads a complete backup and records the backup date. Resolves to false on failure. */
+export async function exportWorkspaceJson(): Promise<boolean> {
+  try {
+    const r = await buildWorkspaceBackup();
+    download(`opennotion-backup-${stamp()}.json`, r.json, 'application/json');
+    storageSet(LAST_BACKUP_KEY, String(Date.now()));
+    window.dispatchEvent(new Event('on:backup-made'));
+    if (r.missing) showToast(`Backup downloaded. ${r.missing} image${r.missing === 1 ? ' was' : 's were'} missing from this browser.`);
+    return true;
+  } catch (e) {
+    recordError('export', e);
+    showToast('Could not build the backup');
+    return false;
+  }
+}
+
+/** Downloads text as a file (raw data from the recovery screen and the crash screen). */
+export function downloadText(name: string, text: string, type = 'application/json') {
+  download(name, text, type);
+}
+
+/**
+ * Reads a backup file: the current format (doc plus images) or an older plain doc. The
+ * result is migrated and normalized, and its images are stored before it resolves.
+ */
+export async function parseWorkspaceBackup(text: string): Promise<Doc> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new BackupError('That file is not valid JSON.');
+  }
+  let raw: unknown = parsed;
+  let images: Record<string, unknown> | null = null;
+  if (parsed && typeof parsed === 'object' && (parsed as { format?: unknown }).format === BACKUP_FORMAT) {
+    const b = parsed as { doc?: unknown; images?: unknown };
+    raw = b.doc;
+    images = b.images && typeof b.images === 'object' && !Array.isArray(b.images) ? (b.images as Record<string, unknown>) : {};
+  }
+  const m = migrateDoc(raw);
+  if (m.future) throw new BackupError('This backup was made by a newer version of OpenNotion.');
+  let doc: Doc;
+  try {
+    doc = normalizeDoc(m.value);
+  } catch (e) {
+    if (e instanceof NotADocError) throw new BackupError('That file is not a workspace backup.');
+    throw e;
+  }
+  return images ? restoreImages(doc, images) : doc;
 }
 
 /** Parses markdown into block specs. */

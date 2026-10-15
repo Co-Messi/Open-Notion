@@ -13,6 +13,9 @@ import { importMarkdownIntoPage } from '../lib/exporter';
 import { relTime } from '../components/ui';
 import { sanitizeInline } from '../lib/html';
 import { handleInlineLinkClick } from './Editable';
+import { isImageIcon } from '../lib/url';
+import { useCoverStyle } from '../lib/images';
+import { StoredImg } from '../components/StoredImage';
 
 export function PageView({ pageId, peek = false }: { pageId: string; peek?: boolean }) {
   const page = usePage(pageId);
@@ -137,7 +140,7 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
                 onClick={e => !readOnly && setIconPicker(e.currentTarget.getBoundingClientRect())}
                 style={peek ? { marginTop: hasCover ? undefined : 40 } : undefined}
               >
-                {page.icon!.startsWith('data:') || page.icon!.startsWith('http') ? <img src={page.icon} alt="" /> : page.icon}
+                {isImageIcon(page.icon) ? <StoredImg src={page.icon} /> : page.icon}
               </div>
             )}
             {!readOnly && (
@@ -224,15 +227,14 @@ function Cover({
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(page.coverPos ?? 50);
   useEffect(() => setPos(page.coverPos ?? 50), [page.coverPos]);
-  const isImage = /^(data:|https?:|blob:|\/|url\()/.test(page.cover || '');
-  const bg = isImage ? `url("${page.cover!.replace(/^url\(["']?|["']?\)$/g, '')}")` : page.cover;
+  // Stored image refs resolve to blob URLs; every other value passes the cover policy.
+  const { style: coverStyle, isImage } = useCoverStyle(page.cover);
   return (
     <div
       ref={ref}
       className={'cover' + (repositioning ? ' repositioning' : '')}
       style={{
-        backgroundImage: bg && (bg.startsWith('url') || bg.includes('gradient')) ? bg : undefined,
-        backgroundColor: bg && !bg.startsWith('url') && !bg.includes('gradient') ? bg : undefined,
+        ...coverStyle,
         backgroundPosition: `center ${pos}%`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',

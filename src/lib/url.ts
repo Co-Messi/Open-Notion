@@ -14,10 +14,15 @@ const DATA_IMAGE_RE = /^data:image\/(png|jpe?g|gif|webp|avif|bmp|svg\+xml|x-icon
 // Built from char codes so the source file never contains invisible characters.
 const CONTROL_RE = new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + ']');
 
-function clean(raw: unknown): string | null {
+// Inline base64 images (stored by older versions, or kept when IndexedDB is unavailable)
+// are far longer than any link, so they get their own ceiling.
+const MAX_URL = 8192;
+const MAX_DATA_IMAGE = 32 * 1024 * 1024;
+
+function clean(raw: unknown, max = MAX_URL): string | null {
   if (typeof raw !== 'string') return null;
   const s = raw.trim();
-  if (!s || s.length > 8192) return null;
+  if (!s || s.length > max) return null;
   if (CONTROL_RE.test(s)) return null;
   return s;
 }
@@ -64,7 +69,7 @@ export function isImageRef(raw: unknown): raw is string {
 
 /** Image sources: http(s), base64 data images, blob URLs, stored image refs and local paths. */
 export function safeImageSrc(raw: unknown): string | null {
-  const s = clean(raw);
+  const s = clean(raw, typeof raw === 'string' && /^\s*data:image\//i.test(raw) ? MAX_DATA_IMAGE : MAX_URL);
   if (!s) return null;
   if (IMAGE_REF_RE.test(s)) return s;
   if (/^https?:/i.test(s) && !s.includes('\\')) return s;
@@ -80,6 +85,7 @@ const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/
 
 /** Page covers: an image source, or a gradient or color rendered locally. */
 export function safeCover(raw: unknown): string | null {
+  if (typeof raw === 'string' && /^\s*data:/i.test(raw)) return safeImageSrc(raw);
   const s = clean(raw);
   if (!s) return null;
   if (/url\(|\\|;|\{|\}|expression|@import|<|>|"|'/i.test(s)) return safeImageSrc(s);

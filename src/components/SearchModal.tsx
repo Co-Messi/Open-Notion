@@ -4,6 +4,7 @@ import { getDoc, setUi, useUi } from '../store/store';
 import { openPage, pageTitle, pagePath, createPage, isTrashedDeep } from '../store/actions';
 import { htmlToText } from '../lib/html';
 import { PageIconView } from './PageIcon';
+import { CoverBox } from './StoredImage';
 import { SearchIcon, Tooltip } from './ui';
 import { copyPageLink } from './PageMenus';
 import type { Page } from '../store/types';
@@ -255,10 +256,9 @@ function SearchInner() {
 
 function Preview({ page, onOpen, onPeek }: { page: Page; onOpen: () => void; onPeek: () => void }) {
   const text = useMemo(() => pageText(page).slice(0, 1200), [page]);
-  const cover = page.cover ? (/^(data:|https?:|blob:|\/)/.test(page.cover) ? `url("${page.cover}") center/cover` : page.cover) : undefined;
   return (
     <div className="search-preview">
-      <div className="sp-cover" style={cover ? { background: cover } : undefined} />
+      <CoverBox className="sp-cover" cover={page.cover} />
       <div className="sp-actions">
         <Tooltip label="Open in side peek">
           <div className="icon-btn" onClick={onPeek}>

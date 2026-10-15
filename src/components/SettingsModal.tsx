@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { SlidersHorizontal, Bell, Settings as Gear, Users, Keyboard, ChevronDown, Download, Upload, RotateCcw, PanelLeft, Check } from 'lucide-react';
-import { useUi, setUi, useSettings, setSettings, useDoc, transact, replaceDoc, showToast, getDoc } from '../store/store';
+import { SlidersHorizontal, Bell, Settings as Gear, Users, Keyboard, ChevronDown, Download, Upload, RotateCcw, PanelLeft, Check, HardDrive } from 'lucide-react';
+import { useUi, setUi, useSettings, setSettings, useDoc, transact, showToast } from '../store/store';
 import { Popover, Menu, Switch, type Anchor } from './ui';
 import { WorkspaceIcon } from './Sidebar';
 import { EmojiPicker } from './EmojiPicker';
-import { exportWorkspaceJson, importMarkdownAsPage } from '../lib/exporter';
+import { BackupError, exportWorkspaceJson, importMarkdownAsPage, parseWorkspaceBackup } from '../lib/exporter';
 import { createSeed } from '../store/seed';
 import { openPage } from '../store/actions';
-import type { Doc } from '../store/types';
+import { normalizeDoc } from '../store/normalize';
+import { readBackupMeta, readLastBackupAt } from '../store/persist';
+import { useSaveState } from '../store/saveState';
 import { describeStorageFailure, storageGet, storageSet } from '../lib/storage';
+import { recordError, subscribeDiagnostics } from '../lib/diagnostics';
+import { formatBytes, formatWhen, isSafari, requestPersistentStorage } from '../lib/backup';
+import { diagnosticsReport, downloadStoredKey, readSafetyCopy, replaceWorkspace } from './workspaceFlows';
 
 export function SettingsModal() {
   const open = useUi(u => u.settingsOpen);
@@ -50,6 +55,7 @@ export function SettingsModal() {
           {nav('general', <Gear size={16} />, 'General')}
           {nav('people', <Users size={16} />, 'People')}
           {nav('data', <Download size={16} />, 'Import & export')}
+          {nav('storage', <HardDrive size={16} />, 'Storage')}
         </div>
         <div className="settings-content">
           {tab === 'preferences' && <Preferences />}
@@ -59,6 +65,7 @@ export function SettingsModal() {
           {tab === 'general' && <General />}
           {tab === 'people' && <People />}
           {tab === 'data' && <DataSettings />}
+          {tab === 'storage' && <StorageSettings />}
         </div>
       </div>
     </div>
@@ -257,36 +264,48 @@ function People() {
 function DataSettings() {
   const json = useRef<HTMLInputElement>(null);
   const md = useRef<HTMLInputElement>(null);
+  const [, rerender] = useState(0);
+  useEffect(() => {
+    const on = () => rerender(n => n + 1);
+    window.addEventListener('on:backup-made', on);
+    return () => window.removeEventListener('on:backup-made', on);
+  }, []);
+  const last = readLastBackupAt();
+  const safety = readBackupMeta();
   return (
     <>
       <h2>Import & export</h2>
-      <Row title="Export all workspace content" desc="Download every page as a single JSON backup.">
-        <button className="btn secondary sm" onClick={exportWorkspaceJson}>
+      <Row title="Export all workspace content" desc={`Download every page and image as one JSON backup. Last backup: ${formatWhen(last)}.`}>
+        <button className="btn secondary sm" onClick={() => exportWorkspaceJson()}>
           <Download size={14} /> Export
         </button>
       </Row>
-      <Row title="Restore from backup" desc="Replace this workspace with a JSON backup. You can undo this.">
+      <Row title="Restore from backup" desc="Replace this workspace with a JSON backup. A copy of the current workspace is kept in this browser first.">
         <button className="btn secondary sm" onClick={() => json.current?.click()}>
           <Upload size={14} /> Import JSON
         </button>
         <input
           ref={json}
           type="file"
-          accept="application/json"
+          accept="application/json,.json"
           hidden
           onChange={e => {
             const f = e.target.files?.[0];
+            e.target.value = '';
             if (!f) return;
-            f.text().then(t => {
-              try {
-                const d = JSON.parse(t) as Doc;
-                if (!d.pages || !d.blocks || !d.workspace) throw new Error('bad');
-                replaceDoc(d);
-                showToast('Workspace restored');
-              } catch {
-                showToast('That file is not a workspace backup');
-              }
-            });
+            f.text()
+              .then(parseWorkspaceBackup)
+              .then(async d => {
+                if (await replaceWorkspace(d, 'import')) {
+                  setUi({ settingsOpen: false });
+                  location.hash = '#/home';
+                  showToast('Workspace restored');
+                }
+              })
+              .catch(err => {
+                recordError('import', err);
+                showToast(err instanceof BackupError ? err.message : 'That file is not a workspace backup');
+              });
           }}
         />
       </Row>
@@ -310,14 +329,40 @@ function DataSettings() {
           }}
         />
       </Row>
+      {safety && (
+        <Row title="Safety copy" desc={`The workspace as it was before the last ${safety.reason ? safety.reason.toLowerCase() : 'replace'} (${formatWhen(safety.at)}). Restoring swaps it with the current workspace.`}>
+          <div className="set-actions">
+            <button className="btn secondary sm" onClick={() => downloadStoredKey('on:doc:backup')}>
+              Download
+            </button>
+            <button
+              className="btn secondary sm"
+              onClick={async () => {
+                const copy = readSafetyCopy();
+                if (!copy) return showToast('The safety copy could not be read');
+                try {
+                  if (await replaceWorkspace(normalizeDoc(copy.doc), 'restore')) {
+                    setUi({ settingsOpen: false });
+                    location.hash = '#/home';
+                    showToast('Safety copy restored');
+                  }
+                } catch (err) {
+                  recordError('restore', err);
+                  showToast('The safety copy could not be read');
+                }
+              }}
+            >
+              Restore
+            </button>
+          </div>
+        </Row>
+      )}
       <h3>Danger zone</h3>
-      <Row title="Reset workspace" desc="Replace everything with the starter content. You can undo this with ⌘Z.">
+      <Row title="Reset workspace" desc="Replace everything with the starter content. A copy of the current workspace is kept in this browser first.">
         <button
           className="btn danger sm"
-          onClick={() => {
-            const cur = getDoc();
-            void cur;
-            replaceDoc(createSeed());
+          onClick={async () => {
+            if (!(await replaceWorkspace(createSeed(), 'reset'))) return;
             setUi({ settingsOpen: false });
             location.hash = '#/home';
             showToast('Workspace reset. Press ⌘Z to undo.');
@@ -326,6 +371,107 @@ function DataSettings() {
           <RotateCcw size={14} /> Reset
         </button>
       </Row>
+    </>
+  );
+}
+
+type Report = Awaited<ReturnType<typeof diagnosticsReport>>;
+
+function StorageSettings() {
+  const save = useSaveState();
+  const [report, setReport] = useState<Report | null>(null);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let live = true;
+    diagnosticsReport().then(r => live && setReport(r));
+    return () => {
+      live = false;
+    };
+  }, [tick, save.lastSavedAt, save.status]);
+  useEffect(() => subscribeDiagnostics(() => setTick(n => n + 1)), []);
+  const safari = isSafari();
+  const status =
+    save.status === 'saved' ? `Saved ${formatWhen(save.lastSavedAt)}` :
+    save.status === 'pending' ? 'Saving…' :
+    save.status === 'failed' ? `Not saved: ${describeStorageFailure(save.failure ?? 'unknown')}` :
+    save.readonlyReason === 'newer-version' ? 'Read only: saved by a newer version' : 'Read only: changed in another tab';
+  const persisted = report?.storage.persisted;
+  return (
+    <>
+      <h2>Storage</h2>
+      <div className={'set-note' + (safari ? ' strong' : '')}>
+        Your workspace is stored only in this browser, on this device. Clearing site data deletes it.
+        {' '}
+        Safari (on Mac, iPhone and iPad) deletes data of sites you have not visited for 7 days of browsing, unless the app was added to the Home Screen.
+        {' '}
+        Download a backup regularly{safari ? ', especially in Safari' : ''}.
+      </div>
+      <Row title="Save status" desc={status} />
+      <Row title="Last backup" desc={`${report?.lastBackupAt ? 'Downloaded ' + formatWhen(Date.parse(report.lastBackupAt)) : 'Never downloaded'}. Backups include every page and image.`}>
+        <button className="btn secondary sm" onClick={() => exportWorkspaceJson()}>
+          <Download size={14} /> Download backup
+        </button>
+      </Row>
+      <Row
+        title="Persistent storage"
+        desc={persisted === true ? 'The browser agreed to keep this site’s data when space runs low.' : persisted === false ? 'The browser may clear this site’s data when space runs low.' : 'This browser does not say whether it keeps this site’s data.'}
+      >
+        {persisted !== true && (
+          <button
+            className="btn secondary sm"
+            onClick={async () => {
+              const r = await requestPersistentStorage();
+              showToast(r ? 'The browser will keep this data' : 'The browser did not grant persistent storage');
+              setTick(n => n + 1);
+            }}
+          >
+            Ask the browser
+          </button>
+        )}
+      </Row>
+      <h3>Diagnostics</h3>
+      <dl className="diag-grid">
+        <dt>Workspace size</dt>
+        <dd>{formatBytes(report?.save.docChars ?? null)} ({report?.doc.pages ?? 0} pages, {report?.doc.blocks ?? 0} blocks)</dd>
+        <dt>Images</dt>
+        <dd>{report?.images ? `${report.images.count} stored, ${formatBytes(report.images.bytes)}` : 'image storage unavailable'}{report?.doc.inlineImages ? `, ${report.doc.inlineImages} inline` : ''}</dd>
+        <dt>Browser storage</dt>
+        <dd>{report?.storage.usage != null ? `${formatBytes(report.storage.usage)} used of ${formatBytes(report.storage.quota)}` : 'unknown'}</dd>
+        <dt>Last saved</dt>
+        <dd>{formatWhen(save.lastSavedAt)}</dd>
+        <dt>Status</dt>
+        <dd>{save.status}{save.failure ? ` (${save.failure})` : ''}{save.readonlyReason ? ` (${save.readonlyReason})` : ''}</dd>
+      </dl>
+      {!!report?.unreadableCopies.length && (
+        <Row title="Unreadable data kept" desc="Copies of saved data that could not be opened. Download them before deleting.">
+          <div className="set-actions">
+            {report.unreadableCopies.map(c => (
+              <button key={c.key} className="btn secondary sm" onClick={() => downloadStoredKey(c.key)}>
+                Download ({formatBytes(c.chars)})
+              </button>
+            ))}
+          </div>
+        </Row>
+      )}
+      <Row title="Recent errors" desc="Kept only in this tab. Nothing is ever sent anywhere.">
+        <button
+          className="btn secondary sm"
+          onClick={async () => {
+            const text = JSON.stringify(await diagnosticsReport(), null, 2);
+            try {
+              await navigator.clipboard.writeText(text);
+              showToast('Diagnostics copied (no note content)');
+            } catch {
+              showToast('Could not copy to the clipboard');
+            }
+          }}
+        >
+          Copy diagnostics
+        </button>
+      </Row>
+      <div className="diag-errors">
+        {report?.errors.length ? report.errors.map(e => `${e.at}  ${e.source}  ${e.message}`).join('\n') : 'No errors recorded.'}
+      </div>
     </>
   );
 }

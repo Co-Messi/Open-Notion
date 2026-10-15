@@ -25,6 +25,18 @@ function store(): Storage | null {
   }
 }
 
+/** False when the browser blocks site storage entirely (nothing can be saved). */
+export function storageAvailable(): boolean {
+  const s = store();
+  if (!s) return false;
+  try {
+    s.getItem('on:probe');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Reads a key; returns null when it is missing or storage is unavailable. */
 export function storageGet(key: string): string | null {
   try {
