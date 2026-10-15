@@ -102,15 +102,13 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
 
 ### 🗂️ Organize with databases
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/board-dark.jpg">
+  <img src="docs/media/board-light.jpg" alt="Board view grouped by status">
+</picture>
+
 <table>
   <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/media/board-dark.jpg">
-        <img src="docs/media/board-light.jpg" alt="Board view">
-      </picture>
-      <p align="center"><b>Board</b></p>
-    </td>
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/media/table-dark.jpg">
@@ -118,8 +116,6 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
       </picture>
       <p align="center"><b>Table</b></p>
     </td>
-  </tr>
-  <tr>
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/media/timeline-dark.jpg">
@@ -127,6 +123,8 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
       </picture>
       <p align="center"><b>Timeline</b></p>
     </td>
+  </tr>
+  <tr>
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/media/calendar-dark.jpg">
@@ -134,8 +132,6 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
       </picture>
       <p align="center"><b>Calendar</b></p>
     </td>
-  </tr>
-  <tr>
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/media/gallery-dark.jpg">
@@ -143,15 +139,15 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
       </picture>
       <p align="center"><b>Gallery</b></p>
     </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/media/peek-dark.jpg">
-        <img src="docs/media/peek-light.jpg" alt="Side peek">
-      </picture>
-      <p align="center"><b>Side peek</b></p>
-    </td>
   </tr>
 </table>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/peek-dark.jpg">
+  <img src="docs/media/peek-light.jpg" alt="Side peek with editable properties">
+</picture>
+
+<p align="center"><sub>Open any row in a side peek to edit its properties and content without leaving the view.</sub></p>
 
 - **Six views**: table, board, list, gallery, calendar and timeline, each with its own filters, sorts, grouping and visible properties.
 - **13 property types**: text, number, select, multi select, status, date (with time and ranges), person, checkbox, URL, email, phone, created time and last edited time.
