@@ -251,6 +251,53 @@ describe('saving', () => {
     expect(t.store.getUi().toast).toBe('Could not save: this browser is blocking site storage');
   });
 
+  it('asks the browser to keep the data once, after the first successful save (H9)', async () => {
+    let asked = 0;
+    Object.defineProperty(navigator, 'storage', {
+      configurable: true,
+      value: {
+        persist: () => {
+          asked++;
+          return Promise.resolve(true);
+        },
+      },
+    });
+    try {
+      localStorage.setItem(DOC_KEY, FIXTURE);
+      const t = await tab();
+      // Loading alone never asks.
+      expect(asked).toBe(0);
+      // A save that fails does not count as having something worth keeping.
+      const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw quota();
+      });
+      edit(t, 'first');
+      expect(t.store.flushSave()).toBe(false);
+      expect(asked).toBe(0);
+      spy.mockRestore();
+      expect(t.store.retrySave()).toBe(true);
+      expect(asked).toBe(1);
+      edit(t, 'second');
+      expect(t.store.flushSave()).toBe(true);
+      expect(asked).toBe(1);
+    } finally {
+      delete (navigator as unknown as { storage?: unknown }).storage;
+    }
+    expect('storage' in navigator).toBe(false);
+  });
+
+  it('asks on a first launch too, once the starter content is saved', async () => {
+    let asked = 0;
+    Object.defineProperty(navigator, 'storage', { configurable: true, value: { persist: () => (asked++, Promise.resolve(false)) } });
+    try {
+      await tab();
+      expect(localStorage.getItem(DOC_KEY)).not.toBeNull();
+      expect(asked).toBe(1);
+    } finally {
+      delete (navigator as unknown as { storage?: unknown }).storage;
+    }
+  });
+
   it('drops the rolling safety copies before failing a save for quota', async () => {
     localStorage.setItem(DOC_KEY, FIXTURE);
     const t = await tab();
