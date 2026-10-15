@@ -30,7 +30,13 @@ const PROP_TYPES: readonly PropType[] = [
 ];
 const VIEW_TYPES: readonly ViewType[] = ['table', 'board', 'list', 'gallery', 'calendar', 'timeline'];
 const GROUPS = ['todo', 'in_progress', 'complete'] as const;
-const NUMBER_FORMATS = ['number', 'percent', 'dollar', 'euro'] as const;
+// Includes the currency formats added on the polish branch, so merged data keeps them.
+const NUMBER_FORMATS: readonly string[] = [
+  'number', 'percent', 'dollar', 'euro', 'pound', 'yen', 'yuan', 'rupee', 'won', 'franc', 'canadian_dollar', 'australian_dollar',
+];
+/** Hidden row prop keys that hold a value from before a lossy property type change. */
+export const STASH_PREFIX = '~prev:';
+const isPropKey = (k: string) => isSafeId(k) || (k.startsWith(STASH_PREFIX) && isSafeId(k.slice(STASH_PREFIX.length)));
 const FONTS = ['default', 'serif', 'mono'] as const;
 const CARD_PREVIEWS = ['none', 'cover', 'content'] as const;
 const CARD_SIZES = ['small', 'medium', 'large'] as const;
@@ -240,7 +246,7 @@ function normalizeProperty(raw: unknown, r: NormalizeReport, pid: string): Prope
     p.options = raw.options.map(normalizeOption).filter((o): o is SelectOption => !!o);
     if (p.options.length !== raw.options.length) note(r, `page ${pid}: option dropped`);
   }
-  put(p, 'numberFormat', oneOf(raw.numberFormat, NUMBER_FORMATS));
+  put(p, 'numberFormat', oneOf(raw.numberFormat, NUMBER_FORMATS) as Property['numberFormat']);
   put(p, 'width', num(raw.width));
   return p;
 }
@@ -348,7 +354,7 @@ function normalizePageRecord(id: string, raw: unknown, r: NormalizeReport): Page
   if (isObj(raw.props)) {
     const props: Record<string, unknown> = {};
     for (const k of Object.keys(raw.props)) {
-      if (!isSafeId(k)) {
+      if (!isPropKey(k)) {
         note(r, `page ${id}: property value key dropped`);
         continue;
       }

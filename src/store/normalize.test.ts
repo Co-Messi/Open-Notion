@@ -260,6 +260,19 @@ describe('normalizeDoc on hostile input', () => {
     expect(d.recent).toEqual([]);
   });
 
+  it('keeps hidden previous value stashes and every number format', () => {
+    const d = normalizeDoc(JSON.parse(JSON.stringify({
+      pages: {
+        db: { id: 'db', title: '', parentId: null, content: [], createdAt: 1, updatedAt: 1, isDatabase: true, rows: ['r'], schema: [{ id: 'n', name: 'N', type: 'number', numberFormat: 'canadian_dollar' }, { id: 'm', name: 'M', type: 'number', numberFormat: 'doubloon' }] },
+        r: { id: 'r', title: '', parentId: 'db', dbId: 'db', content: [], createdAt: 1, updatedAt: 1, props: { n: 3, '~prev:n': { type: 'text', value: 'three', produced: 3 }, '~prev:__proto__': 1, '~prev:a b': 2 } },
+      },
+      blocks: {},
+    })));
+    expect(d.pages.db.schema![0].numberFormat).toBe('canadian_dollar');
+    expect(d.pages.db.schema![1].numberFormat).toBeUndefined();
+    expect(d.pages.r.props).toEqual({ n: 3, '~prev:n': { type: 'text', value: 'three', produced: 3 } });
+  });
+
   it('cleanHtml keeps text without markup byte for byte and is stable', () => {
     expect(cleanHtml('Food & fun > 3')).toBe('Food & fun > 3');
     expect(cleanHtml('&lt;img src=x onerror=1&gt;')).toBe('&lt;img src=x onerror=1&gt;');

@@ -50,7 +50,7 @@ export function expectDocInvariants(d: Doc) {
     if (p.cover !== undefined) expect(safeCover(p.cover)).toBe(p.cover);
     for (const r of p.rows || []) expect(d.pages[r]?.dbId).toBe(p.id);
     if (p.parentId !== null) expect(Object.hasOwn(d.pages, p.parentId)).toBe(true);
-    for (const k of Object.keys(p.props || {})) expect(isSafeId(k)).toBe(true);
+    for (const k of Object.keys(p.props || {})) expect(isSafeId(k.startsWith('~prev:') ? k.slice(6) : k), k).toBe(true);
   }
   for (const b of Object.values(d.blocks)) {
     for (const c of b.children) {
