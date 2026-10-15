@@ -235,6 +235,17 @@ export function indentBlocks(ids: string[], outdent: boolean, keepFocus?: { id: 
 /* ------------------------------------------------------------------ */
 
 const NBSP = String.fromCharCode(160);
+const IDEOGRAPHIC_SPACE = String.fromCharCode(0x3000);
+/** The space that completes a block shortcut: a normal, non breaking or full width (CJK) space. */
+const isShortcutSpace = (s: string | null | undefined) => s === ' ' || s === NBSP || s === IDEOGRAPHIC_SPACE;
+/**
+ * CJK input methods type full width forms (＃ ＞ － ＊ ［］ and full width digits). NFKC maps each
+ * of them to its ASCII shortcut character, one character for one.
+ */
+export const asciiShortcut = (s: string) => s.normalize('NFKC');
+/** Characters that open the slash menu: ASCII and full width (U+FF0F). */
+export const SLASH_CHARS = ['/', String.fromCharCode(0xff0f)];
+
 const BLOCK_SHORTCUTS: [RegExp, BlockType, Record<string, any>?][] = [
   [/^#$/, 'h1'],
   [/^##$/, 'h2'],
@@ -244,7 +255,8 @@ const BLOCK_SHORTCUTS: [RegExp, BlockType, Record<string, any>?][] = [
   [/^(\[\]|\[ \])$/, 'todo', { checked: false }],
   [/^\[x\]$/i, 'todo', { checked: true }],
   [/^>$/, 'toggle', { open: false }],
-  [/^"$/, 'quote'],
+  // The CJK corner bracket (U+300C) opens a quotation the way '"' does.
+  [new RegExp('^["' + String.fromCharCode(0x300c) + ']$'), 'quote'],
 ];
 
 /** Called after input; returns true if the block was transformed. */
@@ -254,10 +266,10 @@ export function tryMarkdown(el: HTMLElement, blockId: string, data: string | nul
   if (!b || b.type === 'code') return false;
   const before = textBeforeCaret(el);
 
-  if (data === ' ' && (b.type === 'text' || CONTINUE_TYPES.includes(b.type) || b.type === 'quote')) {
-    const prefix = before.slice(0, -1);
+  if (isShortcutSpace(data) && (b.type === 'text' || CONTINUE_TYPES.includes(b.type) || b.type === 'quote')) {
+    const prefix = asciiShortcut(before.slice(0, -1));
     const last = before.slice(-1);
-    if (last === ' ' || last === NBSP) {
+    if (isShortcutSpace(last)) {
       for (const [re, type, extra] of BLOCK_SHORTCUTS) {
         if (re.test(prefix)) {
           if (b.type === type && !extra) return false;
@@ -279,8 +291,9 @@ export function tryMarkdown(el: HTMLElement, blockId: string, data: string | nul
       }
     }
   }
-  const text = el.textContent || '';
-  if (data === '`' && before === '```' && text === '```') {
+  const text = asciiShortcut(el.textContent || '');
+  const ch = data ? asciiShortcut(data) : data;
+  if (ch === '`' && asciiShortcut(before) === '```' && text === '```') {
     transact(tx => {
       txTurnInto(tx, blockId, 'code');
       tx.setBlock(blockId, { html: '', language: 'plain text' });
@@ -289,7 +302,7 @@ export function tryMarkdown(el: HTMLElement, blockId: string, data: string | nul
     focusBlock(blockId, 'start');
     return true;
   }
-  if (data === '-' && text === '---' && b.type === 'text') {
+  if (ch === '-' && text === '---' && b.type === 'text') {
     let nid = '';
     transact(tx => {
       txTurnInto(tx, blockId, 'divider');
@@ -364,13 +377,19 @@ function wrapInline(el: HTMLElement, len: number, html: string): boolean {
 /* Slash                                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Opens the slash menu when the inserted text contains a slash (ASCII or full width). `data` is
+ * the inserted text: one typed character, or a whole IME composition such as '／'.
+ */
 export function maybeOpenSlash(el: HTMLElement, blockId: string, data: string | null) {
-  if (data !== '/') return;
+  if (!data) return;
+  const i = Math.max(...SLASH_CHARS.map(c => data.lastIndexOf(c)));
+  if (i < 0) return;
   const off = caretOffset(el);
   if (off === null) return;
   const rect = caretRect();
   if (!rect) return;
-  slashState.set({ blockId, start: off - 1, rect });
+  slashState.set({ blockId, start: off - (data.length - i), rect });
 }
 
 /* ------------------------------------------------------------------ */

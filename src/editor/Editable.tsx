@@ -98,6 +98,13 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
   };
   commitRef.current = commit;
 
+  /** Markdown and slash triggers for inserted text. Returns true when the block was transformed. */
+  const shortcuts = (el: HTMLDivElement, data: string | null): boolean => {
+    if (tryMarkdown(el, blockId, data ? data.slice(-1) : data)) return true;
+    maybeOpenSlash(el, blockId, data);
+    return false;
+  };
+
   // Native beforeinput (React's onBeforeInput is a legacy polyfill without inputType).
   useLayoutEffect(() => {
     const el = ref.current;
@@ -152,9 +159,14 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
       onCompositionStart={() => {
         composing.current = true;
       }}
-      onCompositionEnd={() => {
+      onCompositionEnd={e => {
         composing.current = false;
         commit();
+        // CJK input methods deliver '／', '＃' and the like through composition, not insertText.
+        const el = ref.current;
+        if (el && e.data && !shortcuts(el, e.data) && slashState.get()?.blockId === blockId) {
+          window.dispatchEvent(new Event('on:slash-input'));
+        }
       }}
       onInput={e => {
         const native = e.nativeEvent as InputEvent;
@@ -164,9 +176,8 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
           return;
         }
         const el = ref.current!;
-        if (native.inputType === 'insertText') {
-          if (tryMarkdown(el, blockId, native.data)) return;
-          maybeOpenSlash(el, blockId, native.data);
+        if (native.inputType === 'insertText' || native.inputType === 'insertFromComposition') {
+          if (shortcuts(el, native.data)) return;
         }
         commit();
         if (slashState.get()?.blockId === blockId) window.dispatchEvent(new Event('on:slash-input'));
