@@ -89,3 +89,13 @@ describe('openExternal', () => {
     expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
   });
 });
+
+describe('large inline images', () => {
+  it('accepts long base64 data images as image sources, covers and icons', () => {
+    const big = 'data:image/jpeg;base64,' + 'A'.repeat(3 * 1024 * 1024);
+    expect(safeImageSrc(big)).toBe(big);
+    expect(safeCover(big)).toBe(big);
+    expect(safeIcon(big)).toBe(big);
+    expect(safeLinkUrl('https://x.example/' + 'a'.repeat(9000))).toBeNull();
+  });
+});
