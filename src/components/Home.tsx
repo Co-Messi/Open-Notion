@@ -68,7 +68,7 @@ export function Home() {
 function RecentCard({ id, at }: { id: string; at: number }) {
   const p = useDoc(d => d.pages[id], Object.is);
   if (!p) return null;
-  const cover = p.cover && !/^(data:|https?:)/.test(p.cover) ? p.cover : p.cover ? `url("${p.cover}") center/cover` : undefined;
+  const cover = p.cover && !/^(data:|https?:|blob:|\/)/.test(p.cover) ? p.cover : p.cover ? `url("${p.cover}") center/cover` : undefined;
   return (
     <div className="recent-card" onClick={() => openPage(id)}>
       <div className="rc-top" style={cover ? { background: cover } : undefined} />

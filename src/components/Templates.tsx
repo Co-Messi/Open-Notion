@@ -109,7 +109,7 @@ export function TemplatesModal() {
             </div>
           </div>
           <div className="tpl-page">
-            {t.cover && <div className="tpl-cover" style={{ background: /^https?:/.test(t.cover) ? `url("${t.cover}") center/cover` : t.cover }} />}
+            {t.cover && <div className="tpl-cover" style={{ background: /^(https?:|\/)/.test(t.cover) ? `url("${t.cover}") center/cover` : t.cover }} />}
             <div className="tpl-body">
               <div className="tpl-page-icon" style={t.cover ? { marginTop: -30 } : undefined}>{t.icon}</div>
               <h1>{t.name}</h1>

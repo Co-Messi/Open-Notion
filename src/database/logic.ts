@@ -702,7 +702,7 @@ export function htmlText(html: string): string {
 
 /** CSS background value for a page cover. */
 export function coverBackground(cover: string): string {
-  if (/^(data:|https?:)/.test(cover)) return `url("${cover}") center / cover no-repeat`;
+  if (/^(data:|https?:|blob:|\/)/.test(cover)) return `url("${cover}") center / cover no-repeat`;
   if (/^url\(/.test(cover)) return `${cover} center / cover no-repeat`;
   return cover;
 }
