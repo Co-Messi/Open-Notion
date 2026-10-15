@@ -36,7 +36,7 @@ const NUMBER_FORMATS: readonly string[] = [
 ];
 /** Hidden row prop keys that hold a value from before a lossy property type change. */
 export const STASH_PREFIX = '~prev:';
-const isPropKey = (k: string) => isSafeId(k) || (k.startsWith(STASH_PREFIX) && isSafeId(k.slice(STASH_PREFIX.length)));
+const isPropKey = (k: string): boolean => (k.startsWith(STASH_PREFIX) ? isSafeId(k.slice(STASH_PREFIX.length)) : isSafeId(k));
 const FONTS = ['default', 'serif', 'mono'] as const;
 const CARD_PREVIEWS = ['none', 'cover', 'content'] as const;
 const CARD_SIZES = ['small', 'medium', 'large'] as const;

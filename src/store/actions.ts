@@ -1,4 +1,4 @@
-import { getDoc, transact, Tx, setUi, showToast } from './store';
+import { getDoc, transact, Tx, setUi, showToast, recordVisit } from './store';
 import type { Block, BlockType, DbView, Page, Property, PropType, SelectOption, ColorName } from './types';
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -625,10 +625,9 @@ export function toggleFavorite(id: string) {
   });
 }
 
+/** Records a visit in the history; never rewrites the workspace (see recordVisit). */
 export function visitPage(id: string) {
-  transact(tx => {
-    tx.recent = [{ id, at: Date.now() }, ...tx.recent.filter(r => r.id !== id)].slice(0, 30);
-  }, 'none');
+  recordVisit(id);
 }
 
 /* ------------------------------------------------------------------ */
