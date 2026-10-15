@@ -1,6 +1,6 @@
 import type { ClipboardEvent } from 'react';
 import { getDoc, transact, breakCoalescing, showToast } from '../store/store';
-import { txInsertBlock, txInsertAfter, uid } from '../store/actions';
+import { deleteBlocks, isPageWithin, isTrashedDeep, pageOfBlockIn, txInsertBlock, txInsertAfter, uid } from '../store/actions';
 import type { Block } from '../store/types';
 import { sanitizeInline, escapeHtml, htmlToText } from '../lib/html';
 import { markdownToBlocks, pageToMarkdown } from '../lib/exporter';
@@ -123,17 +123,49 @@ export function copyBlocks(ids: string[], e?: ClipboardEvent | globalThis.Clipbo
 let lastCopied: Serialized | null = null;
 
 /**
+ * Cut: copies the blocks, then deletes them (owned pages go to the Trash). The payload
+ * remembers which pages this cut sent to the Trash, so pasting them is a move.
+ */
+export function cutBlocks(ids: string[], e?: ClipboardEvent | globalThis.ClipboardEvent) {
+  copyBlocks(ids, e, { cut: true });
+  deleteBlocks(ids);
+}
+
+/**
  * Inserts serialized blocks (with fresh ids) after `afterId` or into `parent` at index.
  * `data` must come from serializeBlocks or decodeClipboard (both normalized).
  */
 export function insertSerialized(data: Serialized, target: { afterId?: string; parent?: string; index?: number }): string[] {
   const created: string[] = [];
   transact(tx => {
-    // Pages this payload's cut sent to Trash: the first paste moves them here.
+    let parent: string;
+    let index: number;
+    if (target.afterId) {
+      const ref = own(tx.blocks, target.afterId);
+      if (!ref) return;
+      parent = ref.parent;
+      index = tx.siblings(target.afterId).indexOf(target.afterId) + 1;
+    } else {
+      parent = target.parent!;
+      index = target.index ?? tx.childList(parent).length;
+    }
+    // A column list holds only columns: anything pasted at that level goes after the list.
+    const listBlock = own(tx.blocks, parent);
+    if (listBlock?.type === 'columns') {
+      index = tx.siblings(parent).indexOf(parent) + 1;
+      parent = listBlock.parent;
+    }
+    if (!own(tx.pages, parent) && !own(tx.blocks, parent)) return;
+    const home = own(tx.pages, parent) ? parent : pageOfBlockIn(tx, parent);
+    // Pages this payload's cut sent to Trash: the first paste moves them here, unless that
+    // would put a page inside itself or one of its descendants, inside a page that is in the
+    // Trash, or into a database. Those pastes get a link and the page stays in the Trash.
     const movable = new Set(
       (data.cut?.pages || []).filter(pid => {
         const p = own(tx.pages, pid);
-        return !!p && p.trashed === true && (p.trashedAt ?? 0) >= data.cut!.at;
+        if (!p || p.trashed !== true || (p.trashedAt ?? 0) < data.cut!.at) return false;
+        if (!home || isPageWithin(tx, home, pid) || isTrashedDeep(tx, home) || tx.pages[home].isDatabase) return false;
+        return true;
       }),
     );
     const moved: { pageId: string; blockId: string }[] = [];
@@ -157,18 +189,6 @@ export function insertSerialized(data: Serialized, target: { afterId?: string; p
       tx.blocks[nid] = { ...tx.blocks[nid], children: b.children };
       return tx.blocks[nid];
     };
-    let parent: string;
-    let index: number;
-    if (target.afterId) {
-      const ref = tx.block(target.afterId);
-      if (!ref) return;
-      parent = ref.parent;
-      index = tx.siblings(target.afterId).indexOf(target.afterId) + 1;
-    } else {
-      parent = target.parent!;
-      index = target.index ?? tx.childList(parent).length;
-    }
-    if (!own(tx.pages, parent) && !own(tx.blocks, parent)) return;
     const list = [...tx.childList(parent)];
     data.roots.forEach((r, i) => {
       if (!data.blocks[r]) return;

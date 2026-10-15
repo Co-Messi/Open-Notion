@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import fixture from '../test/fixtures/doc-v2-current.json';
 import { htmlProblems } from '../test/docInvariants';
+import { checkInvariants } from '../test/invariants';
 
 const DOC_KEY = 'on:doc:v2';
 const PAGE = 'x64uwgofpnh3';
@@ -10,6 +11,7 @@ const SUBPAGE_BLOCK = 'fqn7qoggpnh3';
 const SUBPAGE = 'r3kfrgrhpnh3';
 const MIME = 'application/x-nc-blocks';
 const disposers: (() => void)[] = [];
+const stores: { setUi: (patch: { selectedBlocks: string[] }) => void }[] = [];
 
 async function setup() {
   vi.resetModules();
@@ -18,8 +20,47 @@ async function setup() {
   const selection = await import('./selection');
   const controller = await import('./controller');
   disposers.push(store.startPersistence());
+  stores.push(store);
   return { store, clip, selection, controller };
 }
+type T = Awaited<ReturnType<typeof setup>>;
+
+/** Shows blocks as selected the way the editor renders them, so the document handlers see them. */
+function showSelection(t: T, ids: string[]) {
+  document.body.innerHTML = `<div data-editor-scope>${ids.map(id => `<div class="block" data-block-id="${id}"></div>`).join('')}</div>`;
+  t.store.setUi({ selectedBlocks: ids });
+}
+
+/** A document level clipboard event whose data lives in `data`. */
+function clipboardEvent(type: 'cut' | 'paste', data: Record<string, string>) {
+  const ev = new Event(type, { cancelable: true });
+  Object.defineProperty(ev, 'clipboardData', { value: { setData: (k: string, v: string) => (data[k] = v), getData: (k: string) => data[k] ?? '' } });
+  return ev;
+}
+
+/** Selects blocks and fires the real cut handler (installSelectionKeys). Returns the clipboard. */
+function cutSelection(t: T, ids: string[]): Record<string, string> {
+  t.selection.installSelectionKeys();
+  showSelection(t, ids);
+  const data: Record<string, string> = {};
+  const ev = clipboardEvent('cut', data);
+  document.dispatchEvent(ev);
+  expect(ev.defaultPrevented).toBe(true);
+  expect(t.store.getUi().selectedBlocks).toEqual([]);
+  return data;
+}
+
+/** Pastes with a block selected (block selection mode), through the real paste handler. */
+function pasteOnSelection(t: T, afterId: string, data: Record<string, string>) {
+  t.selection.installSelectionKeys();
+  showSelection(t, [afterId]);
+  const ev = clipboardEvent('paste', data);
+  document.dispatchEvent(ev);
+  expect(ev.defaultPrevented).toBe(true);
+}
+
+/** An editable element with text, so a paste never replaces the anchor block. */
+const editable = () => Object.assign(document.createElement('div'), { textContent: 'x' });
 
 /** A paste event as the browser would deliver it. */
 function pasteEvent(data: Record<string, string>, files: File[] = []) {
@@ -55,6 +96,9 @@ beforeEach(() => {
 });
 afterEach(() => {
   while (disposers.length) disposers.pop()!();
+  // Listeners from installSelectionKeys outlive vi.resetModules: leave none with a selection.
+  while (stores.length) stores.pop()!.setUi({ selectedBlocks: [] });
+  document.body.innerHTML = '';
 });
 
 describe('clipboard payloads', () => {
@@ -112,44 +156,104 @@ describe('clipboard payloads', () => {
   });
 });
 
-describe('cut and paste of sub pages (M2)', () => {
+describe('cut and paste of sub pages (M2, H6)', () => {
   it('moves the page instead of leaving a dead link, and a second paste links', async () => {
     const t = await setup();
-    const stored: Record<string, string> = {};
-    const ev = { clipboardData: { setData: (k: string, v: string) => (stored[k] = v) }, preventDefault: vi.fn() };
-    t.clip.copyBlocks([SUBPAGE_BLOCK], ev as unknown as ClipboardEvent, { cut: true });
-    const { deleteBlocks } = await import('../store/actions');
-    deleteBlocks([SUBPAGE_BLOCK]);
+    const stored = cutSelection(t, [SUBPAGE_BLOCK]);
+    expect(t.store.getDoc().blocks[SUBPAGE_BLOCK]).toBeUndefined();
     expect(t.store.getDoc().pages[SUBPAGE].trashed).toBe(true);
 
     // Paste into another page: the page comes back from Trash, owned by the new block.
     const target = 'p1cba5';
     const anchor = t.store.getDoc().pages[target].content[0];
-    t.clip.handlePaste(pasteEvent(stored), anchor, document.createElement('div'), () => {});
+    t.clip.handlePaste(pasteEvent(stored), anchor, editable(), () => {});
     let d = t.store.getDoc();
     const pasted = d.pages[target].content[1];
     expect(d.blocks[pasted]).toMatchObject({ type: 'page', pageId: SUBPAGE });
     expect(d.blocks[pasted].isLink).toBeUndefined();
     expect(d.pages[SUBPAGE].trashed).toBe(false);
     expect(d.pages[SUBPAGE].parentId).toBe(target);
+    expect(checkInvariants(d)).toEqual([]);
 
     // Pasting the same payload again cannot share the page: it becomes a link.
-    t.clip.handlePaste(pasteEvent(stored), anchor, document.createElement('div'), () => {});
+    t.clip.handlePaste(pasteEvent(stored), anchor, editable(), () => {});
     d = t.store.getDoc();
     const again = d.pages[target].content[1];
     expect(again).not.toBe(pasted);
     expect(d.blocks[again]).toMatchObject({ pageId: SUBPAGE, isLink: true });
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
+  it('pastes a link and keeps the page in Trash when pasted inside the cut page itself', async () => {
+    const t = await setup();
+    const P = 'p2p1fc';
+    const stored = cutSelection(t, ['bud4ce']);
+    expect(t.store.getDoc().pages[P].trashed).toBe(true);
+    // Trashed pages stay editable: open P from the Trash and paste inside it.
+    const inside = t.store.getDoc().pages[P].content[0];
+    t.clip.handlePaste(pasteEvent(stored), inside, editable(), () => {});
+    let d = t.store.getDoc();
+    expect(d.blocks[d.pages[P].content[1]]).toMatchObject({ type: 'page', pageId: P, isLink: true });
+    expect(d.pages[P]).toMatchObject({ trashed: true, parentId: 'p1cba5' });
+    expect(checkInvariants(d)).toEqual([]);
+
+    // The same payload still moves the page once the target is a valid place.
+    const anchor = d.pages.pyepmw.content[0];
+    t.clip.handlePaste(pasteEvent(stored), anchor, editable(), () => {});
+    d = t.store.getDoc();
+    expect(d.pages[P]).toMatchObject({ trashed: false, parentId: 'pyepmw' });
+    expect(d.blocks[d.pages.pyepmw.content[1]]).toMatchObject({ pageId: P });
+    expect(d.blocks[d.pages.pyepmw.content[1]].isLink).toBeUndefined();
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
+  it('pastes a link when the target is a descendant of the cut page (block selection paste)', async () => {
+    const t = await setup();
+    const P = 'p4wvk1j';
+    const child = 'p4xdgkc';
+    const stored = cutSelection(t, ['b70dswl']);
+    expect(t.store.getDoc().pages[P].trashed).toBe(true);
+    const inside = t.store.getDoc().pages[child].content[0];
+    pasteOnSelection(t, inside, stored);
+    const d = t.store.getDoc();
+    expect(d.blocks[d.pages[child].content[1]]).toMatchObject({ type: 'page', pageId: P, isLink: true });
+    expect(d.pages[P].trashed).toBe(true);
+    expect(d.pages[child].parentId).toBe(P);
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
+  it('pastes a link when the target page is in the Trash', async () => {
+    const t = await setup();
+    const stored = cutSelection(t, [SUBPAGE_BLOCK]);
+    const { trashPage } = await import('../store/actions');
+    trashPage('pyepmw');
+    const anchor = t.store.getDoc().pages.pyepmw.content[0];
+    t.clip.handlePaste(pasteEvent(stored), anchor, editable(), () => {});
+    const d = t.store.getDoc();
+    expect(d.blocks[d.pages.pyepmw.content[1]]).toMatchObject({ pageId: SUBPAGE, isLink: true });
+    expect(d.pages[SUBPAGE]).toMatchObject({ trashed: true, parentId: PAGE });
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
+  it('moves a cut page with a block selection paste too', async () => {
+    const t = await setup();
+    const stored = cutSelection(t, [SUBPAGE_BLOCK]);
+    const anchor = t.store.getDoc().pages.pyepmw.content[0];
+    pasteOnSelection(t, anchor, stored);
+    const d = t.store.getDoc();
+    expect(d.pages[SUBPAGE]).toMatchObject({ trashed: false, parentId: 'pyepmw' });
+    expect(t.store.getUi().selectedBlocks).toEqual([d.pages.pyepmw.content[1]]);
+    expect(checkInvariants(d)).toEqual([]);
   });
 
   it('leaves the page in Trash (recoverable) when nothing is pasted', async () => {
     const t = await setup();
-    const ev = { clipboardData: { setData: () => {} }, preventDefault: vi.fn() };
-    t.clip.copyBlocks([SUBPAGE_BLOCK], ev as unknown as ClipboardEvent, { cut: true });
-    const { deleteBlocks, restorePage } = await import('../store/actions');
-    deleteBlocks([SUBPAGE_BLOCK]);
+    cutSelection(t, [SUBPAGE_BLOCK]);
+    const { restorePage } = await import('../store/actions');
     expect(t.store.getDoc().pages[SUBPAGE].trashed).toBe(true);
     restorePage(SUBPAGE);
     expect(t.store.getDoc().pages[SUBPAGE].trashed).toBe(false);
+    expect(checkInvariants(t.store.getDoc())).toEqual([]);
   });
 
   it('a plain copy pastes a link, never a second owner', async () => {
@@ -161,6 +265,20 @@ describe('cut and paste of sub pages (M2)', () => {
     const d = t.store.getDoc();
     const owners = Object.values(d.blocks).filter(b => b.pageId === SUBPAGE && !b.isLink);
     expect(owners).toHaveLength(1);
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
+  it('never pastes into a column list itself', async () => {
+    const t = await setup();
+    const stored: Record<string, string> = {};
+    const ev = { clipboardData: { setData: (k: string, v: string) => (stored[k] = v) }, preventDefault: vi.fn() };
+    t.clip.copyBlocks([ANCHOR], ev as unknown as ClipboardEvent);
+    const data = t.clip.decodeClipboard(stored[MIME])!;
+    const created = t.clip.insertSerialized(data, { parent: 'b6xs7hh', index: 1 });
+    const d = t.store.getDoc();
+    expect(created).toHaveLength(1);
+    expect(d.blocks[created[0]].parent).toBe(d.blocks.b6xs7hh.parent);
+    expect(checkInvariants(d)).toEqual([]);
   });
 });
 
