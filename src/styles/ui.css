@@ -328,10 +328,21 @@
 }
 
 /* ---------------- Search ---------------- */
+/* Notion 7.37 search (Cmd+K) appears and disappears at once, 9vh from the top, with a 20px
+   radius and a 40px backdrop blur. The dialog shadow token already holds its measured dark shadow. */
+.modal-overlay.search-overlay,
+.modal.search-modal {
+  animation: none;
+}
 .search-modal {
-  margin-top: 74px;
+  margin-top: 9vh;
   width: min(1006px, calc(100vw - 48px));
   height: min(700px, calc(100vh - 120px));
+}
+.modal.search-modal {
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(40px);
 }
 .search-modal.compact {
   width: min(755px, calc(100vw - 48px));
