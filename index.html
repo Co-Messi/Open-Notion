@@ -3,11 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenNotion: an open source workspace that runs in your browser</title>
+    <meta
+      name="description"
+      content="Write, plan and organize with pages, blocks and databases that live on your machine. No account, no server, MIT licensed."
+    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>OpenNotion</title>
-    <meta http-equiv="refresh" content="0; url=/app/" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#191919" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://open-notion-app.vercel.app/" />
+    <link rel="canonical" href="https://open-notion-app.vercel.app/" />
+    <meta property="og:site_name" content="OpenNotion" />
+    <meta property="og:title" content="OpenNotion: write, plan and organize in your browser" />
+    <meta
+      property="og:description"
+      content="An open source workspace with pages, blocks and databases that live on your machine. No account, no server, MIT licensed."
+    />
+    <meta property="og:image" content="https://open-notion-app.vercel.app/landing/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="OpenNotion: write, plan and organize. Open source, in your browser." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OpenNotion: write, plan and organize in your browser" />
+    <meta
+      name="twitter:description"
+      content="An open source workspace with pages, blocks and databases that live on your machine. No account, no server, MIT licensed."
+    />
+    <meta name="twitter:image" content="https://open-notion-app.vercel.app/landing/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap"
+    />
+    <link rel="preload" as="image" href="/landing/demo-poster.webp" type="image/webp" />
+
+    <script>
+      // Apply the saved theme before first paint so there is no flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('opennotion.landing.theme');
+          if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+        document.documentElement.classList.add('js');
+      })();
+    </script>
   </head>
-  <body>
-    <p>Opening the workspace… <a href="/app/">Continue</a></p>
+  <body class="landing-body">
+    <div id="root"></div>
+    <noscript>
+      <p style="font: 16px/1.5 system-ui, sans-serif; padding: 24px; text-align: center">
+        OpenNotion is an open source workspace that runs in your browser.
+        <a href="/app/">Open the app</a> or
+        <a href="https://github.com/Co-Messi/Open-Notion">view the code on GitHub</a>.
+      </p>
+    </noscript>
+    <script type="module" src="/src/landing/main.tsx"></script>
   </body>
 </html>
