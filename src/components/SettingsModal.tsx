@@ -407,7 +407,7 @@ function StorageSettings() {
         Download a backup regularly{safari ? ', especially in Safari' : ''}.
       </div>
       <Row title="Save status" desc={status} />
-      <Row title="Last backup" desc={`${formatWhen(report?.lastBackupAt ? Date.parse(report.lastBackupAt) : null)}. Backups include every page and image.`}>
+      <Row title="Last backup" desc={`${report?.lastBackupAt ? 'Downloaded ' + formatWhen(Date.parse(report.lastBackupAt)) : 'Never downloaded'}. Backups include every page and image.`}>
         <button className="btn secondary sm" onClick={() => exportWorkspaceJson()}>
           <Download size={14} /> Download backup
         </button>

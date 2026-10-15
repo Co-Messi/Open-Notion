@@ -4,10 +4,9 @@ import { CLIP_LIMITS, cleanHtml, normalizeClipboardBlocks, normalizeDoc, normali
 import { expectDocInvariants, htmlProblems } from '../test/invariants';
 import type { Doc } from './types';
 import { createSeed } from './seed';
+import { BAD_URLS, XSS, hostileDocJson } from '../test/hostile';
 
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
-
-import { BAD_URLS, XSS, hostileDocJson } from '../test/hostile';
 
 describe('normalizeDoc on the recorded fixture', () => {
   it('keeps every field of the current shape (zero loss)', () => {
