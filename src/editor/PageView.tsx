@@ -177,7 +177,9 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
               <Comments pageId={pageId} open={commenting} quote={quote} onDone={() => setCommenting(false)} />
             )}
           </div>
-          {page.isDatabase && !page.inline ? (
+          {/* An inline database opened as its own page shows the database too; the empty page
+              starter would otherwise offer to reinitialize it and wipe its rows. */}
+          {page.isDatabase ? (
             <DatabaseFull dbId={pageId} />
           ) : (
             <div className="page-content">

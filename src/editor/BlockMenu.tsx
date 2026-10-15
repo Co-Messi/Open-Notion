@@ -313,7 +313,8 @@ export function slashItems(): SlashItem[] {
         }, 'none');
         focusBlock(nid, 'start');
       } else if (type === 'image') {
-        window.dispatchEvent(new CustomEvent('on:image-picker', { detail: id }));
+        // The image block mounts on the next render; ask it to open its picker once it listens.
+        requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('on:image-picker', { detail: id })));
       } else {
         focusBlock(id, 'end');
       }
