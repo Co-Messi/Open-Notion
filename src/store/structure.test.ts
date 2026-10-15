@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtureJson from '../test/fixtures/doc-v2-current.json';
 import { checkInvariants } from '../test/invariants';
-import { getDoc, replaceDoc, transact, undo, redo } from './store';
+import { getDoc, reloadFromStorage, replaceDoc, transact, undo, redo } from './store';
 import { createSeed } from './seed';
 import { normalizeDocWithReport } from './normalize';
 import * as A from './actions';
@@ -418,6 +418,8 @@ function runSequence(seed: number, start: Doc, steps: number, tally?: Record<str
   const r = prng(seed);
   vi.spyOn(Math, 'random').mockImplementation(prng(seed ^ 0x9e3779b9));
   replaceDoc(clone(start));
+  // Start with empty undo history, so a printed seed replays on its own.
+  expect(reloadFromStorage()).toBe(true);
   const c: Ctx = { r, log: [] };
   const names = Object.keys(OPS);
   for (let i = 0; i < steps; i++) {
