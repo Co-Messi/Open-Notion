@@ -11,13 +11,20 @@
 </p>
 
 <p align="center">
+  <a href="https://open-notion-app.vercel.app/app/"><b>Try the live demo →</b></a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-191919?style=flat-square"></a>
   <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white">
   <img alt="Local first" src="https://img.shields.io/badge/data-stays%20local-448361?style=flat-square">
   <a href="#contributing"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-2383E2?style=flat-square"></a>
+  <a href="https://open-notion-app.vercel.app/app/"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-open-191919?style=flat-square&logo=vercel&logoColor=white"></a>
 </p>
+
+<p align="center"><sub>Unofficial project. Not affiliated with Notion Labs, Inc. See the <a href="#disclaimer">disclaimer</a>.</sub></p>
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
@@ -64,7 +71,9 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5174>. A starter workspace with example pages and databases is created on first launch.
+Open <http://localhost:5174/app/> for the workspace (the landing page is at <http://localhost:5174>). A starter workspace with example pages and databases is created on first launch.
+
+Or skip the install and use the hosted demo at **[open-notion-app.vercel.app](https://open-notion-app.vercel.app/app/)**. Your data still stays in your own browser.
 
 To host it yourself, run `npm run build` and serve the `dist/` folder from any static host (GitHub Pages, Vercel, Netlify, Cloudflare Pages or a plain web server). Each visitor gets their own private workspace in their own browser.
 
@@ -333,7 +342,7 @@ Please keep pull requests focused, match the existing code style, and check both
 <details>
 <summary><b>Is OpenNotion affiliated with Notion?</b></summary>
 
-No. OpenNotion is an independent open source project. It is not affiliated with, endorsed by, or sponsored by Notion Labs, Inc. "Notion" is a trademark of Notion Labs, Inc. and is used here only to describe what this project is an alternative to.
+No. OpenNotion is an independent open source project and is not affiliated with, endorsed by, or sponsored by Notion Labs, Inc. See the [disclaimer](#disclaimer).
 </details>
 
 <details>
@@ -353,6 +362,14 @@ Not yet. Each browser has its own workspace. An optional sync server for real ti
 
 They need a server. They are kept as placeholders so the layout feels complete, and may be wired to a self hosted backend in the future.
 </details>
+
+## Disclaimer
+
+OpenNotion is an independent, unofficial open source project built for learning and personal use. It is not affiliated with, endorsed by, sponsored by or otherwise connected to Notion Labs, Inc. "Notion" and related names are trademarks of Notion Labs, Inc. and appear here only to describe what this project is an alternative to. This repository does not include Notion's source code, logos or artwork.
+
+The software is provided "as is", without warranty of any kind, as stated in the [MIT License](LICENSE). The author accepts no responsibility or liability for data loss, damages or any other issue that comes from using it. Everything is stored in your own browser, so please keep your own backups.
+
+If you represent Notion Labs, Inc. or any other rights holder and have a concern about this project, please [open an issue](https://github.com/Co-Messi/Open-Notion/issues) or contact the author. Concerns will be addressed promptly, including renaming the project or taking the repository and demo offline if requested.
 
 ## Credits
 
