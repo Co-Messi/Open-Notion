@@ -4,7 +4,7 @@ import { openPage, updateView } from '../store/actions';
 import type { Page } from '../store/types';
 import { Popover, Menu, pressable } from '../components/ui';
 import { PropIcon } from './cells';
-import { ymd, parseYmd, todayYmd, monthLabel, dayOf, timeOf, withTime, addDays, diffDays, shortMonth, readPref, writePref } from './logic';
+import { ymd, parseYmd, todayYmd, monthLabel, dayOf, timeOf, withTime, addDays, diffDays, shortMonth, readPref, writePref, weekStartDay } from './logic';
 import { addRowAt, setRowRange, shiftRowDate } from './dbActions';
 import { TitleEditor, RowMenu, RowIcon, startPointerDrag, rowItemProps, type ViewProps } from './shared';
 
@@ -206,7 +206,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
         bottom.push({ k, x: i * dayW, w: dayW, label: String(Number(k.slice(8))), today: k === today });
       }
     } else {
-      const lead = (7 - first.getDay()) % 7; // first Sunday
+      const lead = (7 + weekStartDay() - first.getDay()) % 7; // first day of the user's week
       for (let i = lead; i < total; i += 7) {
         const k = addDays(origin, i);
         bottom.push({ k, x: i * dayW, w: 7 * dayW, label: String(Number(k.slice(8))) });

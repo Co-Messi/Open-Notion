@@ -123,7 +123,7 @@ export function TabBar() {
         {tabs.map((t, i) => (
           <TabItem key={t.id} tab={t} active={t.id === active} index={i} />
         ))}
-        <Tooltip label="New tab" shortcut={`${MOD}T`}>
+        <Tooltip label="New tab" shortcut={`${MOD}⌥T`}>
           <div className="icon-btn tab-new" {...pressable()} onClick={() => newTab()}>
             <Plus size={18} />
           </div>

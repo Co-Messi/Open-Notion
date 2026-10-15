@@ -580,25 +580,18 @@ function UpcomingEvents() {
   );
 }
 
-/** "10 – 11AM" for timed events today, otherwise a short weekday/date. */
+/** Time of an upcoming event in the user's locale: a time range today, otherwise a short date. */
 function eventTime(start: string, end?: string): string {
   const s = new Date(start.length > 10 ? start : start + 'T00:00:00');
   const hasTime = start.length > 10;
   const today = new Date();
   const sameDay = s.toDateString() === today.toDateString();
   if (!hasTime) return sameDay ? 'Today' : s.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  const part = (d: Date) => {
-    const h = d.getHours() % 12 || 12;
-    const m = d.getMinutes();
-    return { t: m ? `${h}:${String(m).padStart(2, '0')}` : String(h), ap: d.getHours() < 12 ? 'AM' : 'PM' };
-  };
-  const a = part(s);
   const prefix = sameDay ? '' : s.toLocaleDateString(undefined, { weekday: 'short' }) + ' ';
-  if (end && end.length > 10 && end.slice(0, 10) === start.slice(0, 10)) {
-    const b = part(new Date(end));
-    return a.ap === b.ap ? `${prefix}${a.t}–${b.t}${b.ap}` : `${prefix}${a.t}${a.ap}–${b.t}${b.ap}`;
-  }
-  return `${prefix}${a.t}${a.ap}`;
+  const e = end && end.length > 10 && end.slice(0, 10) === start.slice(0, 10) ? new Date(end) : null;
+  const onTheHour = s.getMinutes() === 0 && (!e || e.getMinutes() === 0);
+  const fmt = new Intl.DateTimeFormat(undefined, onTheHour ? { hour: 'numeric' } : { hour: 'numeric', minute: '2-digit' });
+  return prefix + (e && e > s ? fmt.formatRange(s, e) : fmt.format(s));
 }
 
 function TeamspacesSection() {

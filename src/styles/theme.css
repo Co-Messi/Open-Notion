@@ -2,7 +2,8 @@
    Contrast tiers (WCAG 2.2, checked on the page, sidebar and hover surfaces of both themes):
    ink and ink-muted are for any text that carries meaning and stay at 4.5:1 or more;
    ink-faint is only for placeholders, hints and disabled text and stays at 3:1 or more;
-   glyph-muted and glyph-faint are for icons and stay at 3:1 or more on the page and sidebar. */
+   glyph-muted and glyph-faint are for icons and stay at 3:1 or more on the page, the sidebar and
+   their hover surfaces (the pressed state is transient and may dip slightly below). */
 :root,
 .theme-light {
   color-scheme: light;
@@ -48,8 +49,8 @@
   --theme-green-ink-strong: #2a533c;
   --theme-green-ink: #50946e;
   --theme-glyph: #383836;
-  --theme-glyph-muted: #8c8984;
-  --theme-glyph-faint: #938f8a;
+  --theme-glyph-muted: #8a8782;
+  --theme-glyph-faint: #8b8783;
   --theme-focus-ring: 0px 0px 0px 1px #2383e2 inset, 0px 0px 0px 1px #2383e2;
   --theme-link-underline: rgba(55,53,47,.25);
   --theme-orange-wash-2: #fbebde;
@@ -89,7 +90,7 @@
   --theme-ink-inverse: #f0efed;
   --theme-ink-inverse-muted: #ada9a3;
   --theme-ink: #2c2c2b;
-  --theme-ink-muted: #6f6c68;
+  --theme-ink-muted: #6d6a67;
   --theme-ink-faint: #928f8b;
   --theme-star: #f6c050;
   --theme-yellow-solid: #d8a32f;

@@ -50,7 +50,7 @@ export function CoverPicker({ anchor, onClose, onPick, onRemove }: { anchor: Anc
   const [url, setUrl] = useState('');
   const file = useRef<HTMLInputElement>(null);
   return (
-    <Popover anchor={anchor} onClose={onClose} className="cover-picker" placement="bottom-end">
+    <Popover anchor={anchor} onClose={onClose} className="cover-picker" placement="bottom-end" label="Change cover">
       <div className="ep-tabs">
         {(['gallery', 'upload', 'link'] as const).map(t => (
           <div {...pressable()} key={t} className={'ep-tab' + (tab === t ? ' on' : '')} onClick={() => setTab(t)}>

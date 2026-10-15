@@ -49,7 +49,7 @@
   <tr>
     <td width="33%" valign="top">
       <h3>🔒 Yours</h3>
-      Everything lives in your browser's storage. There is no account to create, no server to trust and nothing you write leaves your machine. The app loads its scripts, fonts and images from its own host only. Export a full JSON backup whenever you want.
+      Everything lives in your browser's storage. There is no account to create, no server to trust and nothing you write leaves your machine. The app loads its own scripts, fonts and images from its own host; an image you add by link loads from the site that hosts it. Export a full JSON backup whenever you want.
     </td>
     <td width="33%" valign="top">
       <h3>⚡ Instant</h3>

@@ -404,7 +404,7 @@ const VALUES = [
     icon: HardDrive,
     tone: 'green' as const,
     title: 'Yours',
-    body: 'Everything lives in your browser. There is no account to create and no server to trust, and the app loads its fonts and images from this site only. Download a full JSON backup whenever you like.',
+    body: 'Everything lives in your browser. There is no account to create and no server to trust, and its own fonts and images come from this site only (an image you add by link loads from where it lives). Download a full JSON backup whenever you like.',
   },
   {
     icon: Zap,

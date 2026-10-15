@@ -25,7 +25,7 @@ function TrashInner() {
   const close = () => setUi({ trashOpen: false });
   const shown = trashed.filter(id => pageTitle(pages[id]).toLowerCase().includes(q.toLowerCase()));
   return (
-    <Popover anchor={anchor} onClose={close} placement="right-start" className="trash-pop">
+    <Popover anchor={anchor} onClose={close} placement="right-start" className="trash-pop" label="Trash">
       <div className="menu-search icon" style={{ paddingTop: 10 }}>
         <SearchIcon size={14} />
         <input autoFocus placeholder="Search pages in Trash" value={q} onChange={e => setQ(e.target.value)} />

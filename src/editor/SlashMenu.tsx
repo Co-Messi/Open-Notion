@@ -132,7 +132,8 @@ export function SlashMenu() {
         choose(results[active]);
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        e.stopPropagation();
+        // Only the slash menu closes; other layers keep their own Escape.
+        e.stopImmediatePropagation();
         slashState.set(null);
       }
     };

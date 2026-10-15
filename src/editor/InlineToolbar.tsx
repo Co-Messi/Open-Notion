@@ -96,9 +96,27 @@ function toggleCode(_blockId: string) {
 
 export function applyColor(blockId: string, color: ColorName, background: boolean) {
   const hex = SENTINEL_FOR[color] || SENTINEL_FOR['default'];
-  if (background) exec('hiliteColor', hex);
-  else exec('foreColor', hex);
+  if (background) applyBackground(color);
+  else exec('foreColor', hex); // emits <font color>, an attribute the sanitizer maps to a class
   commitHost(blockId);
+}
+
+/**
+ * Background colors are applied by wrapping the selection in a span with a color class.
+ * execCommand('hiliteColor') can only write a style attribute, which the production
+ * Content-Security-Policy (style-src 'self') blocks.
+ */
+function applyBackground(color: ColorName) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return;
+  const tpl = document.createElement('template');
+  tpl.content.appendChild(sel.getRangeAt(0).cloneContents());
+  // The new background replaces any background inside the selection.
+  tpl.content.querySelectorAll('[class]').forEach(el => {
+    el.className = el.className.split(/\s+/).filter(c => c && !c.startsWith('bg-')).join(' ');
+  });
+  const inner = tpl.innerHTML;
+  exec('insertHTML', color === 'default' ? inner : `<span class="bg-${color}">${inner}</span>`);
 }
 
 export function applyLink(blockId: string, url: string | null) {

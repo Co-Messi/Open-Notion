@@ -45,7 +45,7 @@ export function MoveBlocksPopover({ ids, anchor, onClose }: { ids: string[]; anc
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 60);
   return (
-    <Popover anchor={anchor} onClose={onClose} width={320}>
+    <Popover anchor={anchor} onClose={onClose} width={320} label="Move blocks to">
       <Menu
         onClose={onClose}
         search

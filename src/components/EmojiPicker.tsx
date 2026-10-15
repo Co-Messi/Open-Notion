@@ -49,7 +49,7 @@ export function EmojiPicker({
   const rec = recent();
 
   return (
-    <Popover anchor={anchor} onClose={onClose} className="emoji-picker" placement="bottom-start">
+    <Popover anchor={anchor} onClose={onClose} className="emoji-picker" placement="bottom-start" label="Choose an icon">
       <div className="ep-tabs">
         <div {...pressable()} className={'ep-tab' + (tab === 'emoji' ? ' on' : '')} onClick={() => setTab('emoji')}>
           Emoji

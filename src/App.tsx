@@ -129,7 +129,7 @@ export function App() {
       } else if (k === ']') {
         e.preventDefault();
         tabForward();
-      } else if (k === 't' && e.altKey) {
+      } else if ((k === 't' || e.code === 'KeyT') && e.altKey) {
         e.preventDefault();
         newTab();
       } else if (k === 'd' && !editing && !getUi().selectedBlocks.length && getUi().route.name === 'page') {
@@ -189,7 +189,7 @@ function ChatView() {
       <div className="empty-view">
         <MessageCircle size={36} color="var(--icon-tertiary)" />
         <h2>AI chat isn’t available</h2>
-        <div>This is a local workspace without an AI backend. Everything else works offline in your browser.</div>
+        <div>This is a local workspace without an AI backend. Everything else runs in your browser, and an open tab keeps working without a connection.</div>
       </div>
     </div>
   );
