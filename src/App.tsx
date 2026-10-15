@@ -91,7 +91,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      if (e.key === 'Escape' && getUi().peekRowId && !getUi().selectedBlocks.length && !document.querySelector('.popover, .modal-overlay')) {
+      if (e.key === 'Escape' && getUi().peekRowId && !getUi().selectedBlocks.length && !document.querySelector('.popover:not(.is-exiting), .modal-overlay')) {
         const ae = document.activeElement as HTMLElement | null;
         if (!ae || !(ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
           setUi({ peekRowId: null });

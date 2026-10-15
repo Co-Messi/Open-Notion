@@ -15,8 +15,26 @@
   flex-direction: column;
   font-size: 14px;
   color: var(--text-primary);
-  animation: pop-in 90ms ease-out;
+  /* Notion 7.37 menus: opacity 0 to 1 and scale 0.96 to 1 over 200ms ease, and the reverse on
+     close; transform-origin is the corner nearest the trigger (set inline when placed). */
+  animation: popover-in 200ms ease;
   max-height: calc(100vh - 24px);
+}
+.popover.is-exiting {
+  animation: popover-out 200ms ease forwards;
+  pointer-events: none;
+}
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes popover-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 @keyframes pop-in {
   from {
@@ -934,6 +952,21 @@
   pointer-events: none;
   max-width: 240px;
   white-space: nowrap;
+  /* Notion 7.37: tooltips only fade, 50ms ease-out in and out. */
+  animation: tooltip-in 50ms ease-out;
+}
+.tooltip.is-exiting {
+  animation: tooltip-out 50ms ease-out forwards;
+}
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tooltip-out {
+  to {
+    opacity: 0;
+  }
 }
 .theme-dark .tooltip {
   background: var(--theme-gray-wash-2);

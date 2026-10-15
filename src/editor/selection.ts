@@ -47,7 +47,8 @@ export function installSelectionKeys() {
     if (!sel.length) return;
     const ae = document.activeElement as HTMLElement | null;
     if (ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
-    if (document.querySelector('.popover')) return;
+    // A popover playing its exit animation is already closed.
+    if (document.querySelector('.popover:not(.is-exiting)')) return;
     const mod = e.metaKey || e.ctrlKey;
     const top = topLevelSelection();
     const scope = scopeOf(sel[0]);
