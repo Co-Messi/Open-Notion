@@ -3,20 +3,24 @@ import fixture from '../test/fixtures/doc-v2-current.json';
 
 const DOC_KEY = 'on:doc:v2';
 const RECENT_KEY = 'on:recent:v1';
-const FIXTURE = JSON.stringify(fixture);
 const PAGE = 'x64uwgofpnh3';
 const BLOCK = 'glyi39xdpnh3';
+/** The fixture without inline images, so the image migration does not write during a test. */
+const plain = JSON.parse(JSON.stringify(fixture));
+plain.blocks['3zg4avl4pnh3'].url = 'https://example.com/tiny.png';
+plain.pages[PAGE].icon = '🧪';
+const FIXTURE = JSON.stringify(plain);
 
 const disposers: (() => void)[] = [];
 
 /** A fresh store module graph, like a newly opened tab. */
-async function tab() {
+async function tab(opts: { start?: boolean } = {}) {
   vi.resetModules();
   const store = await import('./store');
   const saveState = await import('./saveState');
   const actions = await import('./actions');
   const persist = await import('./persist');
-  disposers.push(store.startPersistence());
+  if (opts.start !== false) disposers.push(store.startPersistence());
   return { store, saveState, actions, persist };
 }
 
@@ -104,13 +108,14 @@ describe('store core', () => {
 
 describe('loading', () => {
   it('loads the current stored shape with zero loss', async () => {
-    localStorage.setItem(DOC_KEY, FIXTURE);
-    const t = await tab();
-    // The only intended difference before image migration: the version number.
+    const raw = JSON.stringify(fixture);
+    localStorage.setItem(DOC_KEY, raw);
+    const t = await tab({ start: false });
+    // The only intended difference before the image migration: the version number.
     expect(t.store.getDoc()).toStrictEqual({ ...fixture, version: 2 });
     // The visit history moves to its own key.
     expect(JSON.parse(localStorage.getItem(RECENT_KEY)!)).toEqual(fixture.recent);
-    expect(localStorage.getItem(DOC_KEY)).toBe(FIXTURE);
+    expect(localStorage.getItem(DOC_KEY)).toBe(raw);
   });
 
   it('writes the seed once on a first launch so its ids stay stable', async () => {
@@ -159,7 +164,7 @@ describe('loading', () => {
   });
 
   it('opens data from a newer version read only', async () => {
-    localStorage.setItem(DOC_KEY, JSON.stringify({ ...fixture, version: 99 }));
+    localStorage.setItem(DOC_KEY, JSON.stringify({ ...plain, version: 99 }));
     const t = await tab();
     expect(t.saveState.getSaveState()).toMatchObject({ status: 'readonly', readonlyReason: 'newer-version' });
     edit(t, 'nope');
@@ -197,7 +202,7 @@ describe('saving', () => {
     const stored = JSON.parse(localStorage.getItem(DOC_KEY)!);
     expect(stored.blocks[BLOCK].html).toBe('saved text');
     expect(stored.version).toBe(2);
-    expect(stored.recent).toEqual(fixture.recent);
+    expect(stored.recent).toEqual(plain.recent);
     expect(unload()).toBe(false);
   });
 
@@ -310,7 +315,7 @@ describe('two tabs', () => {
     edit(a, 'first save');
     expect(a.store.flushSave()).toBe(true);
     // An old build in another tab writes its own doc, without a revision.
-    const old = JSON.stringify({ ...fixture, workspace: { ...fixture.workspace, name: 'Old build' } });
+    const old = JSON.stringify({ ...plain, workspace: { ...plain.workspace, name: 'Old build' } });
     localStorage.setItem(DOC_KEY, old);
     edit(a, 'second save');
     expect(a.store.flushSave()).toBe(false);
@@ -321,7 +326,7 @@ describe('two tabs', () => {
   it('notices an older build writing over data that never had a revision', async () => {
     localStorage.setItem(DOC_KEY, FIXTURE);
     const a = await tab();
-    const old = JSON.stringify({ ...fixture, workspace: { ...fixture.workspace, name: 'Old build' } });
+    const old = JSON.stringify({ ...plain, workspace: { ...plain.workspace, name: 'Old build' } });
     localStorage.setItem(DOC_KEY, old);
     edit(a, 'x');
     expect(a.store.flushSave()).toBe(false);

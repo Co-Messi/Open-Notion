@@ -4,6 +4,8 @@ import { getDoc, breakCoalescing } from '../store/store';
 import { setRowProp, openPage, duplicatePage, trashPage } from '../store/actions';
 import type { DbView, Page, Property } from '../store/types';
 import { Popover, Menu } from '../components/ui';
+import { StoredImg } from '../components/StoredImage';
+import { isImageIcon } from '../lib/url';
 
 export interface ViewProps {
   dbId: string;
@@ -116,8 +118,7 @@ export function RowMenu({ rowId, rect, onClose }: { rowId: string; rect: DOMRect
 
 export function RowIcon({ page }: { page: Page }) {
   if (!page.icon) return null;
-  const img = page.icon.startsWith('data:') || page.icon.startsWith('http');
-  return <span className="db-row-icon">{img ? <img src={page.icon} alt="" /> : page.icon}</span>;
+  return <span className="db-row-icon">{isImageIcon(page.icon) ? <StoredImg src={page.icon} /> : page.icon}</span>;
 }
 
 /** Shared pointer-drag helper: calls onStart after a small threshold, then onMove/onEnd. */

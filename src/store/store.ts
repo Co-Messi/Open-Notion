@@ -11,6 +11,7 @@ import { getSaveState, setSaveState } from './saveState';
 import { describeStorageFailure, storageAvailable, storageGet, storageGetJson, storageRemove, storageSet, type StorageFailure } from '../lib/storage';
 import { recordError } from '../lib/diagnostics';
 import { own } from '../lib/own';
+import { collectInlineImages, mapDocImages, storeInlineImages } from '../lib/images';
 
 export { DOC_KEY } from './persist';
 const SETTINGS_KEY = 'on:settings:v1';
@@ -66,8 +67,10 @@ let mode: Mode = 'normal';
 type Baseline = { rev: string } | { raw: string | null };
 let baseline: Baseline = { raw: null };
 
-/** Edits exist in memory that are not in storage yet. */
+/** Something in memory is not in storage yet (user edits or the image migration). */
 let dirty = false;
+/** The user made edits that are not in storage yet. Only these block a reload or prompt on unload. */
+let userDirty = false;
 let firstRunWrite = false;
 
 export interface RecoveryInfo {
@@ -243,7 +246,8 @@ function writeDoc(): boolean {
   if (mode !== 'normal') return false;
   const stored = storageGet(DOC_KEY);
   if (!matchesBaseline(stored)) {
-    goStale();
+    // With no user edits pending (only a migration rewrite), take the other tab's data instead.
+    if (userDirty || stored === null || !adoptStored(stored)) goStale();
     return false;
   }
   const rev = newRev();
@@ -268,6 +272,7 @@ function writeDoc(): boolean {
   }
   baseline = { rev };
   dirty = false;
+  userDirty = false;
   firstRunWrite = false;
   setSaveState({ status: 'saved', failure: null, lastSavedAt: Date.now(), docChars: json.length });
   post({ type: 'saved', rev });
@@ -277,14 +282,13 @@ function writeDoc(): boolean {
   return true;
 }
 
-/** Hook for work that follows a successful write (image migration registers here). */
-let afterSave: (json: string) => void = () => {};
-export function setAfterSave(fn: (json: string) => void) {
-  afterSave = fn;
+function afterSave(json: string) {
+  if (json.includes('"data:image/')) afterLoad();
 }
 
-function markDirty() {
+function markDirty(byUser = true) {
   dirty = true;
+  if (byUser) userDirty = true;
   if (getSaveState().status !== 'failed') setSaveState({ status: 'pending' });
   window.clearTimeout(saveTimer);
   saveTimer = window.setTimeout(writeDoc, SAVE_DELAY_MS);
@@ -299,6 +303,7 @@ export function flushSave(): boolean {
 /** Retry after a failed save (the banner's Retry button). */
 export const retrySave = flushSave;
 
+/** True while anything in memory is not in storage. */
 export function isDirty() {
   return dirty;
 }
@@ -319,6 +324,7 @@ function adoptStored(stored: string): boolean {
   redoStack.length = 0;
   lastKey = null;
   dirty = false;
+  userDirty = false;
   window.clearTimeout(saveTimer);
   setSaveState({ status: 'saved', failure: null, readonlyReason: null, docChars: stored.length });
   if (ui.route.name === 'page' && !own(doc.pages, ui.route.pageId)) {
@@ -339,7 +345,7 @@ function onForeignWrite() {
   if (mode !== 'normal') return;
   const stored = storageGet(DOC_KEY);
   if (matchesBaseline(stored)) return;
-  if (dirty || stored === null || !adoptStored(stored)) goStale();
+  if (userDirty || stored === null || !adoptStored(stored)) goStale();
 }
 
 /** The read only banner's Reload: drop this tab's unsaved edits and load what is stored. */
@@ -354,10 +360,40 @@ export function reloadFromStorage(): boolean {
   return false;
 }
 
-/** Hook for work after a doc was loaded or replaced (image migration registers here). */
-let afterLoad: () => void = () => {};
-export function setAfterLoad(fn: () => void) {
-  afterLoad = fn;
+/* ------------------------------------------------------------------ */
+/* Image migration                                                     */
+/* ------------------------------------------------------------------ */
+
+let imageMigration: Promise<void> | null = null;
+let inlineImagesStay = false;
+
+/**
+ * Moves inline data URL images (older builds, old backups, legacy pastes) into IndexedDB:
+ * the blobs are committed first, then the doc and its undo history are rewritten to refs.
+ * Without IndexedDB the images stay inline.
+ */
+function afterLoad() {
+  if (imageMigration || inlineImagesStay || mode !== 'normal') return;
+  const urls = collectInlineImages(doc);
+  if (!urls.length) return;
+  imageMigration = storeInlineImages(urls)
+    .then(map => {
+      if (map === null) {
+        inlineImagesStay = true;
+        recordError('images', 'Image storage is unavailable; images stay inside the workspace');
+        return;
+      }
+      if (map.size) rewriteDocValues(d => mapDocImages(d, v => map.get(v) ?? v));
+    })
+    .catch(e => recordError('images', e))
+    .finally(() => {
+      imageMigration = null;
+    });
+}
+
+/** Resolves when no image migration is running (diagnostics and tests). */
+export function imageMigrationIdle(): Promise<void> {
+  return imageMigration ?? Promise.resolve();
 }
 
 let started = false;
@@ -373,7 +409,7 @@ export function startPersistence(): () => void {
   };
   const onUnload = (e: BeforeUnloadEvent) => {
     if (mode === 'normal' && dirty) writeDoc();
-    if (dirty) {
+    if (userDirty) {
       e.preventDefault();
       e.returnValue = '';
     }
@@ -437,6 +473,7 @@ export function leaveRecovery(next: Doc): boolean {
   redoStack.length = 0;
   lastKey = null;
   dirty = true;
+  userDirty = true;
   setSaveState({ status: 'pending', readonlyReason: null, failure: null });
   writeDoc();
   emit();
@@ -613,6 +650,7 @@ export function replaceDoc(d: Doc): boolean {
   lastKey = null;
   doc = normalizeDoc(d);
   dirty = true;
+  userDirty = true;
   writeDoc();
   emit();
   afterLoad();
@@ -648,7 +686,7 @@ export function rewriteDocValues(map: (d: Doc) => Doc) {
   for (const list of [undoStack, redoStack]) for (const e of list) e.doc = map(e.doc);
   if (next === doc) return;
   doc = next;
-  markDirty();
+  markDirty(false);
   emit();
 }
 

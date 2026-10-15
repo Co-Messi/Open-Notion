@@ -2,6 +2,7 @@ import { Clock3, BookOpen, CalendarDays, Plus, FileText } from 'lucide-react';
 import { useDoc, getDoc } from '../store/store';
 import { createPage, openPage, pageTitle, isTrashedDeep } from '../store/actions';
 import { PageIconView } from './PageIcon';
+import { CoverBox } from './StoredImage';
 import { relTime } from './ui';
 
 function greeting() {
@@ -68,10 +69,9 @@ export function Home() {
 function RecentCard({ id, at }: { id: string; at: number }) {
   const p = useDoc(d => d.pages[id], Object.is);
   if (!p) return null;
-  const cover = p.cover && !/^(data:|https?:)/.test(p.cover) ? p.cover : p.cover ? `url("${p.cover}") center/cover` : undefined;
   return (
     <div className="recent-card" onClick={() => openPage(id)}>
-      <div className="rc-top" style={cover ? { background: cover } : undefined} />
+      <CoverBox className="rc-top" cover={p.cover} />
       <div className="rc-icon">{p.icon ? <PageIconView page={p} size={26} emojiSize={26} /> : <FileText size={26} strokeWidth={1.4} />}</div>
       <div className="rc-body">
         <div className="rc-title">{pageTitle(p)}</div>

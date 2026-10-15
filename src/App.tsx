@@ -23,6 +23,8 @@ import { attrSel } from './lib/dom';
 import { isSafeId, own } from './lib/own';
 import { parseHash } from './store/route';
 import { storageGet, storageSet } from './lib/storage';
+import { isImageIcon } from './lib/url';
+import { StoredImg } from './components/StoredImage';
 
 function useTheme() {
   const theme = useSettings(s => s.theme);
@@ -79,7 +81,7 @@ export function App() {
   }, []);
 
   // Document title
-  const title = useDoc(d => (route.name === 'page' ? (d.pages[route.pageId]?.icon && !/^(data|http)/.test(d.pages[route.pageId]!.icon!) ? d.pages[route.pageId]!.icon + ' ' : '') + pageTitle(d.pages[route.pageId]) : route.name === 'home' ? 'Home' : route.name === 'chat' ? 'New AI chat' : route.name === 'meetings' ? 'Meetings' : 'Library'), Object.is);
+  const title = useDoc(d => (route.name === 'page' ? (d.pages[route.pageId]?.icon && !isImageIcon(d.pages[route.pageId]!.icon) ? d.pages[route.pageId]!.icon + ' ' : '') + pageTitle(d.pages[route.pageId]) : route.name === 'home' ? 'Home' : route.name === 'chat' ? 'New AI chat' : route.name === 'meetings' ? 'Meetings' : 'Library'), Object.is);
   useEffect(() => {
     document.title = title;
   }, [title]);
@@ -216,7 +218,7 @@ function LibraryView() {
           const p = all[id];
           return (
             <div key={id} className="lib-row" onClick={() => openPage(id)}>
-              <span style={{ width: 20, display: 'flex', justifyContent: 'center', color: 'var(--icon-secondary)' }}>{p.icon || (p.isDatabase ? '▦' : '📄')}</span>
+              <span style={{ width: 20, display: 'flex', justifyContent: 'center', color: 'var(--icon-secondary)' }}>{isImageIcon(p.icon) ? <StoredImg src={p.icon} style={{ width: 18, height: 18, objectFit: 'cover', borderRadius: 3 }} /> : p.icon || (p.isDatabase ? '▦' : '📄')}</span>
               <span className="grow">{pageTitle(p)}</span>
               <span className="muted">Edited {new Date(p.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
             </div>
