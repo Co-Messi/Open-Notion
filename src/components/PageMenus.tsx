@@ -34,7 +34,7 @@ export function SidebarPageMenu({ pageId, anchor, onClose, onRename }: { pageId:
         items={[
           { id: 'fav', icon: fav ? <StarOff size={16} /> : <Star size={16} />, label: fav ? 'Remove from Favorites' : 'Add to Favorites', onSelect: () => toggleFavorite(pageId) },
           { id: 'sep', separatorBefore: true, icon: <Link2 size={16} />, label: 'Copy link', onSelect: () => copyPageLink(pageId) },
-          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', right: `${MOD}D`, onSelect: () => duplicatePage(pageId) },
+          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', onSelect: () => duplicatePage(pageId) },
           { id: 'ren', icon: <PenLine size={16} />, label: 'Rename', right: `${MOD}⇧R`, onSelect: onRename },
           {
             id: 'move', icon: <CornerUpRight size={16} />, label: 'Move to', right: `${MOD}⇧P`, keepOpen: true,

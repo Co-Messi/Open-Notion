@@ -211,6 +211,29 @@ describe('full width shortcuts', () => {
     });
   }
 
+  it('full width inline marks work like their ASCII forms', () => {
+    // jsdom has no execCommand; install a recording stub for this test only.
+    const doc = document as unknown as { execCommand?: unknown };
+    const saved = doc.execCommand;
+    const exec = vi.fn(() => true);
+    doc.execCommand = exec;
+    try {
+      load([['t', 'text', '']]);
+      const el = editable('t');
+      const star = String.fromCharCode(0xff0a);
+      typeText(el, star + star + 'bold' + star + star);
+      tryMarkdown(el, 't', star);
+      expect(exec).toHaveBeenCalledWith('insertHTML', false, '<b>bold</b>');
+      const tick = String.fromCharCode(0xff40);
+      typeText(el, tick + 'code' + tick);
+      tryMarkdown(el, 't', tick);
+      expect(exec).toHaveBeenCalledWith('insertHTML', false, '<code>code</code>');
+    } finally {
+      if (saved === undefined) delete doc.execCommand;
+      else doc.execCommand = saved;
+    }
+  });
+
   it('tryMarkdown reads the full width prefix before the caret', () => {
     load([['t', 'text', '']]);
     const el = editable('t');
