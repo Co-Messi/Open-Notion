@@ -3,11 +3,11 @@ import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { openPage, updateView } from '../store/actions';
 import type { Page } from '../store/types';
-import { Popover, Menu } from '../components/ui';
+import { Popover, Menu, pressable } from '../components/ui';
 import { PropIcon } from './cells';
 import { ymd, todayYmd, monthLabel, dayOf, timeOf, diffDays, fmtTimeShort, weekStartDay, weekdayName, fmtMonthDay } from './logic';
 import { addRowAt, shiftRowDate } from './dbActions';
-import { RowMenu, RowIcon, startPointerDrag, type ViewProps } from './shared';
+import { RowMenu, RowIcon, startPointerDrag, rowItemProps, type ViewProps } from './shared';
 
 interface Seg {
   row: Page;
@@ -65,7 +65,7 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
     return (
       <div className="db-empty-state">
         <div>Calendar views show pages by a date property.</div>
-        <span className="db-fchip add" role="button" onClick={e => setPick(e.currentTarget.getBoundingClientRect())}>
+        <span className="db-fchip add" {...pressable()} onClick={e => setPick(e.currentTarget.getBoundingClientRect())}>
           Calendar by…
         </span>
         {pick && (
@@ -136,13 +136,13 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
       <div className="db-cal-head">
         <span className="db-cal-month">{monthLabel(ym.y, ym.m)}</span>
         <span className="grow" />
-        <span className="db-cal-today" role="button" onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
+        <span className="db-cal-today" {...pressable()} onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
           Today
         </span>
-        <span className="icon-btn db-icon-24" role="button" onClick={() => shift(-1)}>
+        <span className="icon-btn db-icon-24" {...pressable()} aria-label="Previous month" onClick={() => shift(-1)}>
           <ChevronLeft size={16} />
         </span>
-        <span className="icon-btn db-icon-24" role="button" onClick={() => shift(1)}>
+        <span className="icon-btn db-icon-24" {...pressable()} aria-label="Next month" onClick={() => shift(1)}>
           <ChevronRight size={16} />
         </span>
       </div>
@@ -164,7 +164,7 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
                 return (
                   <div key={k} className={'db-cal-day' + (other ? ' other' : '') + (drag?.over === k ? ' drop' : '')} data-date={k}>
                     <div className="db-cal-day-top">
-                      <span className="db-cal-add" role="button" onClick={() => addOn(k)}>
+                      <span className="db-cal-add" {...pressable()} aria-label="Add an item on this day" onClick={() => addOn(k)}>
                         <Plus size={14} />
                       </span>
                       <span className={'db-cal-num' + (k === today ? ' today' : '')}>
@@ -189,6 +189,7 @@ export function CalendarView({ dbId, view, rows, schema, defaults }: ViewProps) 
                         top: TOP + seg.lane * LANE_H,
                       }}
                       title={r.title || 'Untitled'}
+                      {...rowItemProps(r, rect => setRowMenu({ rowId: r.id, rect }), r.title || 'Untitled')}
                       onPointerDown={e => onItemDown(e, r)}
                       onContextMenu={e => {
                         e.preventDefault();

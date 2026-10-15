@@ -58,7 +58,7 @@
   position: relative;
 }
 .menu-search.icon input {
-  padding-left: 28px;
+  padding-inline-start: 28px;
 }
 .menu-search.icon svg {
   position: absolute;
@@ -70,7 +70,7 @@
   padding: 6px 14px 4px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 16px;
   user-select: none;
   display: flex;
@@ -146,7 +146,7 @@
   text-overflow: ellipsis;
 }
 .menu-item .mi-right {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--text-tertiary);
   font-size: 12px;
   display: flex;
@@ -390,7 +390,7 @@
 .search-group-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 8px 6px;
 }
 .search-item {
@@ -428,7 +428,7 @@
   text-overflow: ellipsis;
 }
 .search-item .si-path {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 400;
 }
 .search-item .si-snippet {
@@ -559,7 +559,7 @@
 .settings-nav .nav-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 12px 4px;
 }
 .settings-nav .nav-item {
@@ -596,7 +596,7 @@
 }
 .settings-user .em {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .settings-content {
   flex: 1;
@@ -773,7 +773,7 @@
 .ep-cat {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 6px 4px;
 }
 .ep-cells {
@@ -865,7 +865,7 @@
 }
 .share-person .sub {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .share-footer {
   display: flex;
@@ -910,7 +910,7 @@
 }
 .trash-item .p {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -941,7 +941,7 @@
 }
 .tooltip .sc {
   color: var(--theme-ink-inverse-muted);
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 /* Link editor */
@@ -983,7 +983,7 @@
 }
 .dp-dow {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-align: center;
   height: 24px;
   line-height: 24px;
@@ -1116,7 +1116,7 @@
 .tpl-body blockquote {
   margin: 8px 0;
   border-left: 3px solid currentColor;
-  padding-left: 14px;
+  padding-inline-start: 14px;
 }
 .tpl-li {
   display: flex;

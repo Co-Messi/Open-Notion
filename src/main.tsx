@@ -6,6 +6,7 @@ import './styles/editor.css';
 import './styles/ui.css';
 import './styles/db.css';
 import './styles/status.css';
+import './styles/a11y.css';
 import { App } from './App';
 import { installGlobalErrorCapture } from './lib/diagnostics';
 import { startPersistence } from './store/store';

@@ -41,6 +41,8 @@ interface Props {
   blockId: string;
   html: string;
   placeholder?: string;
+  /** Accessible name, usually the block type. Falls back to the placeholder. */
+  label?: string;
   /** Show placeholder even when not focused (e.g. empty headings). */
   alwaysPlaceholder?: boolean;
   className?: string;
@@ -54,7 +56,7 @@ interface Props {
  * The DOM is the source of truth while typing; the store is only written back into the DOM
  * when it changes from outside (undo, merges, turn-into). IME composition is never interrupted.
  */
-export function Editable({ blockId, html, placeholder, alwaysPlaceholder, className = '', readOnly, onKeyDown, style }: Props) {
+export function Editable({ blockId, html, placeholder, label, alwaysPlaceholder, className = '', readOnly, onKeyDown, style }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const committed = useRef<string | null>(null);
   const composing = useRef(false);
@@ -158,6 +160,10 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
       data-editable-id={blockId}
       data-nav=""
       data-placeholder={placeholder}
+      role="textbox"
+      aria-multiline="true"
+      aria-label={label || placeholder || 'Text'}
+      aria-readonly={readOnly || undefined}
       style={style}
       onFocus={() => clearBlockSelection()}
       onCompositionStart={() => {

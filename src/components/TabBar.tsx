@@ -4,7 +4,7 @@ import { useTabs, currentHash, switchTab, newTab, closeTab, back, forward, canBa
 import { useDoc, useSettings, setSettings } from '../store/store';
 import { pageTitle } from '../store/actions';
 import { PageIconView } from './PageIcon';
-import { Tooltip, MOD, type Anchor } from './ui';
+import { Tooltip, MOD, type Anchor, pressable } from './ui';
 import { WorkspaceIcon, WorkspaceSwitcherMenu } from './Sidebar';
 import { own } from '../lib/own';
 import { parseHash } from '../store/route';
@@ -28,7 +28,20 @@ function TabItem({ tab, active, index }: { tab: Tab; active: boolean; index: num
       className={'tab' + (active ? ' active' : '')}
       role="tab"
       aria-selected={active}
+      tabIndex={active ? 0 : -1}
       title={label}
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          switchTab(tab.id);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          const all = Array.from(e.currentTarget.parentElement!.querySelectorAll<HTMLElement>('[role="tab"]'));
+          const next = all[(all.indexOf(e.currentTarget) + (e.key === 'ArrowRight' ? 1 : -1) + all.length) % all.length];
+          next?.focus();
+        }
+      }}
       onMouseDown={e => {
         if (e.button === 1) {
           e.preventDefault();
@@ -58,7 +71,7 @@ function TabItem({ tab, active, index }: { tab: Tab; active: boolean; index: num
       <span className="tab-label">{label}</span>
       <span
         className="tab-close"
-        role="button"
+        {...pressable()}
         aria-label="Close tab"
         onClick={e => {
           e.stopPropagation();
@@ -80,7 +93,7 @@ export function TabBar() {
   return (
     <div className="tabbar">
       <div className="tabbar-left" style={{ width: sidebarOpen ? sidebarWidth : 'auto' }}>
-        <div className="tb-ws" role="button" onClick={e => setSwitcher(e.currentTarget.getBoundingClientRect())}>
+        <div className="tb-ws" {...pressable()} aria-haspopup="menu" aria-label={wsName} onClick={e => setSwitcher(e.currentTarget.getBoundingClientRect())}>
           <WorkspaceIcon size={20} />
           <span className="tb-ws-name">{wsName}</span>
           <ChevronDown size={13} className="tb-ws-chev" />
@@ -88,7 +101,7 @@ export function TabBar() {
       </div>
       <div className="tabbar-nav">
         <Tooltip label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} shortcut={`${MOD}\\`}>
-          <div className="icon-btn" role="button" onClick={() => setSettings({ sidebarOpen: !sidebarOpen })}>
+          <div className="icon-btn" {...pressable()} onClick={() => setSettings({ sidebarOpen: !sidebarOpen })}>
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4">
               <rect x="2.5" y="3.5" width="15" height="13" rx="2.5" />
               <path d="M7.5 3.5v13" />
@@ -96,12 +109,12 @@ export function TabBar() {
           </div>
         </Tooltip>
         <Tooltip label="Go back" shortcut={`${MOD}[`}>
-          <div className={'icon-btn' + (canBack() ? '' : ' disabled')} role="button" onClick={back}>
+          <div className={'icon-btn' + (canBack() ? '' : ' disabled')} {...pressable()} aria-disabled={!canBack()} onClick={back}>
             <ChevronLeft size={18} />
           </div>
         </Tooltip>
         <Tooltip label="Go forward" shortcut={`${MOD}]`}>
-          <div className={'icon-btn' + (canForward() ? '' : ' disabled')} role="button" onClick={forward}>
+          <div className={'icon-btn' + (canForward() ? '' : ' disabled')} {...pressable()} aria-disabled={!canForward()} onClick={forward}>
             <ChevronRight size={18} />
           </div>
         </Tooltip>
@@ -111,7 +124,7 @@ export function TabBar() {
           <TabItem key={t.id} tab={t} active={t.id === active} index={i} />
         ))}
         <Tooltip label="New tab" shortcut={`${MOD}T`}>
-          <div className="icon-btn tab-new" role="button" onClick={() => newTab()}>
+          <div className="icon-btn tab-new" {...pressable()} onClick={() => newTab()}>
             <Plus size={18} />
           </div>
         </Tooltip>

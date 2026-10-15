@@ -3,7 +3,7 @@ import { PanelRight, Maximize2, Copy, Trash2 } from 'lucide-react';
 import { getDoc, breakCoalescing } from '../store/store';
 import { setRowProp, openPage, duplicatePage, trashPage } from '../store/actions';
 import type { DbView, Page, Property } from '../store/types';
-import { Popover, Menu } from '../components/ui';
+import { Popover, Menu, pressable } from '../components/ui';
 import { StoredImg } from '../components/StoredImage';
 import { isImageIcon } from '../lib/url';
 
@@ -148,4 +148,25 @@ export function startPointerDrag(
   };
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', up);
+}
+
+/**
+ * Keyboard props for a row shown as a card, chip or bar: Enter and Space open the row in the side
+ * peek, and the context menu key (or Shift+F10) opens the same row menu as a right click.
+ */
+export function rowItemProps(row: Page, onMenu: (rect: DOMRect) => void, label?: string) {
+  const base = pressable(() => openPage(row.id, { peek: true }));
+  return {
+    ...base,
+    ...(label ? { 'aria-label': label } : {}),
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.target !== e.currentTarget) return;
+      if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+        e.preventDefault();
+        onMenu(e.currentTarget.getBoundingClientRect());
+        return;
+      }
+      base.onKeyDown(e);
+    },
+  };
 }

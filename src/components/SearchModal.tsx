@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { CornerDownLeft, PanelRight, Link2, ArrowUpRight, SlidersHorizontal, CaseSensitive, User, FileText, Plus, ChevronDown } from 'lucide-react';
 import { getDoc, setUi, useUi } from '../store/store';
 import { openPage, pageTitle, pagePath, createPage, isTrashedDeep } from '../store/actions';
 import { htmlToText } from '../lib/html';
 import { PageIconView } from './PageIcon';
 import { CoverBox } from './StoredImage';
-import { SearchIcon, Tooltip } from './ui';
+import { SearchIcon, Tooltip, pressable, useDialog } from './ui';
 import { copyPageLink } from './PageMenus';
 import type { Page } from '../store/types';
 import { openInNewTab } from '../store/tabs';
@@ -81,8 +81,11 @@ function SearchInner() {
   const [titleOnly, setTitleOnly] = useState(false);
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const uid = useId();
   const ws = getDoc().workspace;
   const close = () => setUi({ searchOpen: false });
+  useDialog(box, close);
 
   const results: Result[] = useMemo(() => {
     const d = getDoc();
@@ -168,13 +171,25 @@ function SearchInner() {
   let lastGroup = '';
   return (
     <div className="modal-overlay light" onMouseDown={close}>
-      <div className="modal search-modal" onMouseDown={e => e.stopPropagation()}>
+      <div ref={box} className="modal search-modal" role="dialog" aria-modal="true" aria-label="Search" onMouseDown={e => e.stopPropagation()}>
         <div className="search-input-row">
           <SearchIcon size={18} />
-          <input autoFocus placeholder={`Search or ask a question in ${ws.name}…`} value={q} onChange={e => setQ(e.target.value)} onKeyDown={onKey} />
+          <input
+            autoFocus
+            placeholder={`Search or ask a question in ${ws.name}…`}
+            aria-label="Search pages"
+            role="combobox"
+            aria-expanded="true"
+            aria-autocomplete="list"
+            aria-controls={uid + '-results'}
+            aria-activedescendant={sel ? uid + '-opt-' + sel.page.id : undefined}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={onKey}
+          />
         </div>
         <div className="search-filters">
-          <span className={'chip' + (titleOnly ? ' on' : '')} onClick={() => setTitleOnly(!titleOnly)}>
+          <span className={'chip' + (titleOnly ? ' on' : '')} {...pressable()} aria-pressed={titleOnly} onClick={() => setTitleOnly(!titleOnly)}>
             <CaseSensitive size={16} /> Title only
           </span>
           <span className="chip">
@@ -188,12 +203,12 @@ function SearchInner() {
           </span>
         </div>
         <div className="search-body">
-          <div className="search-results" ref={listRef}>
+          <div className="search-results" ref={listRef} id={uid + '-results'} tabIndex={-1} role="listbox" aria-label="Results">
             {results.length === 0 && (
               <div className="search-empty">
                 No results for “{q}”.
                 <br />
-                <span className="btn-link" onClick={() => go({ page: getDoc().pages[createPage({ section: 'private', title: q.trim() })], score: 0, group: '' })}>
+                <span className="btn-link" {...pressable()} onClick={() => go({ page: getDoc().pages[createPage({ section: 'private', title: q.trim() })], score: 0, group: '' })}>
                   Create “{q}” as a new page
                 </span>
               </div>
@@ -206,9 +221,12 @@ function SearchInner() {
                 .map(p => pageTitle(p))
                 .join(' / ');
               return (
-                <div key={r.page.id}>
-                  {showGroup && <div className="search-group-label">{r.group}</div>}
+                <div key={r.page.id} role="presentation">
+                  {showGroup && <div className="search-group-label" role="presentation">{r.group}</div>}
                   <div
+                    id={uid + '-opt-' + r.page.id}
+                    role="option"
+                    aria-selected={i === active}
                     className={'search-item' + (i === active ? ' active' : '')}
                     onMouseMove={() => i !== active && setActive(i)}
                     onClick={e => go(r, e.altKey)}
@@ -261,17 +279,17 @@ function Preview({ page, onOpen, onPeek }: { page: Page; onOpen: () => void; onP
       <CoverBox className="sp-cover" cover={page.cover} />
       <div className="sp-actions">
         <Tooltip label="Open in side peek">
-          <div className="icon-btn" onClick={onPeek}>
+          <div className="icon-btn" {...pressable()} onClick={onPeek}>
             <PanelRight size={14} />
           </div>
         </Tooltip>
         <Tooltip label="Copy link">
-          <div className="icon-btn" onClick={() => copyPageLink(page.id)}>
+          <div className="icon-btn" {...pressable()} onClick={() => copyPageLink(page.id)}>
             <Link2 size={14} />
           </div>
         </Tooltip>
         <Tooltip label="Open">
-          <div className="icon-btn" onClick={onOpen}>
+          <div className="icon-btn" {...pressable()} onClick={onOpen}>
             <ArrowUpRight size={14} />
           </div>
         </Tooltip>

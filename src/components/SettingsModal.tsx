@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { SlidersHorizontal, Bell, Settings as Gear, Users, Keyboard, ChevronDown, Download, Upload, RotateCcw, PanelLeft, Check, HardDrive } from 'lucide-react';
 import { useUi, setUi, useSettings, setSettings, useDoc, transact, showToast } from '../store/store';
-import { Popover, Menu, Switch, type Anchor } from './ui';
+import { Popover, Menu, Switch, pressable, useDialog, type Anchor } from './ui';
 import { WorkspaceIcon } from './Sidebar';
 import { EmojiPicker } from './EmojiPicker';
 import { BackupError, exportWorkspaceJson, importMarkdownAsPage, parseWorkspaceBackup } from '../lib/exporter';
@@ -19,26 +19,24 @@ export function SettingsModal() {
   const open = useUi(u => u.settingsOpen);
   const tab = useUi(u => u.settingsTab);
   const ws = useDoc(d => d.workspace, Object.is);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('.popover')) setUi({ settingsOpen: false });
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
   if (!open) return null;
+  return <SettingsDialog tab={tab} ws={ws} />;
+}
+
+function SettingsDialog({ tab, ws }: { tab: string; ws: { userName: string; userEmail: string } }) {
+  const box = useRef<HTMLDivElement>(null);
   const close = () => setUi({ settingsOpen: false });
+  useDialog(box, close);
   const nav = (id: string, icon: React.ReactNode, label: string) => (
-    <div className={'nav-item' + (tab === id ? ' on' : '')} onClick={() => setUi({ settingsTab: id })}>
+    <div className={'nav-item' + (tab === id ? ' on' : '')} {...pressable()} aria-current={tab === id ? 'page' : undefined} onClick={() => setUi({ settingsTab: id })}>
       {icon}
       {label}
     </div>
   );
   return (
     <div className="modal-overlay" onMouseDown={close}>
-      <div className="modal settings-modal" onMouseDown={e => e.stopPropagation()}>
-        <div className="settings-nav">
+      <div ref={box} className="modal settings-modal" role="dialog" aria-modal="true" aria-label="Settings" onMouseDown={e => e.stopPropagation()}>
+        <div className="settings-nav" role="navigation" aria-label="Settings sections">
           <div className="nav-label">Account</div>
           <div className="settings-user">
             <span className="avatar lg">{ws.userName[0]}</span>
@@ -73,10 +71,11 @@ export function SettingsModal() {
 }
 
 function Row({ title, desc, children }: { title: string; desc?: string; children?: React.ReactNode }) {
+  const id = useId();
   return (
-    <div className="set-row">
+    <div className="set-row" role="group" aria-labelledby={id}>
       <div className="set-text">
-        <div className="set-title">{title}</div>
+        <div className="set-title" id={id}>{title}</div>
         {desc && <div className="set-desc">{desc}</div>}
       </div>
       {children}
@@ -88,7 +87,7 @@ function Select({ value, options, onChange }: { value: string; options: [string,
   const [a, setA] = useState<Anchor>(null);
   return (
     <>
-      <div className="select-btn" onClick={e => setA(e.currentTarget.getBoundingClientRect())}>
+      <div className="select-btn" {...pressable()} aria-haspopup="menu" onClick={e => setA(e.currentTarget.getBoundingClientRect())}>
         {options.find(o => o[0] === value)?.[1]}
         <ChevronDown size={14} />
       </div>
@@ -215,7 +214,7 @@ function General() {
         />
       </Row>
       <Row title="Icon" desc="Upload an image or pick an emoji.">
-        <div className="icon-btn" style={{ width: 40, height: 40, boxShadow: 'inset 0 0 0 1px var(--border-translucent)' }} onClick={e => setIconPicker(e.currentTarget.getBoundingClientRect())}>
+        <div className="icon-btn" {...pressable()} aria-label="Change workspace icon" style={{ width: 40, height: 40, boxShadow: 'inset 0 0 0 1px var(--border-translucent)' }} onClick={e => setIconPicker(e.currentTarget.getBoundingClientRect())}>
           <WorkspaceIcon size={28} />
         </div>
       </Row>

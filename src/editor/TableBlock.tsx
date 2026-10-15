@@ -116,6 +116,7 @@ function Cell({
       ref={ref}
       contentEditable={!readOnly}
       suppressContentEditableWarning
+      aria-label="Table cell"
       onInput={e => {
         if (!(e.nativeEvent as InputEvent).isComposing) commit();
       }}

@@ -7,6 +7,7 @@ import { selectBlocks } from './controller';
 import { ImageError, ingestImage, useImageSrc } from '../lib/images';
 import { safeImageSrc } from '../lib/url';
 import { recordError } from '../lib/diagnostics';
+import { pressable } from '../components/ui';
 
 export function ImageBlock({ block, readOnly }: { block: Block; readOnly?: boolean }) {
   const [picker, setPicker] = useState<DOMRect | null>(null);
@@ -25,7 +26,7 @@ export function ImageBlock({ block, readOnly }: { block: Block; readOnly?: boole
   if (!block.url) {
     return (
       <>
-        <div
+        <div {...pressable()}
           ref={holder}
           className="image-placeholder"
           onClick={e => !readOnly && setPicker(e.currentTarget.getBoundingClientRect())}
@@ -61,7 +62,7 @@ export function ImageBlock({ block, readOnly }: { block: Block; readOnly?: boole
 
   return (
     <div className="image-block">
-      <div ref={frame} className="image-frame" style={{ width: block.width || '100%' }} onClick={() => selectBlocks([block.id])}>
+      <div {...pressable()} aria-label={block.caption || 'Image'} ref={frame} className="image-frame" style={{ width: block.width || '100%' }} onClick={() => selectBlocks([block.id])}>
         {img.src ? (
           <img src={img.src} alt={block.caption || ''} draggable={false} />
         ) : (
@@ -121,10 +122,10 @@ export function ImagePicker({ anchor, onClose, onPick, title = 'Upload' }: { anc
   return (
     <Popover anchor={anchor} onClose={onClose} width={Math.max(360, Math.min(540, anchor.width))}>
       <div className="ep-tabs">
-        <div className={'ep-tab' + (tab === 'upload' ? ' on' : '')} onClick={() => setTab('upload')}>
+        <div {...pressable()} className={'ep-tab' + (tab === 'upload' ? ' on' : '')} onClick={() => setTab('upload')}>
           {title}
         </div>
-        <div className={'ep-tab' + (tab === 'link' ? ' on' : '')} onClick={() => setTab('link')}>
+        <div {...pressable()} className={'ep-tab' + (tab === 'link' ? ' on' : '')} onClick={() => setTab('link')}>
           Embed link
         </div>
       </div>

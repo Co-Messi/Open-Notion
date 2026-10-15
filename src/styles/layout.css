@@ -161,7 +161,7 @@
   color: var(--text-primary);
 }
 .sb-row.muted {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .sb-row.drop-into {
   box-shadow: inset 0 0 0 2px var(--theme-accent-wash-4);
@@ -241,7 +241,7 @@
   border-radius: 6px;
   margin: 0 8px;
   cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -449,7 +449,7 @@
   color: var(--text-secondary);
   white-space: nowrap;
   cursor: pointer;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 .topbar .privacy:hover {
   background: var(--hover);
@@ -461,7 +461,7 @@
   flex: 1;
 }
 .topbar .edited {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
   margin-right: 6px;
 }
@@ -601,7 +601,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .avatar {
   width: 16px;
@@ -660,7 +660,7 @@
 }
 .learn-card .lc-meta {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -706,7 +706,7 @@
   background: var(--theme-blue-solid);
 }
 .events-card .ev-item .when {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 .btn-link {
@@ -768,7 +768,7 @@
   white-space: nowrap;
 }
 .lib-row .muted {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -1014,7 +1014,7 @@
   width: 30px !important;
   height: 30px !important;
   align-self: center;
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--icon-secondary);
 }
 
@@ -1070,7 +1070,7 @@
   width: 1px;
   height: 13px;
   background: var(--text-primary);
-  margin-left: 1px;
+  margin-inline-start: 1px;
   vertical-align: -2px;
 }
 .art-menu {
@@ -1083,7 +1083,7 @@
 .art-menu-label {
   font-size: 9px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 2px 6px 3px;
 }
 .art-menu-item {
@@ -1175,7 +1175,7 @@
 }
 .sb-event-time {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }

@@ -19,7 +19,7 @@
 }
 .db-missing {
   padding: 8px 2px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 body.db-dragging,
 body.db-dragging * {
@@ -158,7 +158,7 @@ body.db-col-resizing * {
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 .db-tool {
   width: 28px;
@@ -194,7 +194,7 @@ body.db-col-resizing * {
   display: inline-flex;
   align-items: stretch;
   height: 28px;
-  margin-left: 6px;
+  margin-inline-start: 6px;
   border-radius: 6px;
   overflow: hidden;
   background: var(--blue);
@@ -261,7 +261,7 @@ body.db-col-resizing * {
 }
 .db-fchip.add {
   box-shadow: none;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-fbar-sep {
   width: 1px;
@@ -396,7 +396,7 @@ body.db-col-resizing * {
   flex-shrink: 0;
 }
 .db-mi-type {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -442,7 +442,7 @@ body.db-col-resizing * {
 .db-pill-x {
   display: inline-flex;
   align-items: center;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   margin-right: -2px;
   opacity: 0.55;
   cursor: pointer;
@@ -523,7 +523,7 @@ body.db-col-resizing * {
   justify-content: center;
   width: 20px;
   height: 20px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border-radius: 4px;
   background: var(--popover-bg);
   box-shadow: var(--theme-shadow-1);
@@ -786,7 +786,7 @@ body.db-col-resizing .db-resizer:active {
   gap: 6px;
   height: 33px;
   padding: 0 8px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
   border-bottom: 1px solid var(--border-primary);
@@ -840,7 +840,7 @@ body.db-col-resizing .db-resizer:active {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-calc-val {
   color: var(--text-secondary);
@@ -977,7 +977,7 @@ body.db-col-resizing .db-resizer:active {
   border-top: 1px solid var(--border-secondary-translucent);
 }
 .db-date-foot .menu-item .switch {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .db-dp-today {
   display: flex;
@@ -1113,7 +1113,7 @@ body.db-col-resizing .db-resizer:active {
   padding: 0 8px;
   margin-top: 6px;
   border-radius: 6px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
 }
@@ -1171,7 +1171,7 @@ body.db-col-resizing .db-resizer:active {
   max-width: 60%;
   min-width: 0;
   overflow: hidden;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .db-list-prop {
@@ -1242,7 +1242,7 @@ body.db-col-resizing .db-resizer:active {
   min-height: 72px;
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--border-primary);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-gcard-new:hover {
   background: var(--hover);
@@ -1287,7 +1287,7 @@ body.db-col-resizing .db-resizer:active {
   line-height: 24px;
   font-size: 12px;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-cal-weeks {
   margin-bottom: 16px;
@@ -1350,7 +1350,7 @@ body.db-col-resizing .db-resizer:active {
   min-width: 24px;
   height: 24px;
   padding: 0 4px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border-radius: 12px;
   font-size: 12px;
   color: var(--text-secondary);
@@ -1498,7 +1498,7 @@ body.db-col-resizing .db-resizer:active {
   height: 34px;
   padding: 0 6px;
   border-radius: 6px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
 }
@@ -1600,7 +1600,7 @@ body.db-col-resizing .db-resizer:active {
 }
 .db-new-row.db-tl-new {
   border-bottom: none;
-  padding-left: 4px;
+  padding-inline-start: 4px;
 }
 .db-tl-resizer {
   position: absolute;
@@ -1660,14 +1660,14 @@ body.db-col-resizing .db-resizer:active {
   height: 24px;
   display: flex;
   align-items: center;
-  padding-left: 4px;
+  padding-inline-start: 4px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .db-tl-tick.day {
   justify-content: center;
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 .db-tl-today-num {
   display: inline-flex;
