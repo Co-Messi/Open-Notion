@@ -40,7 +40,8 @@ export function LinkToPagePicker() {
             transact(tx => {
               const b = tx.block(state.blockId);
               if (!b) return;
-              const empty = !b.html || b.html === '<br>';
+              // Only an empty leaf block is replaced: a link block does not show children.
+              const empty = (!b.html || b.html === '<br>') && b.children.length === 0 && b.type !== 'code';
               const patch = { type: (p.isDatabase ? 'database' : 'page') as 'page' | 'database', pageId: p.id, isLink: true, html: '' };
               if (empty) tx.setBlock(state.blockId, patch);
               else txInsertAfter(tx, state.blockId, patch);

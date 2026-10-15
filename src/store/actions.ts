@@ -1,7 +1,125 @@
 import { getDoc, transact, Tx, setUi, showToast } from './store';
-import type { Block, BlockType, DbView, Page, Property, PropType, SelectOption, ColorName } from './types';
+import type { Block, BlockType, DbView, Doc, Page, Property, PropType, SelectOption, ColorName } from './types';
+import { htmlToText } from '../lib/html';
+import { forgetPagesInTabs } from './tabs';
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+/* ------------------------------------------------------------------ */
+/* Structure helpers                                                   */
+/* ------------------------------------------------------------------ */
+
+type DocLike = Pick<Doc, 'pages' | 'blocks'>;
+
+/** Block types that can hold child blocks (rendered nested under them). */
+export const CONTAINER_TYPES: BlockType[] = ['text', 'h1', 'h2', 'h3', 'bulleted', 'numbered', 'todo', 'toggle', 'quote', 'callout'];
+
+/** Types that are part of the page and layout structure; "Turn into" never touches them. */
+const STRUCTURAL_TYPES: BlockType[] = ['page', 'database', 'columns', 'column'];
+
+/** A page or database block that owns its page (as opposed to a "link to page" block). */
+export function ownsPage(b: Block | undefined): b is Block & { pageId: string } {
+  return !!b && (b.type === 'page' || b.type === 'database') && !!b.pageId && !b.isLink;
+}
+
+/** The page that (transitively) holds a block, or '' for a detached block. */
+export function pageOfBlockIn(d: DocLike, id: string): string {
+  let cur = d.blocks[id];
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    if (d.pages[cur.parent]) return cur.parent;
+    cur = d.blocks[cur.parent];
+  }
+  return '';
+}
+
+/** Nearest column that contains a block, or '' when it is outside every column. */
+export function columnOf(d: DocLike, id: string): string {
+  let cur = d.blocks[d.blocks[id]?.parent];
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    if (cur.type === 'column') return cur.id;
+    cur = d.blocks[cur.parent];
+  }
+  return '';
+}
+
+/** True when block `inner` is `outer` itself or sits inside its subtree. */
+export function isBlockWithin(d: DocLike, inner: string, outer: string): boolean {
+  let cur: string | undefined = inner;
+  const seen = new Set<string>();
+  while (cur && d.blocks[cur] && !seen.has(cur)) {
+    if (cur === outer) return true;
+    seen.add(cur);
+    cur = d.blocks[cur].parent;
+  }
+  return false;
+}
+
+/** True when `pageId` is `ancestor` or one of its descendants (through parent pages and databases). */
+export function isPageWithin(d: Pick<Doc, 'pages'>, pageId: string, ancestor: string): boolean {
+  let cur: string | null | undefined = pageId;
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur)) {
+    if (cur === ancestor) return true;
+    seen.add(cur);
+    const p: Page | undefined = d.pages[cur];
+    cur = p ? p.dbId || p.parentId : null;
+  }
+  return false;
+}
+
+/** Pages owned by page and database blocks inside a block subtree (the block itself included). */
+export function ownedPagesIn(d: DocLike, id: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const walk = (bid: string) => {
+    const b = d.blocks[bid];
+    if (!b || seen.has(bid)) return;
+    seen.add(bid);
+    if (ownsPage(b)) out.push(b.pageId);
+    b.children.forEach(walk);
+  };
+  walk(id);
+  return out;
+}
+
+/** Points the pages owned inside a block subtree at the page that now holds the block. */
+export function txSyncOwnedPages(tx: Tx, id: string) {
+  const home = pageOfBlockIn(tx, id) || null;
+  for (const pid of ownedPagesIn(tx, id)) {
+    if (tx.pages[pid] && tx.pages[pid].parentId !== home) tx.setPage(pid, { parentId: home });
+  }
+}
+
+/**
+ * Why block `id` cannot move into `parent` (a page or a block), or null when the move is fine.
+ * Guards the structure: no cycles through blocks or pages, nothing hidden inside a database
+ * or a block type that does not render children, and column lists only ever hold columns.
+ */
+export function moveBlockProblem(d: DocLike, id: string, parent: string): string | null {
+  const b = d.blocks[id];
+  if (!b) return 'missing';
+  if (b.type === 'column') return 'Columns move with their column list';
+  const parentPage = d.pages[parent];
+  const parentBlock = parentPage ? undefined : d.blocks[parent];
+  if (!parentPage && !parentBlock) return 'missing';
+  if (parentBlock) {
+    if (isBlockWithin(d, parent, id)) return 'A block can’t be moved inside itself';
+    if (parentBlock.type === 'columns') return 'Only columns can go in a column list';
+    if (parentBlock.type !== 'column' && !CONTAINER_TYPES.includes(parentBlock.type)) return 'This block can’t hold other blocks';
+  }
+  const target = parentPage ? parent : pageOfBlockIn(d, parent);
+  if (!target) return 'missing';
+  if (d.pages[target].isDatabase) return 'Blocks can’t be moved into a database';
+  if (target !== pageOfBlockIn(d, id) && isTrashedDeep(d, target)) return 'That page is in the Trash';
+  for (const owned of ownedPagesIn(d, id)) {
+    if (isPageWithin(d, target, owned)) return 'A page can’t be moved inside itself';
+  }
+  return null;
+}
 
 /* ------------------------------------------------------------------ */
 /* Blocks                                                              */
@@ -50,7 +168,13 @@ export function txCleanupColumns(tx: Tx, parentId: string) {
     tx.blocks[listId] = { ...list, children: list.children.filter(c => c !== parentId) };
     delete tx.blocks[parentId];
   }
+  txUnwrapColumns(tx, listId);
+}
+
+/** A column list with one column left becomes plain blocks again; an empty one disappears. */
+function txUnwrapColumns(tx: Tx, listId: string) {
   const cur = tx.blocks[listId];
+  if (!cur || cur.type !== 'columns') return;
   if (cur.children.length <= 1) {
     const owner = cur.parent;
     const ownerList = [...tx.childList(owner)];
@@ -65,10 +189,22 @@ export function txCleanupColumns(tx: Tx, parentId: string) {
   }
 }
 
-/** Places `ids` beside `targetId` as a new column (left or right). */
-export function txMakeColumns(tx: Tx, targetId: string, ids: string[], side: 'left' | 'right') {
+/** Places `ids` beside `targetId` as a new column (left or right). Returns false when refused. */
+export function txMakeColumns(tx: Tx, targetId: string, idsIn: string[], side: 'left' | 'right'): boolean {
   const target = tx.block(targetId);
-  if (!target) return;
+  if (!target || target.type === 'columns' || target.type === 'column') return false;
+  // Skip duplicates, the target itself, blocks that contain the target, and blocks whose
+  // ancestor is also moving (they travel with it).
+  const uniq = [...new Set(idsIn)];
+  const ids = uniq.filter(
+    id =>
+      tx.blocks[id] &&
+      id !== targetId &&
+      !isBlockWithin(tx, targetId, id) &&
+      !uniq.some(o => o !== id && isBlockWithin(tx, id, o)) &&
+      !moveBlockProblem(tx, id, target.parent),
+  );
+  if (!ids.length) return false;
   const parent = tx.blocks[target.parent];
   const oldParents = ids.map(id => tx.block(id).parent);
   ids.forEach(id => txDetach(tx, id, false));
@@ -84,7 +220,9 @@ export function txMakeColumns(tx: Tx, targetId: string, ids: string[], side: 'le
     cols.splice(at, 0, col.id);
     tx.blocks[listId] = { ...tx.blocks[listId], children: cols };
     cleanupLater();
-    return;
+    ids.forEach(id => txSyncOwnedPages(tx, id));
+    tx.touched.add(tx.pageOfBlock(targetId));
+    return true;
   }
   const ownerList = [...tx.childList(tx.block(targetId).parent)];
   const at = ownerList.indexOf(targetId);
@@ -99,6 +237,9 @@ export function txMakeColumns(tx: Tx, targetId: string, ids: string[], side: 'le
   ownerList.splice(at, 1, list.id);
   tx.setSiblings(list.parent, ownerList);
   cleanupLater();
+  ids.forEach(id => txSyncOwnedPages(tx, id));
+  tx.touched.add(tx.pageOfBlock(targetId));
+  return true;
 }
 
 /** Inserts a column list with `n` columns, each holding an empty text block. Returns the first text block id. */
@@ -126,28 +267,25 @@ export function txDeleteBlock(tx: Tx, id: string) {
   const b = tx.block(id);
   if (!b) return;
   txDetach(tx, id);
+  // A column removed on its own leaves its list; a list with one column left is unwrapped.
+  if (b.type === 'column') txUnwrapColumns(tx, b.parent);
   const rm = (bid: string) => {
     const x = tx.blocks[bid];
     if (!x) return;
+    delete tx.blocks[bid];
     x.children.forEach(rm);
-    if ((x.type === 'page' || x.type === 'database') && x.pageId && !x.isLink && tx.pages[x.pageId]) {
+    if (ownsPage(x) && tx.pages[x.pageId]) {
       tx.setPage(x.pageId, { trashed: true, trashedAt: Date.now() });
     }
-    delete tx.blocks[bid];
   };
   rm(id);
 }
 
-export function txMoveBlock(tx: Tx, id: string, parent: string, index: number) {
+/** Moves a block (with its subtree) into `parent` at `index`. Returns false when the move is refused. */
+export function txMoveBlock(tx: Tx, id: string, parent: string, index: number): boolean {
   const b = tx.block(id);
-  if (!b) return;
-  // Prevent moving into own subtree.
-  let p: string | undefined = parent;
-  let guard = 0;
-  while (p && tx.blocks[p] && guard++ < 1000) {
-    if (p === id) return;
-    p = tx.blocks[p].parent;
-  }
+  if (!b) return false;
+  if (moveBlockProblem(tx, id, parent)) return false;
   const sameParent = b.parent === parent;
   const oldParent = b.parent;
   const oldIdx = tx.siblings(id).indexOf(id);
@@ -160,11 +298,9 @@ export function txMoveBlock(tx: Tx, id: string, parent: string, index: number) {
   tx.setSiblings(parent, list);
   tx.touched.add(tx.pageOfBlock(id));
   if (oldParent !== parent) txCleanupColumns(tx, oldParent);
-  // Sub-page blocks keep their page's parent pointer in sync.
-  const nb = tx.blocks[id];
-  if ((nb.type === 'page' || nb.type === 'database') && nb.pageId && !nb.isLink && tx.pages[nb.pageId]) {
-    tx.setPage(nb.pageId, { parentId: tx.pageOfBlock(id) || null });
-  }
+  // Sub pages anywhere in the moved subtree keep their parent pointer in sync.
+  txSyncOwnedPages(tx, id);
+  return true;
 }
 
 export function txDuplicateBlock(tx: Tx, id: string, parent?: string, index?: number): string {
@@ -188,6 +324,7 @@ export function txDuplicateBlock(tx: Tx, id: string, parent?: string, index?: nu
   l.splice(idx, 0, nid);
   tx.setSiblings(target, l);
   tx.touched.add(tx.pageOfBlock(nid));
+  txSyncOwnedPages(tx, nid);
   return nid;
 }
 
@@ -218,15 +355,16 @@ const KEEP_HTML_TYPES: BlockType[] = ['text', 'h1', 'h2', 'h3', 'bulleted', 'num
 
 export function txTurnInto(tx: Tx, id: string, type: BlockType) {
   const b = tx.block(id);
-  if (!b) return;
+  if (!b || b.type === type) return;
+  // Pages, databases and column layouts are structure, not text: turning them would orphan a page
+  // or break a column list.
+  if (STRUCTURAL_TYPES.includes(b.type) || STRUCTURAL_TYPES.includes(type)) return;
   const patch: Partial<Block> = { type };
   if (type === 'callout' && !b.icon) patch.icon = '💡';
   if (type === 'code') {
     patch.language = b.language || 'plain text';
-    // Code stores plain text.
-    const tmp = document.createElement('div');
-    tmp.innerHTML = b.html.replace(/<br\s*\/?>/g, '\n');
-    patch.html = tmp.textContent || '';
+    // Code stores plain text; htmlToText parses inside an inert template.
+    patch.html = htmlToText(b.html);
   } else if (b.type === 'code') {
     patch.html = (b.html || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
   }
@@ -250,25 +388,29 @@ export function txIndent(tx: Tx, id: string): boolean {
   if (idx <= 0) return false;
   const prevId = list[idx - 1];
   const prev = tx.block(prevId);
-  if (!prev || ['divider', 'image', 'page', 'database', 'code', 'table', 'bookmark'].includes(prev.type)) return false;
-  txMoveBlock(tx, id, prevId, prev.children.length);
+  // Only text like blocks hold children; a columns block or a column must never receive one.
+  if (!prev || !CONTAINER_TYPES.includes(prev.type)) return false;
+  if (!txMoveBlock(tx, id, prevId, prev.children.length)) return false;
   if (prev.type === 'toggle' && !prev.open) tx.setBlock(prevId, { open: true });
   return true;
 }
 
-/** Outdent: block moves after its parent; following siblings become its children (Notion behaviour). */
+/**
+ * Outdent: block moves after its parent; following siblings become its children (Notion behaviour).
+ * Blocks at the top level of a page or of a column are already at the root and do not move.
+ */
 export function txOutdent(tx: Tx, id: string): boolean {
   const b = tx.block(id);
   if (!b || tx.pages[b.parent]) return false;
   const parent = tx.block(b.parent);
-  if (!parent) return false;
+  if (!parent || parent.type === 'column' || parent.type === 'columns') return false;
   const list = tx.siblings(id);
   const idx = list.indexOf(id);
   const following = list.slice(idx + 1);
   const grand = parent.parent;
   const gList = tx.childList(grand);
   const pIdx = gList.indexOf(parent.id);
-  txMoveBlock(tx, id, grand, pIdx + 1);
+  if (!txMoveBlock(tx, id, grand, pIdx + 1)) return false;
   following.forEach(f => {
     const cur = tx.block(id);
     txMoveBlock(tx, f, id, cur.children.length);
@@ -420,6 +562,7 @@ export function txTrashPage(tx: Tx, id: string) {
 
 export function trashPage(id: string) {
   const page = getDoc().pages[id];
+  if (!page) return;
   transact(tx => {
     txTrashPage(tx, id);
     // Remove the page block from its parent so the parent content no longer shows it.
@@ -437,56 +580,103 @@ export function trashPage(id: string) {
   showToast(`Moved “${page?.title || 'Untitled'}” to Trash`);
 }
 
+/** Adds a page to the private section unless a root list already holds it. */
+function txEnsureRoot(tx: Tx, id: string) {
+  const inTeam = tx.workspace.teamspaces.some(t => t.pages.includes(id));
+  if (!tx.workspace.privatePages.includes(id) && !inTeam) {
+    tx.setWorkspace({ privatePages: [...tx.workspace.privatePages, id] });
+  }
+}
+
+/**
+ * Brings a page back from the Trash. A row whose database is still in the Trash (or gone)
+ * comes back as a normal private page: its dbId is cleared so nothing treats it as trashed.
+ * A page whose parent is in the Trash comes back at the top of the private section.
+ */
 export function restorePage(id: string) {
   transact(tx => {
     const p = tx.page(id);
     if (!p) return;
     tx.setPage(id, { trashed: false, trashedAt: undefined });
-    if (p.dbId && tx.pages[p.dbId] && !tx.pages[p.dbId].trashed) {
+    if (p.dbId) {
       const db = tx.pages[p.dbId];
-      if (!(db.rows || []).includes(id)) tx.setPage(p.dbId, { rows: [...(db.rows || []), id] });
+      if (db && db.isDatabase && !isTrashedDeep(tx, db.id)) {
+        if (!(db.rows || []).includes(id)) tx.setPage(db.id, { rows: [...(db.rows || []), id] });
+        if (p.parentId !== db.id) tx.setPage(id, { parentId: db.id });
+        return;
+      }
+      if (db?.rows?.includes(id)) tx.setPage(db.id, { rows: db.rows.filter(r => r !== id) });
+      tx.setPage(id, { dbId: undefined, parentId: null });
+      txEnsureRoot(tx, id);
       return;
     }
     const parent = p.parentId ? tx.pages[p.parentId] : null;
-    if (parent && !parent.trashed) {
-      const has = Object.values(tx.blocks).some(b => b.pageId === id && !b.isLink);
+    if (parent && parent.id !== id && !parent.isDatabase && !isTrashedDeep(tx, parent.id) && !isPageWithin(tx, parent.id, id)) {
+      const has = Object.values(tx.blocks).some(b => ownsPage(b) && b.pageId === id);
       if (!has) txInsertBlock(tx, { parent: parent.id, type: p.isDatabase ? 'database' : 'page', pageId: id });
     } else {
       tx.setPage(id, { parentId: null });
-      const inTeam = tx.workspace.teamspaces.some(t => t.pages.includes(id));
-      if (!tx.workspace.privatePages.includes(id) && !inTeam) {
-        tx.setWorkspace({ privatePages: [...tx.workspace.privatePages, id] });
-      }
+      txEnsureRoot(tx, id);
     }
   });
 }
 
+/**
+ * Deletes a page, everything inside it and its database rows (trashed rows included).
+ * Trashed pages that pointed at a deleted page as their parent move to the top level, so
+ * restoring them later still works. Tabs, favorites and recents drop the deleted ids; link
+ * blocks elsewhere keep pointing at the id and render "Deleted page".
+ */
 export function deletePageForever(id: string) {
+  const gone = new Set<string>();
   transact(tx => {
-    const rm = (pid: string) => {
-      const p = tx.pages[pid];
-      if (!p) return;
-      const rmBlock = (bid: string) => {
+    if (!tx.pages[id]) return;
+    // A live page (not only in the Trash) also leaves the page that holds its block.
+    const holder = Object.values(tx.blocks).find(b => ownsPage(b) && b.pageId === id);
+    if (holder) txDeleteBlock(tx, holder.id);
+    const pageQueue = [id];
+    const removeBlocks = (ids: string[]) => {
+      const stack = [...ids];
+      while (stack.length) {
+        const bid = stack.pop()!;
         const b = tx.blocks[bid];
-        if (!b) return;
-        b.children.forEach(rmBlock);
-        if (b.pageId && !b.isLink) rm(b.pageId);
+        if (!b) continue;
         delete tx.blocks[bid];
-      };
-      p.content.forEach(rmBlock);
-      (p.rows || []).forEach(rm);
-      delete tx.pages[pid];
+        stack.push(...b.children);
+        if (ownsPage(b)) pageQueue.push(b.pageId);
+      }
     };
-    rm(id);
-    // Drop references to the page and everything that was inside it.
-    const gone = (x: string) => !tx.pages[x];
+    const removeQueued = () => {
+      while (pageQueue.length) {
+        const pid = pageQueue.pop()!;
+        const p = tx.pages[pid];
+        if (!p || gone.has(pid)) continue;
+        gone.add(pid);
+        removeBlocks(p.content);
+        pageQueue.push(...(p.rows || []));
+        delete tx.pages[pid];
+      }
+    };
+    removeQueued();
+    // Rows that were trashed on their own are no longer listed by their database; they go too.
+    for (const p of Object.values(tx.pages)) if (p.dbId && gone.has(p.dbId)) pageQueue.push(p.id);
+    removeQueued();
+    for (const p of Object.values(tx.pages)) {
+      if (p.rows?.some(r => gone.has(r))) tx.setPage(p.id, { rows: p.rows.filter(r => !gone.has(r)) });
+      if (p.parentId && gone.has(p.parentId)) {
+        tx.setPage(p.id, { parentId: null });
+        if (!p.trashed) txEnsureRoot(tx, p.id);
+      }
+    }
     tx.setWorkspace({
-      privatePages: tx.workspace.privatePages.filter(x => !gone(x)),
-      favorites: tx.workspace.favorites.filter(x => !gone(x)),
-      teamspaces: tx.workspace.teamspaces.map(t => ({ ...t, pages: t.pages.filter(x => !gone(x)) })),
+      privatePages: tx.workspace.privatePages.filter(x => !gone.has(x)),
+      favorites: tx.workspace.favorites.filter(x => !gone.has(x)),
+      teamspaces: tx.workspace.teamspaces.map(t => ({ ...t, pages: t.pages.filter(x => !gone.has(x)) })),
     });
-    tx.recent = tx.recent.filter(r => !gone(r.id));
+    tx.recent = tx.recent.filter(r => !gone.has(r.id));
   });
+  // In app tabs live outside the document (and outside undo), so they are cleaned after it.
+  forgetPagesInTabs(gone);
 }
 
 export function txDuplicatePage(tx: Tx, id: string, parentId: string | null, rename = true): string {
@@ -526,10 +716,13 @@ export function txDuplicatePage(tx: Tx, id: string, parentId: string | null, ren
 
 export function duplicatePage(id: string): string {
   let nid = '';
+  if (!getDoc().pages[id]) return nid;
   transact(tx => {
     const src = tx.pages[id];
     nid = txDuplicatePage(tx, id, src.parentId);
-    if (src.dbId && tx.pages[src.dbId]) {
+    // The copy is never trashed, even when the source is.
+    tx.pages[nid] = { ...tx.pages[nid], trashed: undefined, trashedAt: undefined };
+    if (src.dbId && tx.pages[src.dbId]?.isDatabase) {
       tx.pages[nid] = { ...tx.pages[nid], dbId: src.dbId };
       const db = tx.pages[src.dbId];
       const rows = [...(db.rows || [])];
@@ -537,13 +730,17 @@ export function duplicatePage(id: string): string {
       tx.setPage(src.dbId, { rows });
       return;
     }
-    const blk = Object.values(tx.blocks).find(b => b.pageId === id && !b.isLink);
+    const blk = Object.values(tx.blocks).find(b => ownsPage(b) && b.pageId === id);
     if (blk) {
       const list = tx.siblings(blk.id);
       txInsertBlock(tx, { parent: blk.parent, type: src.isDatabase ? 'database' : 'page', pageId: nid }, list.indexOf(blk.id) + 1);
     } else {
       const ws = tx.workspace;
-      if (ws.privatePages.includes(id)) {
+      if (!ws.privatePages.includes(id) && !ws.teamspaces.some(t => t.pages.includes(id))) {
+        // The source is not placed anywhere (for example it sits in the Trash): the copy goes to Private.
+        tx.pages[nid] = { ...tx.pages[nid], parentId: null };
+        tx.setWorkspace({ privatePages: [...ws.privatePages, nid] });
+      } else if (ws.privatePages.includes(id)) {
         const l = [...ws.privatePages];
         l.splice(l.indexOf(id) + 1, 0, nid);
         tx.setWorkspace({ privatePages: l });
@@ -562,8 +759,35 @@ export function duplicatePage(id: string): string {
   return nid;
 }
 
-/** Moves a page under another page (as a page block at the end) or to a top-level section. */
-export function movePage(id: string, target: { pageId?: string; section?: string; index?: number }) {
+/**
+ * Why a page cannot move to `target`, or null when it can. Moving into a database only
+ * reorders that database's own rows; any other page dropped there is refused, because a
+ * database renders rows, never content.
+ */
+export function movePageProblem(d: Pick<Doc, 'pages' | 'workspace'>, id: string, target: { pageId?: string; section?: string }): string | null {
+  const p = d.pages[id];
+  if (!p) return 'missing';
+  if (p.trashed) return 'That page is in the Trash';
+  if (target.pageId) {
+    const dest = d.pages[target.pageId];
+    if (!dest) return 'missing';
+    if (isPageWithin(d, target.pageId, id)) return 'A page can’t be moved inside itself';
+    if (isTrashedDeep(d, target.pageId)) return 'That page is in the Trash';
+    if (dest.isDatabase && p.dbId !== dest.id) return 'Pages can’t be moved into a database';
+    return null;
+  }
+  const section = target.section || 'private';
+  if (section !== 'private' && section !== 'favorites' && !d.workspace.teamspaces.some(t => t.id === section)) return 'missing';
+  return null;
+}
+
+/** Moves a page under another page (as a page block at the end) or to a top-level section. Returns false when refused. */
+export function movePage(id: string, target: { pageId?: string; section?: string; index?: number }): boolean {
+  const problem = movePageProblem(getDoc(), id, target);
+  if (problem) {
+    if (problem !== 'missing') showToast(problem);
+    return false;
+  }
   // Favorites is a list of shortcuts, not a location: dropping there only reorders/adds the shortcut.
   if (target.section === 'favorites') {
     transact(tx => {
@@ -575,7 +799,7 @@ export function movePage(id: string, target: { pageId?: string; section?: string
       l.splice(Math.max(0, Math.min(idx, l.length)), 0, id);
       tx.setWorkspace({ favorites: l });
     });
-    return;
+    return true;
   }
   // Indices refer to the list before the page is removed; moving down within the same list shifts by one.
   let index = target.index;
@@ -593,17 +817,24 @@ export function movePage(id: string, target: { pageId?: string; section?: string
   transact(tx => {
     const p = tx.pages[id];
     if (!p) return;
-    if (target.pageId) {
-      // Refuse to move into own descendant.
-      let cur: Page | undefined = tx.pages[target.pageId];
-      let guard = 0;
-      while (cur && guard++ < 100) {
-        if (cur.id === id) return;
-        cur = cur.parentId ? tx.pages[cur.parentId] : undefined;
-      }
+    const dest = target.pageId ? tx.pages[target.pageId] : undefined;
+    if (dest?.isDatabase) {
+      // A row dropped among its own database's rows: reorder.
+      const rows = (dest.rows || []).filter(r => r !== id);
+      const visible = rows.filter(r => tx.pages[r] && !tx.pages[r].trashed);
+      const at = target.index === undefined || target.index >= visible.length ? rows.length : rows.indexOf(visible[target.index]);
+      rows.splice(at, 0, id);
+      tx.setPage(dest.id, { rows });
+      return;
+    }
+    // A row that leaves its database stops being a row.
+    if (p.dbId) {
+      const db = tx.pages[p.dbId];
+      if (db?.rows?.includes(id)) tx.setPage(db.id, { rows: db.rows.filter(r => r !== id) });
+      tx.setPage(id, { dbId: undefined });
     }
     // Detach from current location.
-    const blk = Object.values(tx.blocks).find(b => b.pageId === id && !b.isLink && (b.type === 'page' || b.type === 'database'));
+    const blk = Object.values(tx.blocks).find(b => ownsPage(b) && b.pageId === id);
     if (blk) {
       txDetach(tx, blk.id);
       delete tx.blocks[blk.id];
@@ -643,6 +874,7 @@ export function movePage(id: string, target: { pageId?: string; section?: string
       }
     }
   });
+  return true;
 }
 
 export function toggleFavorite(id: string) {

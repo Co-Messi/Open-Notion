@@ -6,6 +6,7 @@ import { caretOffset, setCaret } from './caret';
 import { transact } from '../store/store';
 import { sanitizeInline } from '../lib/html';
 import { splitAtSelection } from './caret';
+import { SLASH_CHARS, asciiShortcut } from './ops';
 
 function readQuery(): { q: string; valid: boolean } {
   const s = slashState.get();
@@ -14,8 +15,9 @@ function readQuery(): { q: string; valid: boolean } {
   if (!el || document.activeElement !== el) return { q: '', valid: false };
   const off = caretOffset(el);
   const text = el.textContent || '';
-  if (off === null || off <= s.start || text[s.start] !== '/') return { q: '', valid: false };
-  return { q: text.slice(s.start + 1, off), valid: true };
+  if (off === null || off <= s.start || !SLASH_CHARS.includes(text[s.start])) return { q: '', valid: false };
+  // Full width letters typed with a CJK input method match like their ASCII forms.
+  return { q: asciiShortcut(text.slice(s.start + 1, off)), valid: true };
 }
 
 function score(item: SlashItem, q: string): number {
@@ -104,6 +106,7 @@ export function SlashMenu() {
       setCaret(el, st.start, off);
       const [before, after] = splitAtSelection(el);
       const html = sanitizeInline(before + after);
+      // Sanitized just above: the editable shows exactly what the store will hold.
       el.innerHTML = html;
       transact(tx => tx.setBlock(st.blockId, { html }), 'push');
     }

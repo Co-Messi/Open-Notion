@@ -1,11 +1,41 @@
-import { useLayoutEffect, useRef, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
 import { transact, getDoc, getUi } from '../store/store';
 import { sanitizeInline } from '../lib/html';
+import { openExternal, safeHref } from '../lib/url';
 import { caretOffset, setCaret, selectionOffsets } from './caret';
 import { tryMarkdown, maybeOpenSlash, exitFormatting, clearExitFormatting } from './ops';
 import { slashState, clearBlockSelection } from './controller';
 import { handlePaste } from './clipboard';
 import { inlineToolbarState } from './InlineToolbar';
+
+/**
+ * Opens an inline link's target without ever navigating this tab away: in app links
+ * (`#/...`) change the route, everything else opens in a new tab with noopener.
+ */
+export function openInlineHref(raw: string | null) {
+  const href = safeHref(raw);
+  if (!href) return;
+  if (href.startsWith('#/')) {
+    location.hash = href;
+    return;
+  }
+  if (href.startsWith('#')) return;
+  openExternal(new URL(href, location.href).href);
+}
+
+/**
+ * Click handling for links inside rich text. In an editable block a plain click only places
+ * the caret and Cmd or Ctrl click opens the link. In a locked (read only) block the browser
+ * would follow the link in this tab, so every click is intercepted and opened safely instead.
+ */
+export function handleInlineLinkClick(e: MouseEvent<HTMLElement>, editable: boolean) {
+  const a = (e.target as HTMLElement).closest?.('a[href]') as HTMLAnchorElement | null;
+  if (!a || !e.currentTarget.contains(a)) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (editable && !mod) return;
+  e.preventDefault();
+  openInlineHref(a.getAttribute('href'));
+}
 
 interface Props {
   blockId: string;
@@ -29,20 +59,27 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
   const committed = useRef<string | null>(null);
   const composing = useRef(false);
 
+  // Runs after every render, not only when `html` changes: a shortcut typed in one IME
+  // composition is committed and transformed in the same batch, so the prop can stay ''
+  // while the DOM still shows what was typed. Comparing with what was last committed
+  // catches that case.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (composing.current) return;
     if (html === committed.current) return;
-    if (el.innerHTML !== html) {
+    // Stored html is sanitized on the way in; sanitizing again here keeps the live DOM safe even
+    // if something unsanitized ever reaches the store.
+    const safe = sanitizeInline(html);
+    if (el.innerHTML !== safe) {
       const focused = document.activeElement === el;
       const off = focused ? caretOffset(el) : null;
-      el.innerHTML = html;
+      el.innerHTML = safe;
       if (focused && off !== null) setCaret(el, off);
     }
     committed.current = html;
     el.dataset.empty = String(isEmpty(el));
-  }, [html]);
+  });
 
   const commitRef = useRef<() => void>(() => {});
   const commit = () => {
@@ -64,6 +101,13 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
     }
   };
   commitRef.current = commit;
+
+  /** Markdown and slash triggers for inserted text. Returns true when the block was transformed. */
+  const shortcuts = (el: HTMLDivElement, data: string | null): boolean => {
+    if (tryMarkdown(el, blockId, data ? data.slice(-1) : data)) return true;
+    maybeOpenSlash(el, blockId, data);
+    return false;
+  };
 
   // Native beforeinput (React's onBeforeInput is a legacy polyfill without inputType).
   useLayoutEffect(() => {
@@ -119,9 +163,14 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
       onCompositionStart={() => {
         composing.current = true;
       }}
-      onCompositionEnd={() => {
+      onCompositionEnd={e => {
         composing.current = false;
         commit();
+        // CJK input methods deliver '／', '＃' and the like through composition, not insertText.
+        const el = ref.current;
+        if (el && e.data && !shortcuts(el, e.data) && slashState.get()?.blockId === blockId) {
+          window.dispatchEvent(new Event('on:slash-input'));
+        }
       }}
       onInput={e => {
         const native = e.nativeEvent as InputEvent;
@@ -131,13 +180,13 @@ export function Editable({ blockId, html, placeholder, alwaysPlaceholder, classN
           return;
         }
         const el = ref.current!;
-        if (native.inputType === 'insertText') {
-          if (tryMarkdown(el, blockId, native.data)) return;
-          maybeOpenSlash(el, blockId, native.data);
+        if (native.inputType === 'insertText' || native.inputType === 'insertFromComposition') {
+          if (shortcuts(el, native.data)) return;
         }
         commit();
         if (slashState.get()?.blockId === blockId) window.dispatchEvent(new Event('on:slash-input'));
       }}
+      onClick={e => handleInlineLinkClick(e, !readOnly)}
       onKeyDown={e => {
         if (e.nativeEvent.isComposing || e.keyCode === 229 || composing.current) return;
         onKeyDown?.(e, ref.current!);

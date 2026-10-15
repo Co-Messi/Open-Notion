@@ -12,6 +12,7 @@ import { PageProperties, DatabaseFull } from '../database/DatabaseView';
 import { importMarkdownIntoPage } from '../lib/exporter';
 import { relTime } from '../components/ui';
 import { sanitizeInline } from '../lib/html';
+import { handleInlineLinkClick } from './Editable';
 
 export function PageView({ pageId, peek = false }: { pageId: string; peek?: boolean }) {
   const page = usePage(pageId);
@@ -27,7 +28,8 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
       const d = (e as CustomEvent).detail;
       if (typeof d === 'string' && d !== pageId) return;
       setCommenting(true);
-      setQuote(typeof d === 'object' && d?.quote ? d.quote : '');
+      // The quote is plain text; it is stored as text and rendered as React text.
+      setQuote(typeof d === 'object' && typeof d?.quote === 'string' ? d.quote : '');
     };
     const onImport = (e: Event) => {
       if ((e as CustomEvent).detail !== pageId) return;
@@ -141,12 +143,7 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
             {!readOnly && (
               <div className="page-controls" style={peek && !hasIcon && !hasCover ? { marginTop: 40 } : undefined}>
                 {!hasIcon && (
-                  <button
-                    onClick={e => {
-                      updatePage(pageId, { icon: randomEmoji() });
-                      void e;
-                    }}
-                  >
+                  <button onClick={() => updatePage(pageId, { icon: randomEmoji() })}>
                     <Smile size={16} /> Add icon
                   </button>
                 )}
@@ -451,8 +448,9 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
                 {c.text}
               </div>
             ) : (
-              // Legacy comments stored html; it is sanitized again at render time.
-              <div dangerouslySetInnerHTML={{ __html: sanitizeInline(c.html || '') }} />
+              // Legacy comments stored html; it is sanitized again at render time, and its links
+              // open in a new tab instead of navigating the app away.
+              <div onClick={e => handleInlineLinkClick(e, false)} dangerouslySetInnerHTML={{ __html: sanitizeInline(c.html || '') }} />
             )}
           </div>
           <span
