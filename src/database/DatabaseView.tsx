@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Maximize2, Plus } from 'lucide-react';
 import { usePage, useDoc } from '../store/store';
 import { openPage, setRowProp } from '../store/actions';
@@ -39,6 +39,13 @@ function DbShell({ dbId, inline, prefKey, isLink }: { dbId: string; inline: bool
   const [filterEdit, setFilterEdit] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
 
+  // Filtering and sorting walk every row, so only redo them when an input actually changed.
+  const filtered = useMemo(() => {
+    const vs = db?.views || [];
+    const v = vs.find(x => x.id === viewId) || vs[0];
+    return v && db ? applyView(allRows, db.schema || [], v, query) : allRows;
+  }, [allRows, db, viewId, query]);
+
   if (!db || db.trashed || !db.isDatabase) {
     return (
       <div className={'db db-missing' + (inline ? ' db-inline' : '')}>
@@ -55,7 +62,7 @@ function DbShell({ dbId, inline, prefKey, isLink }: { dbId: string; inline: bool
     setViewIdState(id);
     writePref('on:dbview:' + prefKey, id);
   };
-  const rows = applyView(allRows, schema, view, query);
+  const rows = filtered;
   const defaults = filterDefaults(view, schema);
   const startFilter = (propId: string) => {
     const prop = schema.find(p => p.id === propId);

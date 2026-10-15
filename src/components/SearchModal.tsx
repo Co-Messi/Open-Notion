@@ -16,6 +16,23 @@ interface Result {
   group: string;
 }
 
+/*
+ * Parsing block html through a template element is the slow part of search. Blocks are
+ * immutable strings, so the plain text of each html string is cached across keystrokes. The
+ * cache is cleared when it grows past a bound, which keeps memory flat for huge workspaces.
+ */
+const textCache = new Map<string, string>();
+const TEXT_CACHE_MAX = 20000;
+function cachedText(html: string): string {
+  let t = textCache.get(html);
+  if (t === undefined) {
+    if (textCache.size >= TEXT_CACHE_MAX) textCache.clear();
+    t = htmlToText(html);
+    textCache.set(html, t);
+  }
+  return t;
+}
+
 function pageText(p: Page): string {
   const d = getDoc();
   const out: string[] = [];
@@ -23,7 +40,7 @@ function pageText(p: Page): string {
     ids.forEach(id => {
       const b = d.blocks[id];
       if (!b) return;
-      if (b.html) out.push(b.type === 'code' ? b.html : htmlToText(b.html));
+      if (b.html) out.push(b.type === 'code' ? b.html : cachedText(b.html));
       walk(b.children);
     });
   walk(p.content);
@@ -238,7 +255,7 @@ function SearchInner() {
 
 function Preview({ page, onOpen, onPeek }: { page: Page; onOpen: () => void; onPeek: () => void }) {
   const text = useMemo(() => pageText(page).slice(0, 1200), [page]);
-  const cover = page.cover ? (/^(data:|https?:)/.test(page.cover) ? `url("${page.cover}") center/cover` : page.cover) : undefined;
+  const cover = page.cover ? (/^(data:|https?:|blob:|\/)/.test(page.cover) ? `url("${page.cover}") center/cover` : page.cover) : undefined;
   return (
     <div className="search-preview">
       <div className="sp-cover" style={cover ? { background: cover } : undefined} />
