@@ -377,7 +377,8 @@ let inlineImagesStay = false;
  * Without IndexedDB the images stay inline.
  */
 function afterLoad() {
-  if (imageMigration || inlineImagesStay || mode !== 'normal') return;
+  // Only once the app started persistence (main.tsx), never in tests that drive the store directly.
+  if (!started || imageMigration || inlineImagesStay || mode !== 'normal') return;
   const urls = collectInlineImages(doc);
   if (!urls.length) return;
   imageMigration = storeInlineImages(urls)
