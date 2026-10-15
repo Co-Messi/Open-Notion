@@ -4,14 +4,14 @@
  */
 import type { Doc } from '../store/types';
 import { backupCurrentDoc, canEdit, getDoc, imageMigrationIdle, replaceDoc, showToast } from '../store/store';
-import { DOC_KEY, corruptCopies, readBackupMeta } from '../store/persist';
+import { CORRUPT_PREFIX, DOC_KEY, corruptCopies, readBackupMeta } from '../store/persist';
 import { DOC_VERSION } from '../store/migrate';
 import { getSaveState } from '../store/saveState';
-import { describeStorageFailure, storageGet, storageKeys } from '../lib/storage';
+import { describeStorageFailure, storageGet, storageKeys, storageRemove } from '../lib/storage';
 import { downloadText, exportWorkspaceJson } from '../lib/exporter';
 import { collectImageRefs, collectInlineImages } from '../lib/images';
 import { imageStats } from '../store/blobs';
-import { getRecentErrors } from '../lib/diagnostics';
+import { getRecentErrors, scrubMessage } from '../lib/diagnostics';
 import { readLastBackupAt } from '../store/persist';
 import { storageFacts } from '../lib/backup';
 import { askChoice, confirmDialog } from './ConfirmDialog';
@@ -76,9 +76,22 @@ export function downloadStoredKey(key: string) {
   if (raw !== null) downloadText(`opennotion-${key.replace(/[^a-z0-9]+/gi, '-')}.json`, raw);
 }
 
-/** Error text without quoted fragments, which could contain note content. */
-function scrub(message: string): string {
-  return message.replace(/"[^"]*"|'[^']*'/g, '"…"').slice(0, 300);
+/**
+ * Frees the space of one copy of unreadable data, after a confirmation that says the data
+ * will be gone. Copies are only ever deleted here, by the user. Returns true when deleted.
+ */
+export async function deleteKeptCopy(key: string): Promise<boolean> {
+  if (!key.startsWith(CORRUPT_PREFIX) || storageGet(key) === null) return false;
+  const ok = await confirmDialog({
+    title: 'Delete this copy?',
+    body: 'The unreadable data in this copy will be gone for good, and nothing can bring it back. Download it first if you might need it.',
+    confirmLabel: 'Delete copy',
+    danger: true,
+  });
+  if (!ok) return false;
+  storageRemove(key);
+  showToast('Copy deleted');
+  return storageGet(key) === null;
 }
 
 /** Facts for the diagnostics panel and the Copy diagnostics button. Never includes note content. */
@@ -112,8 +125,8 @@ export async function diagnosticsReport() {
     images,
     storage: facts,
     lastBackupAt: readLastBackupAt() ? new Date(readLastBackupAt()!).toISOString() : null,
-    unreadableCopies: corruptCopies().map(c => ({ key: c.key, chars: c.chars })),
+    unreadableCopies: corruptCopies().map(c => ({ key: c.key, at: c.at, chars: c.chars })),
     keys,
-    errors: getRecentErrors().map(e => ({ at: new Date(e.at).toISOString(), source: e.source, message: scrub(e.message) })),
+    errors: getRecentErrors().map(e => ({ at: new Date(e.at).toISOString(), source: e.source, message: scrubMessage(e.message) })),
   };
 }
