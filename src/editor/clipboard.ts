@@ -257,7 +257,7 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
     const specs = markdownToBlocks(text);
     if (!specs.length) return;
     const [before, after] = splitAtSelection(el);
-    const first = specs.shift()!;
+    const { depth: firstDepth, ...first } = specs.shift()! as Partial<Block> & { depth?: number };
     let lastId = blockId;
     transact(tx => {
       const firstIsPlain = first.type === 'text' || !first.type;
@@ -269,9 +269,17 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
         tx.setBlock(blockId, { html: sanitizeInline(before) });
         lastId = txInsertAfter(tx, lastId, first);
       }
+      // Nested list items keep their depth: depth 0 follows the previous top level block, deeper
+      // items become children of the closest shallower item (same rule as Markdown import).
+      const baseDepth = firstDepth || 0;
+      const stack: string[] = [lastId];
       for (const s of specs) {
-        delete (s as any).depth;
-        lastId = txInsertAfter(tx, lastId, s);
+        const { depth: raw, ...spec } = s as Partial<Block> & { depth?: number };
+        const d = Math.max(0, Math.min((raw || 0) - baseDepth, stack.length));
+        const id = d === 0 ? txInsertAfter(tx, stack[0], spec) : txInsertBlock(tx, { ...spec, parent: stack[d - 1] });
+        stack[d] = id;
+        stack.length = d + 1;
+        lastId = id;
       }
       if (htmlToText(after)) {
         const last = tx.block(lastId);

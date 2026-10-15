@@ -136,7 +136,7 @@ export function PageActionsMenu({ pageId, anchor, onClose }: { pageId: string; a
               showToast('Copied page contents');
             },
           },
-          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', right: `${MOD}D`, onSelect: () => openPage(duplicatePage(pageId)) },
+          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', onSelect: () => openPage(duplicatePage(pageId)) },
           { id: 'move', icon: <CornerUpRight size={16} />, label: 'Move to', right: `${MOD}⇧P`, keepOpen: true, onSelect: () => setMove(anchor) },
           {
             id: 'trash', icon: <Trash2 size={16} />, label: 'Move to Trash', danger: true,

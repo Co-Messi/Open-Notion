@@ -259,6 +259,14 @@ const BLOCK_SHORTCUTS: [RegExp, BlockType, Record<string, any>?][] = [
   [new RegExp('^["' + String.fromCharCode(0x300c) + ']$'), 'quote'],
 ];
 
+/** Full width inline mark characters (U+FF0A, U+FF40, U+FF3F, U+FF5E) and their ASCII forms. */
+const FULL_WIDTH_MARKS: Record<string, string> = {
+  [String.fromCharCode(0xff0a)]: '*',
+  [String.fromCharCode(0xff40)]: '`',
+  [String.fromCharCode(0xff3f)]: '_',
+  [String.fromCharCode(0xff5e)]: '~',
+};
+
 /** Called after input; returns true if the block was transformed. */
 export function tryMarkdown(el: HTMLElement, blockId: string, data: string | null): boolean {
   const d = getDoc();
@@ -312,23 +320,27 @@ export function tryMarkdown(el: HTMLElement, blockId: string, data: string | nul
     focusBlock(nid, 'start');
     return true;
   }
+  // Full width marks typed with a CJK input method count as their ASCII forms. The mapping is one
+  // character for one character, so offsets into the text stay valid.
+  const mark = data && data.length === 1 ? FULL_WIDTH_MARKS[data] ?? data : data;
+  const marks = Array.from(before, ch => FULL_WIDTH_MARKS[ch] ?? ch).join('');
   // Inline marks
-  if (data === '`') {
-    const m = before.match(/`([^`]+)`$/);
+  if (mark === '`') {
+    const m = marks.match(/`([^`]+)`$/);
     if (m) return wrapInline(el, m[0].length, `<code>${escapeHtml(m[1])}</code>`);
   }
-  if (data === '*') {
-    let m = before.match(/\*\*([^*]+)\*\*$/);
+  if (mark === '*') {
+    let m = marks.match(/\*\*([^*]+)\*\*$/);
     if (m) return wrapInline(el, m[0].length, `<b>${escapeHtml(m[1])}</b>`);
-    m = before.match(/(?:^|[^*])\*([^*\s][^*]*)\*$/);
+    m = marks.match(/(?:^|[^*])\*([^*\s][^*]*)\*$/);
     if (m) return wrapInline(el, m[1].length + 2, `<i>${escapeHtml(m[1])}</i>`);
   }
-  if (data === '_') {
-    const m = before.match(/(?:^|\s)_([^_\s][^_]*)_$/);
+  if (mark === '_') {
+    const m = marks.match(/(?:^|\s)_([^_\s][^_]*)_$/);
     if (m) return wrapInline(el, m[1].length + 2, `<i>${escapeHtml(m[1])}</i>`);
   }
-  if (data === '~') {
-    const m = before.match(/~([^~]+)~$/);
+  if (mark === '~') {
+    const m = marks.match(/~([^~]+)~$/);
     if (m) return wrapInline(el, m[0].length, `<s>${escapeHtml(m[1])}</s>`);
   }
   return false;

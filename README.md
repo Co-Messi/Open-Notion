@@ -75,7 +75,7 @@ Open <http://localhost:5174/app/> for the workspace (the landing page is at <htt
 
 Or skip the install and use the hosted demo at **[open-notion-app.vercel.app](https://open-notion-app.vercel.app/app/)**. Your data still stays in your own browser.
 
-To host it yourself, run `npm run build` and serve the `dist/` folder from any static host (GitHub Pages, Vercel, Netlify, Cloudflare Pages or a plain web server). Each visitor gets their own private workspace in their own browser. The security headers (a strict Content-Security-Policy, `Referrer-Policy: no-referrer` and `nosniff`) live in `vercel.json`; on another host, send the same headers. `npm run preview` serves them locally.
+To host it yourself, run `npm run build` and serve the `dist/` folder from any static host (GitHub Pages, Vercel, Netlify, Cloudflare Pages or a plain web server). Each visitor gets their own private workspace in their own browser. The security headers (a strict Content-Security-Policy, `Referrer-Policy: no-referrer` and `nosniff`) live in `vercel.json`; on another host, send the same headers (the built pages also carry the policy as a meta tag for hosts that cannot send headers). `npm run preview` serves them locally. Give OpenNotion its own origin: on a GitHub Pages user site (`username.github.io`) every project shares one origin, so any other page hosted there could read the notes stored by this one.
 
 ## Features
 

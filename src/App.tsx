@@ -12,7 +12,7 @@ import { InlineToolbar } from './editor/InlineToolbar';
 import { LinkToPagePicker } from './editor/LinkToPage';
 import { installSelectionKeys } from './editor/selection';
 import { useUi, useSettings, setUi, setSettings, getUi, getDoc, undo, redo, getSettings, useDoc } from './store/store';
-import { createPage, openPage, visitPage, pageTitle, duplicatePage } from './store/actions';
+import { createPage, openPage, visitPage, pageTitle } from './store/actions';
 import type { Route } from './store/store';
 import { Tooltip, MOD } from './components/ui';
 import { focusBlock } from './editor/controller';
@@ -132,11 +132,9 @@ export function App() {
       } else if ((k === 't' || e.code === 'KeyT') && e.altKey) {
         e.preventDefault();
         newTab();
-      } else if (k === 'd' && !editing && !getUi().selectedBlocks.length && getUi().route.name === 'page') {
-        e.preventDefault();
-        const r = getUi().route;
-        if (r.name === 'page') openPage(duplicatePage(r.pageId));
       }
+      // Cmd+D is left to the browser (bookmark) unless blocks are selected; block duplication is
+      // handled by the selection keys. Pages are duplicated from their menus.
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

@@ -128,6 +128,24 @@ describe('clipboard payloads', () => {
     for (const h of allHtml(d)) expect(htmlProblems(h)).toEqual([]);
   });
 
+  it('keeps list nesting when multi line text is pasted', async () => {
+    const t = await setup();
+    const text = ['- top one', '  - child', '    - grandchild', '- top two'].join('\n');
+    t.clip.handlePaste(pasteEvent({ 'text/plain': text }), ANCHOR, editable(), () => {});
+    const d = t.store.getDoc();
+    const find = (s: string) => Object.values(d.blocks).find(b => b.html === s)!;
+    const top = find('top one');
+    const child = find('child');
+    const grandchild = find('grandchild');
+    const two = find('top two');
+    expect(child.parent).toBe(top.id);
+    expect(grandchild.parent).toBe(child.id);
+    expect(two.parent).toBe(top.parent);
+    expect(top.children).toEqual([child.id]);
+    expect('depth' in top).toBe(false);
+    expect(checkInvariants(d)).toEqual([]);
+  });
+
   it('pastes a hostile payload without the nonce as escaped text only', async () => {
     const t = await setup();
     const before = Object.keys(t.store.getDoc().blocks).length;
