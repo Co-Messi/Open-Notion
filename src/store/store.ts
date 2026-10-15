@@ -614,13 +614,21 @@ export function setRestoreFocus(fn: (f: FocusHint | null | undefined) => void) {
   restoreFocus = fn;
 }
 
+/**
+ * The visit history is not part of undo, but it never lists a page the restored doc lacks
+ * (undoing a new page or an import would otherwise leave dangling ids behind).
+ */
+function recentFor(next: Doc): Doc['recent'] {
+  const r = doc.recent;
+  return r.every(x => Object.hasOwn(next.pages, x.id)) ? r : r.filter(x => Object.hasOwn(next.pages, x.id));
+}
+
 export function undo() {
   if (!canEdit()) return notifyReadOnly();
   const e = undoStack.pop();
   if (!e) return;
   redoStack.push({ doc, focus: focusProvider() });
-  // The visit history is not part of undo.
-  doc = { ...e.doc, recent: doc.recent };
+  doc = { ...e.doc, recent: recentFor(e.doc) };
   lastKey = null;
   markDirty();
   emit();
@@ -632,7 +640,7 @@ export function redo() {
   const e = redoStack.pop();
   if (!e) return;
   undoStack.push({ doc, focus: focusProvider() });
-  doc = { ...e.doc, recent: doc.recent };
+  doc = { ...e.doc, recent: recentFor(e.doc) };
   lastKey = null;
   markDirty();
   emit();
