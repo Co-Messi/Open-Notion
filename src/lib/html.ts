@@ -1,5 +1,7 @@
 /** Inline rich text helpers. Block text is stored as a small, sanitized HTML subset. */
 
+import { safeHref } from './url';
+
 const ALLOWED = new Set(['B', 'I', 'U', 'S', 'CODE', 'A', 'SPAN', 'BR']);
 const RENAME: Record<string, string> = { STRONG: 'B', EM: 'I', STRIKE: 'S', DEL: 'S', INS: 'U' };
 
@@ -140,8 +142,8 @@ function walk(src: Node, dst: Node, ctx: WalkCtx = {}) {
     }
     const clean = document.createElement(tag.toLowerCase());
     if (tag === 'A') {
-      const href = el.getAttribute('href') || '';
-      if (/^(https?:|mailto:|#|\/)/i.test(href)) clean.setAttribute('href', href);
+      const href = safeHref(el.getAttribute('href'));
+      if (href) clean.setAttribute('href', href);
     }
     dst.appendChild(clean);
     if (tag === 'BR') return;

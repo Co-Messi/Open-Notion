@@ -1,4 +1,7 @@
 import { useSyncExternalStore } from 'react';
+import { isSafeId } from '../lib/own';
+import { storageGetJson, storageSet } from '../lib/storage';
+import { parseHash } from './route';
 
 /** App-level tabs, like the desktop app's tab strip. Each tab keeps its own back/forward stack. */
 export interface Tab {
@@ -14,14 +17,34 @@ interface TabsState {
 const KEY = 'on:tabs:v1';
 const newId = () => Math.random().toString(36).slice(2, 9);
 
-function load(): TabsState {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) || 'null') as TabsState | null;
-    if (s && s.tabs?.length && s.tabs.some(t => t.id === s.active)) return s;
-  } catch {
-    /* ignore */
+/** Only hashes the router understands are kept; anything else becomes Home. */
+function cleanHash(h: unknown): string {
+  if (typeof h !== 'string' || h.length > 300) return '#/home';
+  const r = parseHash(h);
+  if (r.name === 'page') return h.startsWith('#/p/') ? h : '#/home';
+  return r.name === 'home' ? '#/home' : '#/' + r.name;
+}
+
+/** Validates persisted tabs; malformed entries are dropped instead of crashing the tab strip. */
+export function sanitizeTabs(raw: unknown): TabsState | null {
+  const s = raw as Partial<TabsState> | null;
+  if (!s || typeof s !== 'object' || !Array.isArray(s.tabs)) return null;
+  const tabs: Tab[] = [];
+  for (const t of s.tabs.slice(0, 50)) {
+    if (!t || typeof t !== 'object' || !isSafeId(t.id) || !Array.isArray(t.stack) || !t.stack.length) continue;
+    const stack = t.stack.slice(-50).map(cleanHash);
+    const idx = Number.isInteger(t.idx) ? Math.max(0, Math.min(t.idx, stack.length - 1)) : stack.length - 1;
+    if (!tabs.some(x => x.id === t.id)) tabs.push({ id: t.id, stack, idx });
   }
-  const t = { id: newId(), stack: [location.hash || '#/home'], idx: 0 };
+  if (!tabs.length) return null;
+  const active = tabs.some(t => t.id === s.active) ? (s.active as string) : tabs[0].id;
+  return { tabs, active };
+}
+
+function load(): TabsState {
+  const s = sanitizeTabs(storageGetJson<unknown>(KEY, null));
+  if (s) return s;
+  const t = { id: newId(), stack: [cleanHash(location.hash || '#/home')], idx: 0 };
   return { tabs: [t], active: t.id };
 }
 
@@ -29,11 +52,7 @@ let state: TabsState = load();
 const ls = new Set<() => void>();
 function set(s: TabsState) {
   state = s;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* ignore */
-  }
+  storageSet(KEY, JSON.stringify(state));
   ls.forEach(l => l());
 }
 export const getTabs = () => state;
@@ -60,7 +79,7 @@ function go(hash: string) {
 
 /** Called on every hashchange. */
 export function onHashChange() {
-  const hash = location.hash || '#/home';
+  const hash = cleanHash(location.hash || '#/home');
   const t = activeTab();
   if (navigatingInternally) {
     navigatingInternally = false;

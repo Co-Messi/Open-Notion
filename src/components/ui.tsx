@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { attrSel } from '../lib/dom';
 
 export type Anchor = DOMRect | { x: number; y: number; width?: number; height?: number } | HTMLElement | null;
 
@@ -183,7 +184,7 @@ export function Menu({ items, onClose, search, searchPlaceholder = 'Search actio
   const choose = (item: MenuItemDef, el?: HTMLElement) => {
     if (item.disabled) return;
     if (item.submenu) {
-      const rect = (el || listRef.current?.querySelector(`[data-mid="${item.id}"]`))?.getBoundingClientRect();
+      const rect = (el || listRef.current?.querySelector(attrSel('data-mid', item.id)))?.getBoundingClientRect();
       if (rect) setSub({ id: item.id, rect });
       return;
     }

@@ -3,6 +3,7 @@ import { Globe, Link2 } from 'lucide-react';
 import type { Block } from '../store/types';
 import { transact } from '../store/store';
 import { Popover } from '../components/ui';
+import { openExternal } from '../lib/url';
 
 export function BookmarkBlock({ block }: { block: Block }) {
   const [edit, setEdit] = useState<DOMRect | null>(null);
@@ -53,7 +54,7 @@ export function BookmarkBlock({ block }: { block: Block }) {
     /* keep raw */
   }
   return (
-    <div className="bookmark" onClick={() => window.open(block.url, '_blank', 'noopener')}>
+    <div className="bookmark" onClick={() => openExternal(block.url)}>
       <div className="bm-text">
         <div className="bm-title">{host}</div>
         <div className="bm-url" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

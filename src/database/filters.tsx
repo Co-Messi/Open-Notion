@@ -7,6 +7,7 @@ import { Popover, Menu, type Anchor, type MenuItemDef } from '../components/ui';
 import { PropIcon, OptionPill, Avatar, DatePicker, CheckboxBox } from './cells';
 import { FocusMenuSearch } from './focus';
 import { opsFor, opDef, defaultOp, filterActive, optionById, fmtDate, orderedProps } from './logic';
+import { attrSel } from '../lib/dom';
 
 /* ------------------------------------------------------------------ */
 /* View patch helpers                                                  */
@@ -99,7 +100,7 @@ export function FilterBar({ dbId, view, schema, editing, setEditing }: FilterBar
       setEditRect(null);
       return;
     }
-    const el = barRef.current?.querySelector(`[data-fid="${editing}"]`) as HTMLElement | null;
+    const el = barRef.current?.querySelector(attrSel('data-fid', editing)) as HTMLElement | null;
     if (el) setEditRect(el.getBoundingClientRect());
   }, [editing]);
 

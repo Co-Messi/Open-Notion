@@ -6,11 +6,14 @@ import { pageTitle } from '../store/actions';
 import { PageIconView } from './PageIcon';
 import { Tooltip, MOD, type Anchor } from './ui';
 import { WorkspaceIcon, WorkspaceSwitcherMenu } from './Sidebar';
+import { own } from '../lib/own';
+import { parseHash } from '../store/route';
 
 function useTabLabel(tab: Tab) {
   const hash = currentHash(tab);
-  const pageId = hash.startsWith('#/p/') ? hash.slice(4).split('?')[0] : null;
-  const page = useDoc(d => (pageId ? d.pages[pageId] : undefined), Object.is);
+  const route = parseHash(hash);
+  const pageId = route.name === 'page' ? route.pageId : null;
+  const page = useDoc(d => own(d.pages, pageId), Object.is);
   if (pageId) return { icon: <PageIconView page={page} size={16} emojiSize={14} />, label: page ? pageTitle(page) : 'Page not found' };
   if (hash === '#/chat') return { icon: <MessageCircle size={15} />, label: 'New AI chat' };
   if (hash === '#/meetings') return { icon: <CalendarDays size={15} />, label: 'Meetings' };

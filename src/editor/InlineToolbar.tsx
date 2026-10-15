@@ -8,6 +8,8 @@ import { selectionOffsets, setCaret } from './caret';
 import { Popover, Menu, Tooltip, MOD } from '../components/ui';
 import { TurnIntoMenu, BLOCK_TYPE_LABEL, ColorMenu } from './BlockMenu';
 import type { ColorName } from '../store/types';
+import { attrSel } from '../lib/dom';
+import { normalizeTypedLink } from '../lib/url';
 
 interface TBState {
   rect: DOMRect;
@@ -52,7 +54,7 @@ function exec(cmd: string, value?: string) {
 }
 
 function commitHost(blockId: string) {
-  const el = document.querySelector(`[data-editable-id="${blockId}"]`) as HTMLElement | null;
+  const el = document.querySelector(attrSel('data-editable-id', blockId)) as HTMLElement | null;
   if (!el) return;
   const offs = selectionOffsets(el);
   const clean = sanitizeInline(el.innerHTML);
@@ -275,14 +277,17 @@ export function LinkEditor({ anchor, blockId, onClose }: { anchor: DOMRect; bloc
   }, []);
   const apply = (v: string | null) => {
     const sel = window.getSelection();
-    const el = document.querySelector(`[data-editable-id="${blockId}"]`) as HTMLElement | null;
+    const el = document.querySelector(attrSel('data-editable-id', blockId)) as HTMLElement | null;
     el?.focus();
     if (saved.current && sel) {
       sel.removeAllRanges();
       sel.addRange(saved.current);
     }
-    let href = v?.trim() || null;
-    if (href && !/^(https?:|mailto:|#|\/)/i.test(href)) href = 'https://' + href;
+    const href = v?.trim() ? normalizeTypedLink(v) : null;
+    if (v?.trim() && !href) {
+      onClose();
+      return;
+    }
     applyLink(blockId, href);
     onClose();
   };

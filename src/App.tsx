@@ -19,15 +19,10 @@ import { focusBlock } from './editor/controller';
 import { TabBar } from './components/TabBar';
 import { TemplatesModal } from './components/Templates';
 import { onHashChange, back as tabBack, forward as tabForward, newTab } from './store/tabs';
-
-function parseHash(): Route {
-  const h = location.hash.replace(/^#\/?/, '');
-  if (h.startsWith('p/')) return { name: 'page', pageId: h.slice(2).split('?')[0] };
-  if (h === 'chat') return { name: 'chat' };
-  if (h === 'meetings') return { name: 'meetings' };
-  if (h === 'library') return { name: 'library' };
-  return { name: 'home' };
-}
+import { attrSel } from './lib/dom';
+import { isSafeId, own } from './lib/own';
+import { parseHash } from './store/route';
+import { storageGet, storageSet } from './lib/storage';
 
 function useTheme() {
   const theme = useSettings(s => s.theme);
@@ -56,7 +51,7 @@ export function App() {
     const apply = () => {
       onHashChange();
       const r = parseHash();
-      if (r.name === 'page' && !getDoc().pages[r.pageId]) {
+      if ((r.name === 'page' && !own(getDoc().pages, r.pageId)) || (r.name !== 'page' && /^#\/?p\//.test(location.hash))) {
         location.replace('#/home');
         return;
       }
@@ -65,16 +60,17 @@ export function App() {
         visitPage(r.pageId);
         expandSidebarTo(r.pageId);
         const blockId = new URLSearchParams(location.hash.split('?')[1] || '').get('b');
-        if (blockId) setTimeout(() => {
-          const el = document.querySelector(`.block[data-block-id="${blockId}"]`);
+        if (blockId && isSafeId(blockId)) setTimeout(() => {
+          const el = document.querySelector('.block' + attrSel('data-block-id', blockId));
           el?.scrollIntoView({ block: 'center' });
           if (el) setUi({ selectedBlocks: [blockId] });
         }, 50);
       }
     };
     if (!location.hash || location.hash === '#' || location.hash === '#/') {
-      const last = getDoc().recent[0]?.id;
-      if (getSettings().startPage === 'last' && last && getDoc().pages[last] && !getDoc().pages[last].trashed) location.hash = `#/p/${last}`;
+      const last = getDoc().recent?.[0]?.id;
+      const lastPage = own(getDoc().pages, last);
+      if (getSettings().startPage === 'last' && lastPage && !lastPage.trashed) location.hash = `#/p/${lastPage.id}`;
       else location.hash = '#/home';
     }
     apply();
@@ -104,7 +100,7 @@ export function App() {
       const k = e.key.toLowerCase();
       const ae = document.activeElement as HTMLElement | null;
       const editing = !!ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
-      if ((k === 'k' && !editing) || k === 'p' && !e.shiftKey || (k === 'k' && editing && window.getSelection()?.isCollapsed)) {
+      if ((k === 'k' && !editing) || (k === 'k' && editing && window.getSelection()?.isCollapsed)) {
         e.preventDefault();
         setUi({ searchOpen: !getUi().searchOpen });
       } else if (e.key === '\\' || e.code === 'Backslash') {
@@ -114,7 +110,7 @@ export function App() {
         e.preventDefault();
         const dark = document.body.classList.contains('theme-dark');
         setSettings({ theme: dark ? 'light' : 'dark' });
-      } else if (k === 'n' && !e.shiftKey && !e.altKey) {
+      } else if ((k === 'n' || (e.altKey && e.code === 'KeyN')) && !e.shiftKey) {
         e.preventDefault();
         openPage(createPage({ section: 'private' }));
       } else if (k === 'z' && !editing) {
@@ -235,7 +231,7 @@ function SidePeek() {
   const rowId = useUi(u => u.peekRowId);
   const page = useDoc(d => (rowId ? d.pages[rowId] : undefined), Object.is);
   const [menu, setMenu] = useState<DOMRect | null>(null);
-  const [width, setWidth] = useState(() => Number(localStorage.getItem('on:peek-w')) || 560);
+  const [width, setWidth] = useState(() => Number(storageGet('on:peek-w')) || 560);
   const widthRef = useRef(width);
   widthRef.current = width;
   if (!rowId || !page) return null;
@@ -259,7 +255,7 @@ function SidePeek() {
           const up = () => {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
-            localStorage.setItem('on:peek-w', String(widthRef.current));
+            storageSet('on:peek-w', String(widthRef.current));
           };
           window.addEventListener('pointermove', move);
           window.addEventListener('pointerup', up);

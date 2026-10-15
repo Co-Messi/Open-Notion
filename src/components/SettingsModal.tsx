@@ -8,6 +8,7 @@ import { exportWorkspaceJson, importMarkdownAsPage } from '../lib/exporter';
 import { createSeed } from '../store/seed';
 import { openPage } from '../store/actions';
 import type { Doc } from '../store/types';
+import { describeStorageFailure, storageGet, storageSet } from '../lib/storage';
 
 export function SettingsModal() {
   const open = useUi(u => u.settingsOpen);
@@ -110,7 +111,7 @@ function Preferences() {
         <Select value="en" options={[['en', 'English (US)']]} onChange={() => {}} />
       </Row>
       <Row title="Start week on Monday" desc="This will change how all calendars in your app look.">
-        <Switch on={localStorage.getItem('on:week-monday') === '1'} onChange={v => { localStorage.setItem('on:week-monday', v ? '1' : '0'); showToast('Saved'); setUi({}); }} />
+        <Switch on={storageGet('on:week-monday') === '1'} onChange={v => { const r = storageSet('on:week-monday', v ? '1' : '0'); showToast(r.ok ? 'Saved' : 'Could not save: ' + describeStorageFailure(r.reason)); setUi({}); }} />
       </Row>
       <h3>Desktop app</h3>
       <Row title="Open on start" desc="Choose what to show when the app opens.">
@@ -133,8 +134,8 @@ function Notifications() {
 }
 
 const SHORTCUTS: [string, string][] = [
-  ['Search', '⌘K / ⌘P'],
-  ['New page', '⌘N'],
+  ['Search', '⌘K'],
+  ['New page', '⌘⌥N'],
   ['Toggle sidebar', '⌘\\'],
   ['Toggle dark mode', '⌘⇧L'],
   ['Undo / Redo', '⌘Z / ⌘⇧Z'],

@@ -20,6 +20,7 @@ import { BookmarkBlock } from './BookmarkBlock';
 import { startBlockDrag } from './dnd';
 import { InlineDatabase } from '../database/DatabaseView';
 import { LinkEditorFor } from './LinkShortcut';
+import { attrSel } from '../lib/dom';
 
 const PLACEHOLDER: Partial<Record<Block['type'], string>> = {
   text: "Write something, or press '/' for commands…",
@@ -222,7 +223,7 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
     // Open the slash menu like Notion does after clicking "+".
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        const el = document.querySelector(`[data-editable-id="${nid}"]`) as HTMLElement | null;
+        const el = document.querySelector(attrSel('data-editable-id', nid)) as HTMLElement | null;
         if (el && !el.textContent) {
           document.execCommand('insertText', false, '/');
         }

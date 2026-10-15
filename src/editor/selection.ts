@@ -4,9 +4,10 @@ import { focusBlock, selectBlocks, clearBlockSelection } from './controller';
 import { indentBlocks, NON_EDITABLE } from './ops';
 import { copyBlocks, insertSerialized } from './clipboard';
 import type { BlockType } from '../store/types';
+import { attrSel } from '../lib/dom';
 
 function scopeOf(id: string): Element | null {
-  return document.querySelector(`.block[data-block-id="${id}"]`)?.closest('[data-editor-scope]') || null;
+  return document.querySelector('.block' + attrSel('data-block-id', id))?.closest('[data-editor-scope]') || null;
 }
 
 function visible(scope: Element | null): string[] {

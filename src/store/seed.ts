@@ -58,7 +58,7 @@ export function createSeed(): Doc {
       ['bulleted', 'Use <code>Tab</code> and <code>Shift+Tab</code> to indent and outdent blocks.'],
       ['bulleted', 'Type <code>[]</code> followed by a space to start a to-do list, <code>#</code> for a heading, <code>-</code> for a bulleted list.'],
       ['bulleted', 'Press <code>Esc</code> to select a block, then use arrow keys to move between blocks.'],
-      ['bulleted', 'Press <code>⌘K</code> or <code>⌘P</code> to search across all of your pages.'],
+      ['bulleted', 'Press <code>⌘K</code> to search across all of your pages.'],
     ]],
     ['divider'],
     ['h3', 'Things you can make'],

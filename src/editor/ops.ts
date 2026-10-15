@@ -6,6 +6,7 @@ import type { BlockType } from '../store/types';
 import { sanitizeInline, htmlToText, escapeHtml } from '../lib/html';
 import { splitAtSelection, textBeforeCaret, caretOffset, setCaret, plainLength, caretRect, atStart } from './caret';
 import { focusBlock, neighbor, selectBlocks, slashState } from './controller';
+import { attrSel } from '../lib/dom';
 
 export const CONTINUE_TYPES: BlockType[] = ['bulleted', 'numbered', 'todo', 'toggle'];
 export const TEXTUAL_TYPES: BlockType[] = ['text', 'h1', 'h2', 'h3', 'bulleted', 'numbered', 'todo', 'toggle', 'quote', 'callout'];
@@ -177,7 +178,7 @@ export function handleDeleteAtEnd(el: HTMLElement, blockId: string): boolean {
 
 export function focusTitle(pageId: string, offset: number | 'end' = 'end') {
   requestAnimationFrame(() => {
-    const t = document.querySelector(`[data-title="${pageId}"]`) as HTMLElement | null;
+    const t = document.querySelector(attrSel('data-title', pageId)) as HTMLElement | null;
     if (!t) return;
     t.focus();
     setCaret(t, offset);

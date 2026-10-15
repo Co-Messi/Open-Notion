@@ -1,0 +1,3939 @@
+{
+ "version": 1,
+ "pages": {
+  "p1cba5": {
+   "id": "p1cba5",
+   "parentId": null,
+   "content": [
+    "b6qjsm",
+    "b7brde",
+    "b8eb25",
+    "b937ig",
+    "bahrcr",
+    "bbzrpj",
+    "bc6zlo",
+    "bdfl4d",
+    "be35f1",
+    "bjihzr",
+    "bkhhgo",
+    "blnbwy",
+    "bs8pkw",
+    "bt94jg",
+    "bud4ce",
+    "bvtybt",
+    "bwylp1",
+    "bxxwdb"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792041801793,
+   "title": "Getting Started",
+   "icon": "👋"
+  },
+  "p2p1fc": {
+   "id": "p2p1fc",
+   "parentId": "p1cba5",
+   "content": [
+    "b3wgap",
+    "b42024",
+    "b5k8ae"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Example sub-page",
+   "icon": "📄"
+  },
+  "pyepmw": {
+   "id": "pyepmw",
+   "parentId": null,
+   "content": [
+    "bzaywp",
+    "b10pno4",
+    "b11m4kh",
+    "b12wwdd",
+    "b14hy0g",
+    "b157a5r",
+    "b16s6k4",
+    "b17keli",
+    "b181xyr",
+    "b19gas3"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792034661793,
+   "title": "Quick Note",
+   "icon": "📝"
+  },
+  "p1agex8": {
+   "id": "p1agex8",
+   "parentId": null,
+   "content": [
+    "b1brwzd",
+    "b1c7w2m",
+    "b1qzhmi",
+    "b227ysb"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792023861793,
+   "title": "Weekly To-do List",
+   "icon": "🗓️",
+   "cover": "linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)"
+  },
+  "p23xcxb": {
+   "id": "p23xcxb",
+   "parentId": null,
+   "content": [
+    "b24ht3y",
+    "b25xfrc",
+    "b26frtz",
+    "b2a0kkx",
+    "b2dp4gy",
+    "b2fbrl9",
+    "b2gc3zn",
+    "b2hq2fn",
+    "b2ixdtz",
+    "b2r8w15",
+    "b2s9zxs"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1791955461793,
+   "title": "Trip to Japan",
+   "icon": "🗾",
+   "cover": "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1600&q=80&auto=format&fit=crop",
+   "coverPos": 60
+  },
+  "p2tpsff": {
+   "id": "p2tpsff",
+   "parentId": null,
+   "content": [],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792031061793,
+   "title": "Task List",
+   "icon": "✅",
+   "isDatabase": true,
+   "inline": false,
+   "cover": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1600&q=80&auto=format&fit=crop",
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "status",
+     "name": "Status",
+     "type": "status",
+     "options": [
+      {
+       "id": "st1",
+       "name": "Not started",
+       "color": "default",
+       "group": "todo"
+      },
+      {
+       "id": "st2",
+       "name": "In progress",
+       "color": "blue",
+       "group": "in_progress"
+      },
+      {
+       "id": "st3",
+       "name": "Done",
+       "color": "green",
+       "group": "complete"
+      }
+     ]
+    },
+    {
+     "id": "assignee",
+     "name": "Assignee",
+     "type": "person"
+    },
+    {
+     "id": "due",
+     "name": "Due",
+     "type": "date"
+    },
+    {
+     "id": "priority",
+     "name": "Priority",
+     "type": "select",
+     "options": [
+      {
+       "id": "pr1",
+       "name": "High",
+       "color": "red"
+      },
+      {
+       "id": "pr2",
+       "name": "Medium",
+       "color": "yellow"
+      },
+      {
+       "id": "pr3",
+       "name": "Low",
+       "color": "green"
+      }
+     ]
+    }
+   ],
+   "views": [
+    {
+     "id": "v_board",
+     "name": "Board",
+     "type": "board",
+     "groupBy": "status",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    },
+    {
+     "id": "v_table",
+     "name": "Table",
+     "type": "table",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    },
+    {
+     "id": "v_cal",
+     "name": "Calendar",
+     "type": "calendar",
+     "dateProp": "due",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    },
+    {
+     "id": "v_tl",
+     "name": "Timeline",
+     "type": "timeline",
+     "dateProp": "due",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    }
+   ],
+   "rows": [
+    "p2uym3l",
+    "p31v1nk",
+    "p38iez5",
+    "p3f3trp",
+    "p3m995m",
+    "p3tj3ih"
+   ]
+  },
+  "p2uym3l": {
+   "id": "p2uym3l",
+   "parentId": "p2tpsff",
+   "content": [
+    "b2vbefg",
+    "b2w6r11",
+    "b2xt1ya",
+    "b2y8d8i",
+    "b2zv92e",
+    "b30thcf"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Draft project brief",
+   "icon": "📄",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st2",
+    "priority": "pr1",
+    "due": {
+     "start": "2026-10-14",
+     "end": "2026-10-17"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p31v1nk": {
+   "id": "p31v1nk",
+   "parentId": "p2tpsff",
+   "content": [
+    "b32hhfw",
+    "b33z54r",
+    "b3453wd",
+    "b35tem1",
+    "b36egt0",
+    "b37pmve"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Review design mockups",
+   "icon": "🎨",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st1",
+    "priority": "pr2",
+    "due": {
+     "start": "2026-10-17",
+     "end": "2026-10-21"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p38iez5": {
+   "id": "p38iez5",
+   "parentId": "p2tpsff",
+   "content": [
+    "b397zlz",
+    "b3anp6n",
+    "b3bl8ok",
+    "b3c2mvn",
+    "b3dbytp",
+    "b3e092a"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Set up weekly sync",
+   "icon": "📅",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st3",
+    "priority": "pr3",
+    "due": {
+     "start": "2026-10-11",
+     "end": "2026-10-12"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p3f3trp": {
+   "id": "p3f3trp",
+   "parentId": "p2tpsff",
+   "content": [
+    "b3g8n7h",
+    "b3hzubt",
+    "b3imnm7",
+    "b3j8iw7",
+    "b3knx7i",
+    "b3lv45i"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Write launch checklist",
+   "icon": "🚀",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st1",
+    "priority": "pr1",
+    "due": {
+     "start": "2026-10-19",
+     "end": "2026-10-25"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p3m995m": {
+   "id": "p3m995m",
+   "parentId": "p2tpsff",
+   "content": [
+    "b3ns1bw",
+    "b3oxlts",
+    "b3p2kr5",
+    "b3qgu7c",
+    "b3rmgij",
+    "b3s4ks5"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Collect user feedback",
+   "icon": "💬",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st2",
+    "priority": "pr2",
+    "due": {
+     "start": "2026-10-16",
+     "end": "2026-10-23"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p3tj3ih": {
+   "id": "p3tj3ih",
+   "parentId": "p2tpsff",
+   "content": [
+    "b3uqgyw",
+    "b3vol4a",
+    "b3wbkmj",
+    "b3x650b",
+    "b3yvi7j",
+    "b3zknpj"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Update onboarding docs",
+   "icon": "📚",
+   "dbId": "p2tpsff",
+   "props": {
+    "status": "st3",
+    "priority": "pr3",
+    "due": {
+     "start": "2026-10-09",
+     "end": "2026-10-11"
+    },
+    "assignee": [
+     "me"
+    ]
+   }
+  },
+  "p40n21x": {
+   "id": "p40n21x",
+   "parentId": null,
+   "content": [],
+   "createdAt": 1791782661793,
+   "updatedAt": 1791955461793,
+   "title": "Reading List",
+   "icon": "📚",
+   "isDatabase": true,
+   "inline": false,
+   "cover": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1600&q=80&auto=format&fit=crop",
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "type",
+     "name": "Type",
+     "type": "select",
+     "options": [
+      {
+       "id": "ty1",
+       "name": "Book",
+       "color": "orange"
+      },
+      {
+       "id": "ty2",
+       "name": "Article",
+       "color": "blue"
+      },
+      {
+       "id": "ty3",
+       "name": "Podcast",
+       "color": "purple"
+      }
+     ]
+    },
+    {
+     "id": "author",
+     "name": "Author",
+     "type": "text"
+    },
+    {
+     "id": "rating",
+     "name": "Rating",
+     "type": "select",
+     "options": [
+      {
+       "id": "ra5",
+       "name": "★★★★★",
+       "color": "yellow"
+      },
+      {
+       "id": "ra4",
+       "name": "★★★★",
+       "color": "yellow"
+      },
+      {
+       "id": "ra3",
+       "name": "★★★",
+       "color": "yellow"
+      }
+     ]
+    },
+    {
+     "id": "done",
+     "name": "Finished",
+     "type": "checkbox"
+    },
+    {
+     "id": "link",
+     "name": "Link",
+     "type": "url"
+    }
+   ],
+   "views": [
+    {
+     "id": "v_gal",
+     "name": "Gallery",
+     "type": "gallery",
+     "hidden": [
+      "author",
+      "link"
+     ],
+     "filters": [],
+     "sorts": [],
+     "cardPreview": "cover"
+    },
+    {
+     "id": "v_rtable",
+     "name": "All",
+     "type": "table",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    }
+   ],
+   "rows": [
+    "p410isn",
+    "p45bpon",
+    "p49rhbs",
+    "p4dt54h",
+    "p4hqrwi"
+   ]
+  },
+  "p410isn": {
+   "id": "p410isn",
+   "parentId": "p40n21x",
+   "content": [
+    "b42fo0n",
+    "b437a59",
+    "b44kqyr"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "The Design of Everyday Things",
+   "icon": "📕",
+   "dbId": "p40n21x",
+   "cover": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&q=80&auto=format&fit=crop",
+   "props": {
+    "type": "ty1",
+    "author": "Don Norman",
+    "rating": "ra5",
+    "done": true
+   }
+  },
+  "p45bpon": {
+   "id": "p45bpon",
+   "parentId": "p40n21x",
+   "content": [
+    "b46tzzn",
+    "b47ys9g",
+    "b48rs9p"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "How to Take Smart Notes",
+   "icon": "📗",
+   "dbId": "p40n21x",
+   "cover": "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1600&q=80&auto=format&fit=crop",
+   "props": {
+    "type": "ty1",
+    "author": "Sönke Ahrens",
+    "rating": "ra4",
+    "done": false
+   }
+  },
+  "p49rhbs": {
+   "id": "p49rhbs",
+   "parentId": "p40n21x",
+   "content": [
+    "b4acjuy",
+    "b4b2w4r",
+    "b4cvcr3"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Shape Up",
+   "icon": "📘",
+   "dbId": "p40n21x",
+   "cover": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&q=80&auto=format&fit=crop",
+   "props": {
+    "type": "ty2",
+    "author": "Ryan Singer",
+    "rating": "ra4",
+    "done": true
+   }
+  },
+  "p4dt54h": {
+   "id": "p4dt54h",
+   "parentId": "p40n21x",
+   "content": [
+    "b4e1dj0",
+    "b4fpk0d",
+    "b4gq97o"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "The Knowledge Project",
+   "icon": "🎧",
+   "dbId": "p40n21x",
+   "cover": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80&auto=format&fit=crop",
+   "props": {
+    "type": "ty3",
+    "author": "Shane Parrish",
+    "rating": "ra3",
+    "done": false
+   }
+  },
+  "p4hqrwi": {
+   "id": "p4hqrwi",
+   "parentId": "p40n21x",
+   "content": [
+    "b4iv2s7",
+    "b4j7x3n",
+    "b4k8g5a"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Deep Work",
+   "icon": "📙",
+   "dbId": "p40n21x",
+   "cover": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop",
+   "props": {
+    "type": "ty1",
+    "author": "Cal Newport",
+    "rating": "ra5",
+    "done": true
+   }
+  },
+  "p4lrev0": {
+   "id": "p4lrev0",
+   "parentId": null,
+   "content": [],
+   "createdAt": 1791782661793,
+   "updatedAt": 1791869061793,
+   "title": "Journal",
+   "icon": "📔",
+   "isDatabase": true,
+   "inline": false,
+   "cover": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1600&q=80&auto=format&fit=crop",
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "created",
+     "name": "Created",
+     "type": "created_time"
+    },
+    {
+     "id": "tags",
+     "name": "Tags",
+     "type": "multi_select",
+     "options": [
+      {
+       "id": "tg1",
+       "name": "Daily",
+       "color": "blue"
+      },
+      {
+       "id": "tg2",
+       "name": "Ideas",
+       "color": "pink"
+      },
+      {
+       "id": "tg3",
+       "name": "Gratitude",
+       "color": "green"
+      }
+     ]
+    }
+   ],
+   "views": [
+    {
+     "id": "v_list",
+     "name": "List",
+     "type": "list",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    }
+   ],
+   "rows": [
+    "p4m7adl",
+    "p4pow72",
+    "p4s3s7l"
+   ]
+  },
+  "p4m7adl": {
+   "id": "p4m7adl",
+   "parentId": "p4lrev0",
+   "content": [
+    "b4niihu",
+    "b4ouedq"
+   ],
+   "createdAt": 1791955461793,
+   "updatedAt": 1792038261793,
+   "title": "Morning pages",
+   "icon": "☀️",
+   "dbId": "p4lrev0",
+   "props": {
+    "tags": [
+     "tg1"
+    ]
+   }
+  },
+  "p4pow72": {
+   "id": "p4pow72",
+   "parentId": "p4lrev0",
+   "content": [
+    "b4qcjbh",
+    "b4rdeyj"
+   ],
+   "createdAt": 1791869061793,
+   "updatedAt": 1792038261793,
+   "title": "Things I learned this week",
+   "icon": "💡",
+   "dbId": "p4lrev0",
+   "props": {
+    "tags": [
+     "tg2"
+    ]
+   }
+  },
+  "p4s3s7l": {
+   "id": "p4s3s7l",
+   "parentId": "p4lrev0",
+   "content": [
+    "b4tnvkq",
+    "b4um1i7"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Three good things",
+   "icon": "🌱",
+   "dbId": "p4lrev0",
+   "props": {
+    "tags": [
+     "tg3",
+     "tg1"
+    ]
+   }
+  },
+  "p4vbw8c": {
+   "id": "p4vbw8c",
+   "parentId": null,
+   "content": [
+    "b6w6aqt",
+    "b6xs7hh",
+    "b77f1zk",
+    "b785159",
+    "b79ep13"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792020261793,
+   "title": "Teamspace Home",
+   "icon": "🏠",
+   "cover": "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)"
+  },
+  "p4wvk1j": {
+   "id": "p4wvk1j",
+   "parentId": "p4vbw8c",
+   "content": [
+    "b59ohsa",
+    "b5aidet",
+    "b5blte5",
+    "b5ci60b",
+    "b5did2u"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792013061793,
+   "title": "Engineering Wiki",
+   "icon": "📖"
+  },
+  "p4xdgkc": {
+   "id": "p4xdgkc",
+   "parentId": "p4wvk1j",
+   "content": [
+    "b4z0ftj",
+    "b500ifc",
+    "b514bal",
+    "b52c6hj",
+    "b53exu9"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Onboarding guide",
+   "icon": "🧭"
+  },
+  "p4ymjjh": {
+   "id": "p4ymjjh",
+   "parentId": "p4wvk1j",
+   "content": [
+    "b54rl40",
+    "b55yp2h",
+    "b560wfc",
+    "b57xgp6",
+    "b582txp"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Code review guidelines",
+   "icon": "🔍"
+  },
+  "p5e6qw0": {
+   "id": "p5e6qw0",
+   "parentId": "p4vbw8c",
+   "content": [],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792027461793,
+   "title": "Product Roadmap",
+   "icon": "🚀",
+   "isDatabase": true,
+   "inline": false,
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "rstatus",
+     "name": "Status",
+     "type": "status",
+     "options": [
+      {
+       "id": "rs1",
+       "name": "Planned",
+       "color": "default",
+       "group": "todo"
+      },
+      {
+       "id": "rs2",
+       "name": "Building",
+       "color": "blue",
+       "group": "in_progress"
+      },
+      {
+       "id": "rs3",
+       "name": "Shipped",
+       "color": "green",
+       "group": "complete"
+      }
+     ]
+    },
+    {
+     "id": "quarter",
+     "name": "Quarter",
+     "type": "select",
+     "options": [
+      {
+       "id": "q1",
+       "name": "Q4 2026",
+       "color": "purple"
+      },
+      {
+       "id": "q2",
+       "name": "Q1 2027",
+       "color": "pink"
+      }
+     ]
+    },
+    {
+     "id": "owner",
+     "name": "Owner",
+     "type": "person"
+    }
+   ],
+   "views": [
+    {
+     "id": "v_rb",
+     "name": "Board",
+     "type": "board",
+     "groupBy": "rstatus",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    },
+    {
+     "id": "v_rt",
+     "name": "Table",
+     "type": "table",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    }
+   ],
+   "rows": [
+    "p5f17zt",
+    "p5hkrbr",
+    "p5jyqk5",
+    "p5ld2s0"
+   ]
+  },
+  "p5f17zt": {
+   "id": "p5f17zt",
+   "parentId": "p5e6qw0",
+   "content": [
+    "b5gs7n1"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Dark mode polish",
+   "icon": "🌙",
+   "dbId": "p5e6qw0",
+   "props": {
+    "rstatus": "rs3",
+    "quarter": "q1",
+    "owner": [
+     "me"
+    ]
+   }
+  },
+  "p5hkrbr": {
+   "id": "p5hkrbr",
+   "parentId": "p5e6qw0",
+   "content": [
+    "b5iwz10"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Offline sync",
+   "icon": "🔄",
+   "dbId": "p5e6qw0",
+   "props": {
+    "rstatus": "rs2",
+    "quarter": "q1",
+    "owner": [
+     "me"
+    ]
+   }
+  },
+  "p5jyqk5": {
+   "id": "p5jyqk5",
+   "parentId": "p5e6qw0",
+   "content": [
+    "b5k9vxa"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Public API",
+   "icon": "🧩",
+   "dbId": "p5e6qw0",
+   "props": {
+    "rstatus": "rs1",
+    "quarter": "q2",
+    "owner": [
+     "me"
+    ]
+   }
+  },
+  "p5ld2s0": {
+   "id": "p5ld2s0",
+   "parentId": "p5e6qw0",
+   "content": [
+    "b5mk5qs"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Mobile widgets",
+   "icon": "📱",
+   "dbId": "p5e6qw0",
+   "props": {
+    "rstatus": "rs1",
+    "quarter": "q2",
+    "owner": [
+     "me"
+    ]
+   }
+  },
+  "p5nuntb": {
+   "id": "p5nuntb",
+   "parentId": "p4vbw8c",
+   "content": [],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792016661793,
+   "title": "Meeting Notes",
+   "icon": "🗒️",
+   "isDatabase": true,
+   "inline": true,
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "mdate",
+     "name": "Date",
+     "type": "date"
+    },
+    {
+     "id": "mtype",
+     "name": "Type",
+     "type": "select",
+     "options": [
+      {
+       "id": "mt1",
+       "name": "Standup",
+       "color": "blue"
+      },
+      {
+       "id": "mt2",
+       "name": "Planning",
+       "color": "orange"
+      },
+      {
+       "id": "mt3",
+       "name": "Retro",
+       "color": "purple"
+      }
+     ]
+    },
+    {
+     "id": "attendees",
+     "name": "Attendees",
+     "type": "person"
+    }
+   ],
+   "views": [
+    {
+     "id": "v_mt",
+     "name": "Table",
+     "type": "table",
+     "hidden": [],
+     "filters": [],
+     "sorts": []
+    }
+   ],
+   "rows": [
+    "p5oie8r",
+    "p5tp6wu",
+    "p5yjblh",
+    "p63xqty",
+    "p68rng7"
+   ]
+  },
+  "p5oie8r": {
+   "id": "p5oie8r",
+   "parentId": "p5nuntb",
+   "content": [
+    "b5prdz8",
+    "b5q7x9r",
+    "b5rkc1v",
+    "b5sqjm3"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Design review",
+   "dbId": "p5nuntb",
+   "props": {
+    "mdate": {
+     "start": "2026-10-15T10:00",
+     "end": "2026-10-15T11:00"
+    },
+    "mtype": "mt2",
+    "attendees": [
+     "me"
+    ]
+   }
+  },
+  "p5tp6wu": {
+   "id": "p5tp6wu",
+   "parentId": "p5nuntb",
+   "content": [
+    "b5uvi15",
+    "b5vvxk0",
+    "b5w0xqv",
+    "b5x2ivl"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Eng kickoff",
+   "dbId": "p5nuntb",
+   "props": {
+    "mdate": {
+     "start": "2026-10-15T12:00",
+     "end": "2026-10-15T13:00"
+    },
+    "mtype": "mt2",
+    "attendees": [
+     "me"
+    ]
+   }
+  },
+  "p5yjblh": {
+   "id": "p5yjblh",
+   "parentId": "p5nuntb",
+   "content": [
+    "b5zi9eo",
+    "b60e234",
+    "b611yhb",
+    "b62gqwp"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Product updates",
+   "dbId": "p5nuntb",
+   "props": {
+    "mdate": {
+     "start": "2026-10-15T16:00",
+     "end": "2026-10-15T17:00"
+    },
+    "mtype": "mt1",
+    "attendees": [
+     "me"
+    ]
+   }
+  },
+  "p63xqty": {
+   "id": "p63xqty",
+   "parentId": "p5nuntb",
+   "content": [
+    "b64mvcz",
+    "b65gfzw",
+    "b66q87v",
+    "b67p490"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Daily standup",
+   "dbId": "p5nuntb",
+   "props": {
+    "mdate": {
+     "start": "2026-10-14T09:30",
+     "end": "2026-10-14T09:45"
+    },
+    "mtype": "mt1",
+    "attendees": [
+     "me"
+    ]
+   }
+  },
+  "p68rng7": {
+   "id": "p68rng7",
+   "parentId": "p5nuntb",
+   "content": [
+    "b693ark",
+    "b6akeju",
+    "b6b8kgy",
+    "b6c01ig"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792038261793,
+   "title": "Q3 retrospective",
+   "dbId": "p5nuntb",
+   "props": {
+    "mdate": {
+     "start": "2026-10-09T15:00",
+     "end": "2026-10-09T16:00"
+    },
+    "mtype": "mt3",
+    "attendees": [
+     "me"
+    ]
+   }
+  },
+  "p6d05dt": {
+   "id": "p6d05dt",
+   "parentId": null,
+   "content": [
+    "b6eaknd",
+    "b6fnfmk",
+    "b6grwa7",
+    "b6hb3lb",
+    "b6ieqko",
+    "b6junh2"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792009461793,
+   "title": "Product Specs",
+   "icon": "📐",
+   "cover": "linear-gradient(120deg, #f093fb 0%, #f5576c 100%)"
+  },
+  "p6kat6c": {
+   "id": "p6kat6c",
+   "parentId": null,
+   "content": [
+    "b6lyjh1",
+    "b6mp9nj",
+    "b6vqpfy"
+   ],
+   "createdAt": 1791782661793,
+   "updatedAt": 1792005861793,
+   "title": "Architecture",
+   "icon": "🏗️"
+  },
+  "x64uwgofpnh3": {
+   "id": "x64uwgofpnh3",
+   "title": "Fixture blocks",
+   "parentId": null,
+   "content": [
+    "381ry8m6pnh3",
+    "xi2v0ou1pnh3",
+    "kklxbisqpnh3",
+    "xo9wkoegpnh3",
+    "ntp83asypnh3",
+    "m6wkd7dopnh3",
+    "pjg932hapnh3",
+    "rng4fpaqpnh3",
+    "am7tje1fpnh3",
+    "67hkzrshpnh3",
+    "glyi39xdpnh3",
+    "ztiyz3rlpnh3",
+    "1dcj8fprpnh3",
+    "3zg4avl4pnh3",
+    "qaulb13spnh3",
+    "2p2wer0dpnh3",
+    "98gxxu2fpnh3",
+    "qyqdpjonpnh3",
+    "fqn7qoggpnh3",
+    "rch61px7pnh3",
+    "m4dmq3aqpnh4"
+   ],
+   "createdAt": 1792042293783,
+   "updatedAt": 1792042293784,
+   "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+   "cover": "linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)",
+   "coverPos": 30,
+   "font": "serif",
+   "smallText": true,
+   "fullWidth": true,
+   "comments": [
+    {
+     "id": "wxlam80xpnh4",
+     "html": "<i>“Plain bold”</i> looks good &amp; fine",
+     "createdAt": 1760000000000,
+     "author": "You"
+    },
+    {
+     "id": "t8hnohpppnh4",
+     "html": "second &lt;b&gt;",
+     "createdAt": 1760000001000,
+     "author": "You"
+    }
+   ]
+  },
+  "r3kfrgrhpnh3": {
+   "id": "r3kfrgrhpnh3",
+   "title": "Fixture sub page",
+   "parentId": "x64uwgofpnh3",
+   "content": [],
+   "createdAt": 1792042293783,
+   "updatedAt": 1792042293783,
+   "icon": "📄",
+   "locked": true
+  },
+  "rbbro3uppnh4": {
+   "id": "rbbro3uppnh4",
+   "title": "Fixture trashed page",
+   "parentId": "x64uwgofpnh3",
+   "content": [],
+   "createdAt": 1792042293784,
+   "updatedAt": 1792042293784,
+   "trashed": true,
+   "trashedAt": 1792042293784
+  },
+  "joiiy81zpnh4": {
+   "id": "joiiy81zpnh4",
+   "title": "Fixture database",
+   "parentId": "x64uwgofpnh3",
+   "content": [],
+   "createdAt": 1792042293784,
+   "updatedAt": 1792042293785,
+   "isDatabase": true,
+   "inline": true,
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "7lahz5iwpnh4",
+     "name": "Tags",
+     "type": "multi_select",
+     "options": []
+    },
+    {
+     "id": "55afivdqpnh4",
+     "name": "Text",
+     "type": "text",
+     "width": 240
+    },
+    {
+     "id": "c7yv5fzvpnh4",
+     "name": "Number",
+     "type": "number",
+     "numberFormat": "dollar"
+    },
+    {
+     "id": "0vgkiawopnh4",
+     "name": "Select",
+     "type": "select",
+     "options": [
+      {
+       "id": "tooeb2zdpnh4",
+       "name": "Alpha",
+       "color": "yellow"
+      }
+     ]
+    },
+    {
+     "id": "5j9m6ya9pnh4",
+     "name": "Multi-select",
+     "type": "multi_select",
+     "options": [
+      {
+       "id": "begqfn0rpnh4",
+       "name": "Beta",
+       "color": "orange"
+      }
+     ]
+    },
+    {
+     "id": "rp9oyiarpnh4",
+     "name": "Status",
+     "type": "status",
+     "options": [
+      {
+       "id": "4mczv85bpnh4",
+       "name": "Not started",
+       "color": "default",
+       "group": "todo"
+      },
+      {
+       "id": "n2oh2l5spnh4",
+       "name": "In progress",
+       "color": "blue",
+       "group": "in_progress"
+      },
+      {
+       "id": "ekxoho48pnh4",
+       "name": "Done",
+       "color": "green",
+       "group": "complete"
+      }
+     ]
+    },
+    {
+     "id": "g5im8eqvpnh4",
+     "name": "Date",
+     "type": "date"
+    },
+    {
+     "id": "p8n6eqonpnh4",
+     "name": "Checkbox",
+     "type": "checkbox"
+    },
+    {
+     "id": "e54uuf6epnh4",
+     "name": "URL",
+     "type": "url"
+    },
+    {
+     "id": "gmcc2elcpnh4",
+     "name": "Email",
+     "type": "email"
+    },
+    {
+     "id": "ritt7l04pnh4",
+     "name": "Phone",
+     "type": "phone"
+    },
+    {
+     "id": "qa7ntrhfpnh4",
+     "name": "Person",
+     "type": "person",
+     "options": [
+      {
+       "id": "d4lxgrkvpnh4",
+       "name": "Ada",
+       "color": "pink"
+      }
+     ]
+    },
+    {
+     "id": "ttdvy2dgpnh4",
+     "name": "Created time",
+     "type": "created_time"
+    },
+    {
+     "id": "pb8oblf8pnh4",
+     "name": "Last edited time",
+     "type": "last_edited_time"
+    }
+   ],
+   "views": [
+    {
+     "id": "vod4d212pnh4",
+     "name": "Table",
+     "type": "table",
+     "hidden": [
+      "ritt7l04pnh4"
+     ],
+     "filters": [
+      {
+       "id": "kn66cfs6pnh5",
+       "propId": "c7yv5fzvpnh4",
+       "op": "gt",
+       "value": 1
+      },
+      {
+       "id": "1gy58zi0pnh5",
+       "propId": "0vgkiawopnh4",
+       "op": "is",
+       "value": "tooeb2zdpnh4"
+      }
+     ],
+     "sorts": [
+      {
+       "id": "ry81scg3pnh5",
+       "propId": "g5im8eqvpnh4",
+       "dir": "desc"
+      }
+     ],
+     "calcs": {
+      "c7yv5fzvpnh4": "sum",
+      "title": "count"
+     },
+     "wrapCells": true,
+     "order": [
+      "pb8oblf8pnh4",
+      "ttdvy2dgpnh4",
+      "qa7ntrhfpnh4",
+      "ritt7l04pnh4",
+      "gmcc2elcpnh4",
+      "e54uuf6epnh4",
+      "p8n6eqonpnh4",
+      "g5im8eqvpnh4",
+      "rp9oyiarpnh4",
+      "5j9m6ya9pnh4",
+      "0vgkiawopnh4",
+      "c7yv5fzvpnh4",
+      "55afivdqpnh4",
+      "7lahz5iwpnh4",
+      "title"
+     ]
+    },
+    {
+     "id": "i80s4cbrpnh5",
+     "name": "Board",
+     "type": "board",
+     "hidden": [
+      "55afivdqpnh4",
+      "c7yv5fzvpnh4",
+      "g5im8eqvpnh4",
+      "p8n6eqonpnh4",
+      "e54uuf6epnh4",
+      "gmcc2elcpnh4",
+      "ritt7l04pnh4",
+      "qa7ntrhfpnh4",
+      "ttdvy2dgpnh4",
+      "pb8oblf8pnh4"
+     ],
+     "filters": [],
+     "sorts": [],
+     "groupBy": "rp9oyiarpnh4"
+    },
+    {
+     "id": "zlyfcaixpnh5",
+     "name": "List",
+     "type": "list",
+     "hidden": [
+      "55afivdqpnh4",
+      "c7yv5fzvpnh4",
+      "g5im8eqvpnh4",
+      "p8n6eqonpnh4",
+      "e54uuf6epnh4",
+      "gmcc2elcpnh4",
+      "ritt7l04pnh4",
+      "qa7ntrhfpnh4",
+      "ttdvy2dgpnh4",
+      "pb8oblf8pnh4"
+     ],
+     "filters": [],
+     "sorts": []
+    },
+    {
+     "id": "7ic3fbf3pnh5",
+     "name": "Gallery",
+     "type": "gallery",
+     "hidden": [
+      "55afivdqpnh4",
+      "c7yv5fzvpnh4",
+      "g5im8eqvpnh4",
+      "p8n6eqonpnh4",
+      "e54uuf6epnh4",
+      "gmcc2elcpnh4",
+      "ritt7l04pnh4",
+      "qa7ntrhfpnh4",
+      "ttdvy2dgpnh4",
+      "pb8oblf8pnh4"
+     ],
+     "filters": [],
+     "sorts": [],
+     "cardPreview": "cover",
+     "cardSize": "large"
+    },
+    {
+     "id": "7b5k2i0kpnh5",
+     "name": "Calendar",
+     "type": "calendar",
+     "hidden": [],
+     "filters": [],
+     "sorts": [],
+     "dateProp": "g5im8eqvpnh4"
+    },
+    {
+     "id": "awynkg00pnh5",
+     "name": "Timeline",
+     "type": "timeline",
+     "hidden": [],
+     "filters": [],
+     "sorts": [],
+     "dateProp": "g5im8eqvpnh4"
+    }
+   ],
+   "rows": [
+    "efmzmfb7pnh4",
+    "564evtxnpnh4",
+    "2biybtptpnh4"
+   ]
+  },
+  "efmzmfb7pnh4": {
+   "id": "efmzmfb7pnh4",
+   "title": "Row one",
+   "parentId": "joiiy81zpnh4",
+   "content": [],
+   "createdAt": 1792042293784,
+   "updatedAt": 1792042293785,
+   "dbId": "joiiy81zpnh4",
+   "props": {
+    "55afivdqpnh4": "Some text",
+    "c7yv5fzvpnh4": 42.5,
+    "0vgkiawopnh4": "tooeb2zdpnh4",
+    "5j9m6ya9pnh4": [
+     "begqfn0rpnh4"
+    ],
+    "rp9oyiarpnh4": "n2oh2l5spnh4",
+    "g5im8eqvpnh4": {
+     "start": "2026-03-08T01:30",
+     "end": "2026-03-09"
+    },
+    "p8n6eqonpnh4": true,
+    "e54uuf6epnh4": "https://example.com",
+    "gmcc2elcpnh4": "a@example.com",
+    "ritt7l04pnh4": "+1 555 0100",
+    "qa7ntrhfpnh4": [
+     "You"
+    ]
+   }
+  },
+  "564evtxnpnh4": {
+   "id": "564evtxnpnh4",
+   "title": "Row two",
+   "parentId": "joiiy81zpnh4",
+   "content": [
+    "5k4sfgivpnh5"
+   ],
+   "createdAt": 1792042293784,
+   "updatedAt": 1792042293785,
+   "dbId": "joiiy81zpnh4",
+   "props": {
+    "g5im8eqvpnh4": {
+     "start": "2026-11-01"
+    }
+   }
+  },
+  "2biybtptpnh4": {
+   "id": "2biybtptpnh4",
+   "title": "",
+   "parentId": "joiiy81zpnh4",
+   "content": [],
+   "createdAt": 1792042293784,
+   "updatedAt": 1792042293784,
+   "dbId": "joiiy81zpnh4",
+   "props": {}
+  },
+  "x1c42prapnh5": {
+   "id": "x1c42prapnh5",
+   "title": "Fixture full page database",
+   "parentId": null,
+   "content": [],
+   "createdAt": 1792042293785,
+   "updatedAt": 1792042293786,
+   "isDatabase": true,
+   "inline": false,
+   "schema": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "title"
+    },
+    {
+     "id": "9w651ybjpnh5",
+     "name": "Status",
+     "type": "status",
+     "options": [
+      {
+       "id": "t8oarfk6pnh5",
+       "name": "Not started",
+       "color": "default",
+       "group": "todo"
+      },
+      {
+       "id": "osk1vdvcpnh5",
+       "name": "In progress",
+       "color": "blue",
+       "group": "in_progress"
+      },
+      {
+       "id": "y748amlcpnh5",
+       "name": "Done",
+       "color": "green",
+       "group": "complete"
+      }
+     ]
+    }
+   ],
+   "views": [
+    {
+     "id": "r6ru0vgppnh5",
+     "name": "Board",
+     "type": "board",
+     "hidden": [],
+     "filters": [],
+     "sorts": [],
+     "groupBy": "9w651ybjpnh5"
+    }
+   ],
+   "rows": [
+    "5ekffpe2pnh5",
+    "l9wmp5phpnh5"
+   ]
+  },
+  "5ekffpe2pnh5": {
+   "id": "5ekffpe2pnh5",
+   "title": "",
+   "parentId": "x1c42prapnh5",
+   "content": [],
+   "createdAt": 1792042293785,
+   "updatedAt": 1792042293785,
+   "dbId": "x1c42prapnh5",
+   "props": {
+    "9w651ybjpnh5": "t8oarfk6pnh5"
+   }
+  },
+  "l9wmp5phpnh5": {
+   "id": "l9wmp5phpnh5",
+   "title": "",
+   "parentId": "x1c42prapnh5",
+   "content": [],
+   "createdAt": 1792042293785,
+   "updatedAt": 1792042293785,
+   "dbId": "x1c42prapnh5",
+   "props": {
+    "9w651ybjpnh5": "osk1vdvcpnh5"
+   }
+  },
+  "kbzorfrvpnh5": {
+   "id": "kbzorfrvpnh5",
+   "title": "",
+   "parentId": "x1c42prapnh5",
+   "content": [],
+   "createdAt": 1792042293785,
+   "updatedAt": 1792042293785,
+   "dbId": "x1c42prapnh5",
+   "props": {
+    "9w651ybjpnh5": "y748amlcpnh5"
+   },
+   "trashed": true,
+   "trashedAt": 1792042293785
+  }
+ },
+ "blocks": {
+  "b3wgap": {
+   "id": "b3wgap",
+   "type": "text",
+   "html": "Sub-pages live inside other pages. You can nest them as deep as you like.",
+   "children": [],
+   "parent": "p2p1fc",
+   "createdAt": 1791869061793
+  },
+  "b42024": {
+   "id": "b42024",
+   "type": "callout",
+   "html": "Drag a page in the sidebar onto another page to move it inside.",
+   "children": [],
+   "parent": "p2p1fc",
+   "createdAt": 1791869061793,
+   "icon": "💡",
+   "color": "gray_background"
+  },
+  "b5k8ae": {
+   "id": "b5k8ae",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p2p1fc",
+   "createdAt": 1791869061793
+  },
+  "b6qjsm": {
+   "id": "b6qjsm",
+   "type": "text",
+   "html": "👋 Welcome to your workspace!",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "b7brde": {
+   "id": "b7brde",
+   "type": "h2",
+   "html": "Here are the basics",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "b8eb25": {
+   "id": "b8eb25",
+   "type": "todo",
+   "html": "Click anywhere and just start typing",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "b937ig": {
+   "id": "b937ig",
+   "type": "todo",
+   "html": "Hit <code>/</code> to see all the types of content you can add: headers, columns, sub pages, databases, etc.",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bahrcr": {
+   "id": "bahrcr",
+   "type": "todo",
+   "html": "Highlight any text, and use the menu that pops up to <b>style</b> <i>your</i> <s>writing</s> <code>however</code> <span class=\"c-blue\">you</span> <span class=\"bg-yellow\">like</span>",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bbzrpj": {
+   "id": "bbzrpj",
+   "type": "todo",
+   "html": "See the <code>⋮⋮</code> to the left of this checkbox on hover? Click and drag to move this line",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bc6zlo": {
+   "id": "bc6zlo",
+   "type": "todo",
+   "html": "Click the <code>New page</code> button at the top of your sidebar to add a new page",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bdfl4d": {
+   "id": "bdfl4d",
+   "type": "todo",
+   "html": "Drag a block to the right edge of another block to make columns",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "be35f1": {
+   "id": "be35f1",
+   "type": "toggle",
+   "html": "This is a toggle block. Click the little triangle to see more useful tips!",
+   "children": [
+    "bffsdz",
+    "bga443",
+    "bhs1y0",
+    "bi8sdu"
+   ],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793,
+   "open": false
+  },
+  "bffsdz": {
+   "id": "bffsdz",
+   "type": "bulleted",
+   "html": "Use <code>Tab</code> and <code>Shift+Tab</code> to indent and outdent blocks.",
+   "children": [],
+   "parent": "be35f1",
+   "createdAt": 1791869061793
+  },
+  "bga443": {
+   "id": "bga443",
+   "type": "bulleted",
+   "html": "Type <code>[]</code> followed by a space to start a to-do list, <code>#</code> for a heading, <code>-</code> for a bulleted list.",
+   "children": [],
+   "parent": "be35f1",
+   "createdAt": 1791869061793
+  },
+  "bhs1y0": {
+   "id": "bhs1y0",
+   "type": "bulleted",
+   "html": "Press <code>Esc</code> to select a block, then use arrow keys to move between blocks.",
+   "children": [],
+   "parent": "be35f1",
+   "createdAt": 1791869061793
+  },
+  "bi8sdu": {
+   "id": "bi8sdu",
+   "type": "bulleted",
+   "html": "Press <code>⌘K</code> or <code>⌘P</code> to search across all of your pages.",
+   "children": [],
+   "parent": "be35f1",
+   "createdAt": 1791869061793
+  },
+  "bjihzr": {
+   "id": "bjihzr",
+   "type": "divider",
+   "html": "",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bkhhgo": {
+   "id": "bkhhgo",
+   "type": "h3",
+   "html": "Things you can make",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "blnbwy": {
+   "id": "blnbwy",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "bmge1d",
+    "boki65",
+    "bqmc05"
+   ],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bmge1d": {
+   "id": "bmge1d",
+   "type": "column",
+   "html": "",
+   "children": [
+    "bnml6z"
+   ],
+   "parent": "blnbwy",
+   "createdAt": 1791869061793
+  },
+  "bnml6z": {
+   "id": "bnml6z",
+   "type": "callout",
+   "html": "<b>Docs</b><br>Write with headings, quotes, code and images.",
+   "children": [],
+   "parent": "bmge1d",
+   "createdAt": 1791869061793,
+   "icon": "📝",
+   "color": "gray_background"
+  },
+  "boki65": {
+   "id": "boki65",
+   "type": "column",
+   "html": "",
+   "children": [
+    "bpb5zh"
+   ],
+   "parent": "blnbwy",
+   "createdAt": 1791869061793
+  },
+  "bpb5zh": {
+   "id": "bpb5zh",
+   "type": "callout",
+   "html": "<b>Projects</b><br>Track work on boards, tables and calendars.",
+   "children": [],
+   "parent": "boki65",
+   "createdAt": 1791869061793,
+   "icon": "🚀",
+   "color": "blue_background"
+  },
+  "bqmc05": {
+   "id": "bqmc05",
+   "type": "column",
+   "html": "",
+   "children": [
+    "br89xl"
+   ],
+   "parent": "blnbwy",
+   "createdAt": 1791869061793
+  },
+  "br89xl": {
+   "id": "br89xl",
+   "type": "callout",
+   "html": "<b>Wikis</b><br>Nest pages to build a knowledge base.",
+   "children": [],
+   "parent": "bqmc05",
+   "createdAt": 1791869061793,
+   "icon": "📚",
+   "color": "yellow_background"
+  },
+  "bs8pkw": {
+   "id": "bs8pkw",
+   "type": "quote",
+   "html": "Simplicity is about subtracting the obvious and adding the meaningful.",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bt94jg": {
+   "id": "bt94jg",
+   "type": "code",
+   "html": "function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet(\"world\"));",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793,
+   "language": "javascript"
+  },
+  "bud4ce": {
+   "id": "bud4ce",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793,
+   "pageId": "p2p1fc"
+  },
+  "bvtybt": {
+   "id": "bvtybt",
+   "type": "text",
+   "html": "See it in action:",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bwylp1": {
+   "id": "bwylp1",
+   "type": "image",
+   "html": "",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793,
+   "url": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80&auto=format&fit=crop",
+   "caption": "A calm desk is a productive desk."
+  },
+  "bxxwdb": {
+   "id": "bxxwdb",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p1cba5",
+   "createdAt": 1791869061793
+  },
+  "bzaywp": {
+   "id": "bzaywp",
+   "type": "text",
+   "html": "Quickly jot down ideas, links, and anything else you want to come back to.",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b10pno4": {
+   "id": "b10pno4",
+   "type": "h3",
+   "html": "Ideas",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b11m4kh": {
+   "id": "b11m4kh",
+   "type": "bulleted",
+   "html": "Weekend trip to the coast",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b12wwdd": {
+   "id": "b12wwdd",
+   "type": "bulleted",
+   "html": "Learn a new keyboard shortcut every day",
+   "children": [
+    "b13m22l"
+   ],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b13m22l": {
+   "id": "b13m22l",
+   "type": "bulleted",
+   "html": "<code>⌘⇧L</code> toggles dark mode",
+   "children": [],
+   "parent": "b12wwdd",
+   "createdAt": 1791869061793
+  },
+  "b14hy0g": {
+   "id": "b14hy0g",
+   "type": "bulleted",
+   "html": "Read <a href=\"https://en.wikipedia.org/wiki/Zettelkasten\">about Zettelkasten</a>",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b157a5r": {
+   "id": "b157a5r",
+   "type": "h3",
+   "html": "Groceries",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b16s6k4": {
+   "id": "b16s6k4",
+   "type": "todo",
+   "html": "Oat milk",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "b17keli": {
+   "id": "b17keli",
+   "type": "todo",
+   "html": "Coffee beans",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b181xyr": {
+   "id": "b181xyr",
+   "type": "todo",
+   "html": "Blueberries",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b19gas3": {
+   "id": "b19gas3",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "pyepmw",
+   "createdAt": 1791869061793
+  },
+  "b1brwzd": {
+   "id": "b1brwzd",
+   "type": "callout",
+   "html": "Plan the week on Sunday, review it on Friday.",
+   "children": [],
+   "parent": "p1agex8",
+   "createdAt": 1791869061793,
+   "icon": "📌",
+   "color": "yellow_background"
+  },
+  "b1c7w2m": {
+   "id": "b1c7w2m",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "b1dsqp1",
+    "b1ikc19",
+    "b1m5vtt"
+   ],
+   "parent": "p1agex8",
+   "createdAt": 1791869061793
+  },
+  "b1dsqp1": {
+   "id": "b1dsqp1",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1ewupm",
+    "b1fdoa0",
+    "b1gfkw7",
+    "b1h0feu"
+   ],
+   "parent": "b1c7w2m",
+   "createdAt": 1791869061793
+  },
+  "b1ewupm": {
+   "id": "b1ewupm",
+   "type": "h3",
+   "html": "Monday",
+   "children": [],
+   "parent": "b1dsqp1",
+   "createdAt": 1791869061793
+  },
+  "b1fdoa0": {
+   "id": "b1fdoa0",
+   "type": "todo",
+   "html": "Inbox zero",
+   "children": [],
+   "parent": "b1dsqp1",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "b1gfkw7": {
+   "id": "b1gfkw7",
+   "type": "todo",
+   "html": "Team standup",
+   "children": [],
+   "parent": "b1dsqp1",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "b1h0feu": {
+   "id": "b1h0feu",
+   "type": "todo",
+   "html": "Draft project brief",
+   "children": [],
+   "parent": "b1dsqp1",
+   "createdAt": 1791869061793
+  },
+  "b1ikc19": {
+   "id": "b1ikc19",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1jvhjg",
+    "b1kxsis",
+    "b1lb65i"
+   ],
+   "parent": "b1c7w2m",
+   "createdAt": 1791869061793
+  },
+  "b1jvhjg": {
+   "id": "b1jvhjg",
+   "type": "h3",
+   "html": "Tuesday",
+   "children": [],
+   "parent": "b1ikc19",
+   "createdAt": 1791869061793
+  },
+  "b1kxsis": {
+   "id": "b1kxsis",
+   "type": "todo",
+   "html": "Design review",
+   "children": [],
+   "parent": "b1ikc19",
+   "createdAt": 1791869061793
+  },
+  "b1lb65i": {
+   "id": "b1lb65i",
+   "type": "todo",
+   "html": "Gym 🏋️",
+   "children": [],
+   "parent": "b1ikc19",
+   "createdAt": 1791869061793
+  },
+  "b1m5vtt": {
+   "id": "b1m5vtt",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1ngojh",
+    "b1oxl8z",
+    "b1p6bqf"
+   ],
+   "parent": "b1c7w2m",
+   "createdAt": 1791869061793
+  },
+  "b1ngojh": {
+   "id": "b1ngojh",
+   "type": "h3",
+   "html": "Wednesday",
+   "children": [],
+   "parent": "b1m5vtt",
+   "createdAt": 1791869061793
+  },
+  "b1oxl8z": {
+   "id": "b1oxl8z",
+   "type": "todo",
+   "html": "Write launch checklist",
+   "children": [],
+   "parent": "b1m5vtt",
+   "createdAt": 1791869061793
+  },
+  "b1p6bqf": {
+   "id": "b1p6bqf",
+   "type": "todo",
+   "html": "Call mom",
+   "children": [],
+   "parent": "b1m5vtt",
+   "createdAt": 1791869061793
+  },
+  "b1qzhmi": {
+   "id": "b1qzhmi",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "b1r6dn4",
+    "b1u3lmx",
+    "b1yizzq"
+   ],
+   "parent": "p1agex8",
+   "createdAt": 1791869061793
+  },
+  "b1r6dn4": {
+   "id": "b1r6dn4",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1sojex",
+    "b1ts7bl"
+   ],
+   "parent": "b1qzhmi",
+   "createdAt": 1791869061793
+  },
+  "b1sojex": {
+   "id": "b1sojex",
+   "type": "h3",
+   "html": "Thursday",
+   "children": [],
+   "parent": "b1r6dn4",
+   "createdAt": 1791869061793
+  },
+  "b1ts7bl": {
+   "id": "b1ts7bl",
+   "type": "todo",
+   "html": "Collect user feedback",
+   "children": [],
+   "parent": "b1r6dn4",
+   "createdAt": 1791869061793
+  },
+  "b1u3lmx": {
+   "id": "b1u3lmx",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1vglwm",
+    "b1w4c2i",
+    "b1x40b0"
+   ],
+   "parent": "b1qzhmi",
+   "createdAt": 1791869061793
+  },
+  "b1vglwm": {
+   "id": "b1vglwm",
+   "type": "h3",
+   "html": "Friday",
+   "children": [],
+   "parent": "b1u3lmx",
+   "createdAt": 1791869061793
+  },
+  "b1w4c2i": {
+   "id": "b1w4c2i",
+   "type": "todo",
+   "html": "Weekly review",
+   "children": [],
+   "parent": "b1u3lmx",
+   "createdAt": 1791869061793
+  },
+  "b1x40b0": {
+   "id": "b1x40b0",
+   "type": "todo",
+   "html": "Plan next week",
+   "children": [],
+   "parent": "b1u3lmx",
+   "createdAt": 1791869061793
+  },
+  "b1yizzq": {
+   "id": "b1yizzq",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b1z9fwj",
+    "b208hyq",
+    "b21znpq"
+   ],
+   "parent": "b1qzhmi",
+   "createdAt": 1791869061793
+  },
+  "b1z9fwj": {
+   "id": "b1z9fwj",
+   "type": "h3",
+   "html": "Weekend",
+   "children": [],
+   "parent": "b1yizzq",
+   "createdAt": 1791869061793
+  },
+  "b208hyq": {
+   "id": "b208hyq",
+   "type": "todo",
+   "html": "Farmers market",
+   "children": [],
+   "parent": "b1yizzq",
+   "createdAt": 1791869061793
+  },
+  "b21znpq": {
+   "id": "b21znpq",
+   "type": "todo",
+   "html": "Read for an hour",
+   "children": [],
+   "parent": "b1yizzq",
+   "createdAt": 1791869061793
+  },
+  "b227ysb": {
+   "id": "b227ysb",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p1agex8",
+   "createdAt": 1791869061793
+  },
+  "b24ht3y": {
+   "id": "b24ht3y",
+   "type": "callout",
+   "html": "<b>Dates:</b> April 3 to April 14 · <b>Budget:</b> ¥350,000",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "icon": "✈️",
+   "color": "blue_background"
+  },
+  "b25xfrc": {
+   "id": "b25xfrc",
+   "type": "h2",
+   "html": "Itinerary",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793
+  },
+  "b26frtz": {
+   "id": "b26frtz",
+   "type": "toggle",
+   "html": "<b>Tokyo</b> · Days 1 to 4",
+   "children": [
+    "b27mxf5",
+    "b28ew0x",
+    "b29z00h"
+   ],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "open": true
+  },
+  "b27mxf5": {
+   "id": "b27mxf5",
+   "type": "bulleted",
+   "html": "Shibuya crossing at night",
+   "children": [],
+   "parent": "b26frtz",
+   "createdAt": 1791869061793
+  },
+  "b28ew0x": {
+   "id": "b28ew0x",
+   "type": "bulleted",
+   "html": "TeamLab Planets",
+   "children": [],
+   "parent": "b26frtz",
+   "createdAt": 1791869061793
+  },
+  "b29z00h": {
+   "id": "b29z00h",
+   "type": "bulleted",
+   "html": "Day trip to Kamakura",
+   "children": [],
+   "parent": "b26frtz",
+   "createdAt": 1791869061793
+  },
+  "b2a0kkx": {
+   "id": "b2a0kkx",
+   "type": "toggle",
+   "html": "<b>Kyoto</b> · Days 5 to 9",
+   "children": [
+    "b2bw7pz",
+    "b2ckukp"
+   ],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "open": false
+  },
+  "b2bw7pz": {
+   "id": "b2bw7pz",
+   "type": "bulleted",
+   "html": "Fushimi Inari at sunrise",
+   "children": [],
+   "parent": "b2a0kkx",
+   "createdAt": 1791869061793
+  },
+  "b2ckukp": {
+   "id": "b2ckukp",
+   "type": "bulleted",
+   "html": "Arashiyama bamboo grove",
+   "children": [],
+   "parent": "b2a0kkx",
+   "createdAt": 1791869061793
+  },
+  "b2dp4gy": {
+   "id": "b2dp4gy",
+   "type": "toggle",
+   "html": "<b>Osaka</b> · Days 10 to 12",
+   "children": [
+    "b2eo473"
+   ],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "open": false
+  },
+  "b2eo473": {
+   "id": "b2eo473",
+   "type": "bulleted",
+   "html": "Dotonbori street food",
+   "children": [],
+   "parent": "b2dp4gy",
+   "createdAt": 1791869061793
+  },
+  "b2fbrl9": {
+   "id": "b2fbrl9",
+   "type": "h2",
+   "html": "Budget",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793
+  },
+  "b2gc3zn": {
+   "id": "b2gc3zn",
+   "type": "table",
+   "html": "",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "headerRow": true,
+   "rows": [
+    [
+     "Item",
+     "Cost",
+     "Booked"
+    ],
+    [
+     "Flights",
+     "¥120,000",
+     "✅"
+    ],
+    [
+     "Hotels",
+     "¥140,000",
+     "✅"
+    ],
+    [
+     "JR Pass",
+     "¥50,000",
+     ""
+    ],
+    [
+     "Food & fun",
+     "¥40,000",
+     ""
+    ]
+   ]
+  },
+  "b2hq2fn": {
+   "id": "b2hq2fn",
+   "type": "h2",
+   "html": "Packing list",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793
+  },
+  "b2ixdtz": {
+   "id": "b2ixdtz",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "b2j65hs",
+    "b2n7hnl"
+   ],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793
+  },
+  "b2j65hs": {
+   "id": "b2j65hs",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b2knafz",
+    "b2lru5h",
+    "b2mk6yc"
+   ],
+   "parent": "b2ixdtz",
+   "createdAt": 1791869061793
+  },
+  "b2knafz": {
+   "id": "b2knafz",
+   "type": "todo",
+   "html": "Passport",
+   "children": [],
+   "parent": "b2j65hs",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "b2lru5h": {
+   "id": "b2lru5h",
+   "type": "todo",
+   "html": "Power adapter",
+   "children": [],
+   "parent": "b2j65hs",
+   "createdAt": 1791869061793
+  },
+  "b2mk6yc": {
+   "id": "b2mk6yc",
+   "type": "todo",
+   "html": "Walking shoes",
+   "children": [],
+   "parent": "b2j65hs",
+   "createdAt": 1791869061793
+  },
+  "b2n7hnl": {
+   "id": "b2n7hnl",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b2omrdv",
+    "b2pn290",
+    "b2qcon5"
+   ],
+   "parent": "b2ixdtz",
+   "createdAt": 1791869061793
+  },
+  "b2omrdv": {
+   "id": "b2omrdv",
+   "type": "todo",
+   "html": "Camera",
+   "children": [],
+   "parent": "b2n7hnl",
+   "createdAt": 1791869061793
+  },
+  "b2pn290": {
+   "id": "b2pn290",
+   "type": "todo",
+   "html": "Rain jacket",
+   "children": [],
+   "parent": "b2n7hnl",
+   "createdAt": 1791869061793
+  },
+  "b2qcon5": {
+   "id": "b2qcon5",
+   "type": "todo",
+   "html": "Suica card",
+   "children": [],
+   "parent": "b2n7hnl",
+   "createdAt": 1791869061793
+  },
+  "b2r8w15": {
+   "id": "b2r8w15",
+   "type": "image",
+   "html": "",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793,
+   "url": "https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=1600&q=80&auto=format&fit=crop",
+   "caption": ""
+  },
+  "b2s9zxs": {
+   "id": "b2s9zxs",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p23xcxb",
+   "createdAt": 1791869061793
+  },
+  "b2vbefg": {
+   "id": "b2vbefg",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b2w6r11": {
+   "id": "b2w6r11",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b2xt1ya": {
+   "id": "b2xt1ya",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b2y8d8i": {
+   "id": "b2y8d8i",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b2zv92e": {
+   "id": "b2zv92e",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b30thcf": {
+   "id": "b30thcf",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p2uym3l",
+   "createdAt": 1791869061793
+  },
+  "b32hhfw": {
+   "id": "b32hhfw",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b33z54r": {
+   "id": "b33z54r",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b3453wd": {
+   "id": "b3453wd",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b35tem1": {
+   "id": "b35tem1",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b36egt0": {
+   "id": "b36egt0",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b37pmve": {
+   "id": "b37pmve",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p31v1nk",
+   "createdAt": 1791869061793
+  },
+  "b397zlz": {
+   "id": "b397zlz",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3anp6n": {
+   "id": "b3anp6n",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3bl8ok": {
+   "id": "b3bl8ok",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3c2mvn": {
+   "id": "b3c2mvn",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3dbytp": {
+   "id": "b3dbytp",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3e092a": {
+   "id": "b3e092a",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p38iez5",
+   "createdAt": 1791869061793
+  },
+  "b3g8n7h": {
+   "id": "b3g8n7h",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3hzubt": {
+   "id": "b3hzubt",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3imnm7": {
+   "id": "b3imnm7",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3j8iw7": {
+   "id": "b3j8iw7",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3knx7i": {
+   "id": "b3knx7i",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3lv45i": {
+   "id": "b3lv45i",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p3f3trp",
+   "createdAt": 1791869061793
+  },
+  "b3ns1bw": {
+   "id": "b3ns1bw",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3oxlts": {
+   "id": "b3oxlts",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3p2kr5": {
+   "id": "b3p2kr5",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3qgu7c": {
+   "id": "b3qgu7c",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3rmgij": {
+   "id": "b3rmgij",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3s4ks5": {
+   "id": "b3s4ks5",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p3m995m",
+   "createdAt": 1791869061793
+  },
+  "b3uqgyw": {
+   "id": "b3uqgyw",
+   "type": "h3",
+   "html": "Context",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b3vol4a": {
+   "id": "b3vol4a",
+   "type": "text",
+   "html": "Why this matters and what done looks like.",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b3wbkmj": {
+   "id": "b3wbkmj",
+   "type": "h3",
+   "html": "Checklist",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b3x650b": {
+   "id": "b3x650b",
+   "type": "todo",
+   "html": "Outline",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b3yvi7j": {
+   "id": "b3yvi7j",
+   "type": "todo",
+   "html": "First draft",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b3zknpj": {
+   "id": "b3zknpj",
+   "type": "todo",
+   "html": "Share for feedback",
+   "children": [],
+   "parent": "p3tj3ih",
+   "createdAt": 1791869061793
+  },
+  "b42fo0n": {
+   "id": "b42fo0n",
+   "type": "h3",
+   "html": "Key ideas",
+   "children": [],
+   "parent": "p410isn",
+   "createdAt": 1791869061793
+  },
+  "b437a59": {
+   "id": "b437a59",
+   "type": "bulleted",
+   "html": "Notes and highlights go here.",
+   "children": [],
+   "parent": "p410isn",
+   "createdAt": 1791869061793
+  },
+  "b44kqyr": {
+   "id": "b44kqyr",
+   "type": "quote",
+   "html": "Favorite quote from the book.",
+   "children": [],
+   "parent": "p410isn",
+   "createdAt": 1791869061793
+  },
+  "b46tzzn": {
+   "id": "b46tzzn",
+   "type": "h3",
+   "html": "Key ideas",
+   "children": [],
+   "parent": "p45bpon",
+   "createdAt": 1791869061793
+  },
+  "b47ys9g": {
+   "id": "b47ys9g",
+   "type": "bulleted",
+   "html": "Notes and highlights go here.",
+   "children": [],
+   "parent": "p45bpon",
+   "createdAt": 1791869061793
+  },
+  "b48rs9p": {
+   "id": "b48rs9p",
+   "type": "quote",
+   "html": "Favorite quote from the book.",
+   "children": [],
+   "parent": "p45bpon",
+   "createdAt": 1791869061793
+  },
+  "b4acjuy": {
+   "id": "b4acjuy",
+   "type": "h3",
+   "html": "Key ideas",
+   "children": [],
+   "parent": "p49rhbs",
+   "createdAt": 1791869061793
+  },
+  "b4b2w4r": {
+   "id": "b4b2w4r",
+   "type": "bulleted",
+   "html": "Notes and highlights go here.",
+   "children": [],
+   "parent": "p49rhbs",
+   "createdAt": 1791869061793
+  },
+  "b4cvcr3": {
+   "id": "b4cvcr3",
+   "type": "quote",
+   "html": "Favorite quote from the book.",
+   "children": [],
+   "parent": "p49rhbs",
+   "createdAt": 1791869061793
+  },
+  "b4e1dj0": {
+   "id": "b4e1dj0",
+   "type": "h3",
+   "html": "Key ideas",
+   "children": [],
+   "parent": "p4dt54h",
+   "createdAt": 1791869061793
+  },
+  "b4fpk0d": {
+   "id": "b4fpk0d",
+   "type": "bulleted",
+   "html": "Notes and highlights go here.",
+   "children": [],
+   "parent": "p4dt54h",
+   "createdAt": 1791869061793
+  },
+  "b4gq97o": {
+   "id": "b4gq97o",
+   "type": "quote",
+   "html": "Favorite quote from the book.",
+   "children": [],
+   "parent": "p4dt54h",
+   "createdAt": 1791869061793
+  },
+  "b4iv2s7": {
+   "id": "b4iv2s7",
+   "type": "h3",
+   "html": "Key ideas",
+   "children": [],
+   "parent": "p4hqrwi",
+   "createdAt": 1791869061793
+  },
+  "b4j7x3n": {
+   "id": "b4j7x3n",
+   "type": "bulleted",
+   "html": "Notes and highlights go here.",
+   "children": [],
+   "parent": "p4hqrwi",
+   "createdAt": 1791869061793
+  },
+  "b4k8g5a": {
+   "id": "b4k8g5a",
+   "type": "quote",
+   "html": "Favorite quote from the book.",
+   "children": [],
+   "parent": "p4hqrwi",
+   "createdAt": 1791869061793
+  },
+  "b4niihu": {
+   "id": "b4niihu",
+   "type": "text",
+   "html": "Write freely for ten minutes.",
+   "children": [],
+   "parent": "p4m7adl",
+   "createdAt": 1791869061793
+  },
+  "b4ouedq": {
+   "id": "b4ouedq",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p4m7adl",
+   "createdAt": 1791869061793
+  },
+  "b4qcjbh": {
+   "id": "b4qcjbh",
+   "type": "text",
+   "html": "Write freely for ten minutes.",
+   "children": [],
+   "parent": "p4pow72",
+   "createdAt": 1791869061793
+  },
+  "b4rdeyj": {
+   "id": "b4rdeyj",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p4pow72",
+   "createdAt": 1791869061793
+  },
+  "b4tnvkq": {
+   "id": "b4tnvkq",
+   "type": "text",
+   "html": "Write freely for ten minutes.",
+   "children": [],
+   "parent": "p4s3s7l",
+   "createdAt": 1791869061793
+  },
+  "b4um1i7": {
+   "id": "b4um1i7",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p4s3s7l",
+   "createdAt": 1791869061793
+  },
+  "b4z0ftj": {
+   "id": "b4z0ftj",
+   "type": "h2",
+   "html": "Your first week",
+   "children": [],
+   "parent": "p4xdgkc",
+   "createdAt": 1791869061793
+  },
+  "b500ifc": {
+   "id": "b500ifc",
+   "type": "numbered",
+   "html": "Set up your laptop and accounts",
+   "children": [],
+   "parent": "p4xdgkc",
+   "createdAt": 1791869061793
+  },
+  "b514bal": {
+   "id": "b514bal",
+   "type": "numbered",
+   "html": "Read the architecture overview",
+   "children": [],
+   "parent": "p4xdgkc",
+   "createdAt": 1791869061793
+  },
+  "b52c6hj": {
+   "id": "b52c6hj",
+   "type": "numbered",
+   "html": "Ship a small change on day one",
+   "children": [],
+   "parent": "p4xdgkc",
+   "createdAt": 1791869061793
+  },
+  "b53exu9": {
+   "id": "b53exu9",
+   "type": "callout",
+   "html": "Ask questions early. Everyone was new once.",
+   "children": [],
+   "parent": "p4xdgkc",
+   "createdAt": 1791869061793,
+   "icon": "🙌",
+   "color": "green_background"
+  },
+  "b54rl40": {
+   "id": "b54rl40",
+   "type": "h2",
+   "html": "What we look for",
+   "children": [],
+   "parent": "p4ymjjh",
+   "createdAt": 1791869061793
+  },
+  "b55yp2h": {
+   "id": "b55yp2h",
+   "type": "bulleted",
+   "html": "Correctness first, then clarity",
+   "children": [],
+   "parent": "p4ymjjh",
+   "createdAt": 1791869061793
+  },
+  "b560wfc": {
+   "id": "b560wfc",
+   "type": "bulleted",
+   "html": "Small, focused pull requests",
+   "children": [],
+   "parent": "p4ymjjh",
+   "createdAt": 1791869061793
+  },
+  "b57xgp6": {
+   "id": "b57xgp6",
+   "type": "bulleted",
+   "html": "Tests for behaviour changes",
+   "children": [],
+   "parent": "p4ymjjh",
+   "createdAt": 1791869061793
+  },
+  "b582txp": {
+   "id": "b582txp",
+   "type": "code",
+   "html": "# run before pushing\nnpm run lint && npm test",
+   "children": [],
+   "parent": "p4ymjjh",
+   "createdAt": 1791869061793,
+   "language": "bash"
+  },
+  "b59ohsa": {
+   "id": "b59ohsa",
+   "type": "text",
+   "html": "Everything engineers need to know, in one place.",
+   "children": [],
+   "parent": "p4wvk1j",
+   "createdAt": 1791869061793
+  },
+  "b5aidet": {
+   "id": "b5aidet",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "parent": "p4wvk1j",
+   "createdAt": 1791869061793,
+   "pageId": "p4xdgkc"
+  },
+  "b5blte5": {
+   "id": "b5blte5",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "parent": "p4wvk1j",
+   "createdAt": 1791869061793,
+   "pageId": "p4ymjjh"
+  },
+  "b5ci60b": {
+   "id": "b5ci60b",
+   "type": "h3",
+   "html": "Useful links",
+   "children": [],
+   "parent": "p4wvk1j",
+   "createdAt": 1791869061793
+  },
+  "b5did2u": {
+   "id": "b5did2u",
+   "type": "bookmark",
+   "html": "",
+   "children": [],
+   "parent": "p4wvk1j",
+   "createdAt": 1791869061793,
+   "url": "https://developer.mozilla.org/"
+  },
+  "b5gs7n1": {
+   "id": "b5gs7n1",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p5f17zt",
+   "createdAt": 1791869061793
+  },
+  "b5iwz10": {
+   "id": "b5iwz10",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p5hkrbr",
+   "createdAt": 1791869061793
+  },
+  "b5k9vxa": {
+   "id": "b5k9vxa",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p5jyqk5",
+   "createdAt": 1791869061793
+  },
+  "b5mk5qs": {
+   "id": "b5mk5qs",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p5ld2s0",
+   "createdAt": 1791869061793
+  },
+  "b5prdz8": {
+   "id": "b5prdz8",
+   "type": "h3",
+   "html": "Agenda",
+   "children": [],
+   "parent": "p5oie8r",
+   "createdAt": 1791869061793
+  },
+  "b5q7x9r": {
+   "id": "b5q7x9r",
+   "type": "bulleted",
+   "html": "",
+   "children": [],
+   "parent": "p5oie8r",
+   "createdAt": 1791869061793
+  },
+  "b5rkc1v": {
+   "id": "b5rkc1v",
+   "type": "h3",
+   "html": "Action items",
+   "children": [],
+   "parent": "p5oie8r",
+   "createdAt": 1791869061793
+  },
+  "b5sqjm3": {
+   "id": "b5sqjm3",
+   "type": "todo",
+   "html": "",
+   "children": [],
+   "parent": "p5oie8r",
+   "createdAt": 1791869061793
+  },
+  "b5uvi15": {
+   "id": "b5uvi15",
+   "type": "h3",
+   "html": "Agenda",
+   "children": [],
+   "parent": "p5tp6wu",
+   "createdAt": 1791869061793
+  },
+  "b5vvxk0": {
+   "id": "b5vvxk0",
+   "type": "bulleted",
+   "html": "",
+   "children": [],
+   "parent": "p5tp6wu",
+   "createdAt": 1791869061793
+  },
+  "b5w0xqv": {
+   "id": "b5w0xqv",
+   "type": "h3",
+   "html": "Action items",
+   "children": [],
+   "parent": "p5tp6wu",
+   "createdAt": 1791869061793
+  },
+  "b5x2ivl": {
+   "id": "b5x2ivl",
+   "type": "todo",
+   "html": "",
+   "children": [],
+   "parent": "p5tp6wu",
+   "createdAt": 1791869061793
+  },
+  "b5zi9eo": {
+   "id": "b5zi9eo",
+   "type": "h3",
+   "html": "Agenda",
+   "children": [],
+   "parent": "p5yjblh",
+   "createdAt": 1791869061793
+  },
+  "b60e234": {
+   "id": "b60e234",
+   "type": "bulleted",
+   "html": "",
+   "children": [],
+   "parent": "p5yjblh",
+   "createdAt": 1791869061793
+  },
+  "b611yhb": {
+   "id": "b611yhb",
+   "type": "h3",
+   "html": "Action items",
+   "children": [],
+   "parent": "p5yjblh",
+   "createdAt": 1791869061793
+  },
+  "b62gqwp": {
+   "id": "b62gqwp",
+   "type": "todo",
+   "html": "",
+   "children": [],
+   "parent": "p5yjblh",
+   "createdAt": 1791869061793
+  },
+  "b64mvcz": {
+   "id": "b64mvcz",
+   "type": "h3",
+   "html": "Agenda",
+   "children": [],
+   "parent": "p63xqty",
+   "createdAt": 1791869061793
+  },
+  "b65gfzw": {
+   "id": "b65gfzw",
+   "type": "bulleted",
+   "html": "",
+   "children": [],
+   "parent": "p63xqty",
+   "createdAt": 1791869061793
+  },
+  "b66q87v": {
+   "id": "b66q87v",
+   "type": "h3",
+   "html": "Action items",
+   "children": [],
+   "parent": "p63xqty",
+   "createdAt": 1791869061793
+  },
+  "b67p490": {
+   "id": "b67p490",
+   "type": "todo",
+   "html": "",
+   "children": [],
+   "parent": "p63xqty",
+   "createdAt": 1791869061793
+  },
+  "b693ark": {
+   "id": "b693ark",
+   "type": "h3",
+   "html": "Agenda",
+   "children": [],
+   "parent": "p68rng7",
+   "createdAt": 1791869061793
+  },
+  "b6akeju": {
+   "id": "b6akeju",
+   "type": "bulleted",
+   "html": "",
+   "children": [],
+   "parent": "p68rng7",
+   "createdAt": 1791869061793
+  },
+  "b6b8kgy": {
+   "id": "b6b8kgy",
+   "type": "h3",
+   "html": "Action items",
+   "children": [],
+   "parent": "p68rng7",
+   "createdAt": 1791869061793
+  },
+  "b6c01ig": {
+   "id": "b6c01ig",
+   "type": "todo",
+   "html": "",
+   "children": [],
+   "parent": "p68rng7",
+   "createdAt": 1791869061793
+  },
+  "b6eaknd": {
+   "id": "b6eaknd",
+   "type": "text",
+   "html": "Every feature starts with a one page spec.",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793
+  },
+  "b6fnfmk": {
+   "id": "b6fnfmk",
+   "type": "h2",
+   "html": "Template",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793
+  },
+  "b6grwa7": {
+   "id": "b6grwa7",
+   "type": "numbered",
+   "html": "<b>Problem</b>: who has it and how often",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793
+  },
+  "b6hb3lb": {
+   "id": "b6hb3lb",
+   "type": "numbered",
+   "html": "<b>Goals</b>: what success looks like",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793
+  },
+  "b6ieqko": {
+   "id": "b6ieqko",
+   "type": "numbered",
+   "html": "<b>Solution</b>: the smallest thing that works",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793
+  },
+  "b6junh2": {
+   "id": "b6junh2",
+   "type": "callout",
+   "html": "Link the spec from the roadmap card so everyone can find it.",
+   "children": [],
+   "parent": "p6d05dt",
+   "createdAt": 1791869061793,
+   "icon": "🔗",
+   "color": "purple_background"
+  },
+  "b6lyjh1": {
+   "id": "b6lyjh1",
+   "type": "text",
+   "html": "How the system fits together.",
+   "children": [],
+   "parent": "p6kat6c",
+   "createdAt": 1791869061793
+  },
+  "b6mp9nj": {
+   "id": "b6mp9nj",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "b6njc93",
+    "b6rxxdf"
+   ],
+   "parent": "p6kat6c",
+   "createdAt": 1791869061793
+  },
+  "b6njc93": {
+   "id": "b6njc93",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b6oou72",
+    "b6pbb9d",
+    "b6qtokp"
+   ],
+   "parent": "b6mp9nj",
+   "createdAt": 1791869061793
+  },
+  "b6oou72": {
+   "id": "b6oou72",
+   "type": "h3",
+   "html": "Frontend",
+   "children": [],
+   "parent": "b6njc93",
+   "createdAt": 1791869061793
+  },
+  "b6pbb9d": {
+   "id": "b6pbb9d",
+   "type": "bulleted",
+   "html": "React + Vite",
+   "children": [],
+   "parent": "b6njc93",
+   "createdAt": 1791869061793
+  },
+  "b6qtokp": {
+   "id": "b6qtokp",
+   "type": "bulleted",
+   "html": "Local first storage",
+   "children": [],
+   "parent": "b6njc93",
+   "createdAt": 1791869061793
+  },
+  "b6rxxdf": {
+   "id": "b6rxxdf",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b6sfjeo",
+    "b6t3myx",
+    "b6uw9sb"
+   ],
+   "parent": "b6mp9nj",
+   "createdAt": 1791869061793
+  },
+  "b6sfjeo": {
+   "id": "b6sfjeo",
+   "type": "h3",
+   "html": "Data",
+   "children": [],
+   "parent": "b6rxxdf",
+   "createdAt": 1791869061793
+  },
+  "b6t3myx": {
+   "id": "b6t3myx",
+   "type": "bulleted",
+   "html": "Pages and blocks",
+   "children": [],
+   "parent": "b6rxxdf",
+   "createdAt": 1791869061793
+  },
+  "b6uw9sb": {
+   "id": "b6uw9sb",
+   "type": "bulleted",
+   "html": "Undo history per action",
+   "children": [],
+   "parent": "b6rxxdf",
+   "createdAt": 1791869061793
+  },
+  "b6vqpfy": {
+   "id": "b6vqpfy",
+   "type": "code",
+   "html": "page -> blocks[] -> children[]",
+   "children": [],
+   "parent": "p6kat6c",
+   "createdAt": 1791869061793,
+   "language": "plain text"
+  },
+  "b6w6aqt": {
+   "id": "b6w6aqt",
+   "type": "callout",
+   "html": "This is the home page for your teamspace. Share docs, wikis and projects with everyone here.",
+   "children": [],
+   "parent": "p4vbw8c",
+   "createdAt": 1791869061793,
+   "icon": "👋",
+   "color": "blue_background"
+  },
+  "b6xs7hh": {
+   "id": "b6xs7hh",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "b6yhjg2",
+    "b72cbuq"
+   ],
+   "parent": "p4vbw8c",
+   "createdAt": 1791869061793
+  },
+  "b6yhjg2": {
+   "id": "b6yhjg2",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b6z2e7o",
+    "b70dswl",
+    "b71nvt3"
+   ],
+   "parent": "b6xs7hh",
+   "createdAt": 1791869061793
+  },
+  "b6z2e7o": {
+   "id": "b6z2e7o",
+   "type": "h3",
+   "html": "Team docs",
+   "children": [],
+   "parent": "b6yhjg2",
+   "createdAt": 1791869061793
+  },
+  "b70dswl": {
+   "id": "b70dswl",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "parent": "b6yhjg2",
+   "createdAt": 1791869061793,
+   "pageId": "p4wvk1j"
+  },
+  "b71nvt3": {
+   "id": "b71nvt3",
+   "type": "database",
+   "html": "",
+   "children": [],
+   "parent": "b6yhjg2",
+   "createdAt": 1791869061793,
+   "pageId": "p5e6qw0"
+  },
+  "b72cbuq": {
+   "id": "b72cbuq",
+   "type": "column",
+   "html": "",
+   "children": [
+    "b73xzs1",
+    "b747l80",
+    "b75corp",
+    "b76700a"
+   ],
+   "parent": "b6xs7hh",
+   "createdAt": 1791869061793
+  },
+  "b73xzs1": {
+   "id": "b73xzs1",
+   "type": "h3",
+   "html": "This week",
+   "children": [],
+   "parent": "b72cbuq",
+   "createdAt": 1791869061793
+  },
+  "b747l80": {
+   "id": "b747l80",
+   "type": "todo",
+   "html": "Ship the beta to five customers",
+   "children": [],
+   "parent": "b72cbuq",
+   "createdAt": 1791869061793
+  },
+  "b75corp": {
+   "id": "b75corp",
+   "type": "todo",
+   "html": "Hiring sync on Thursday",
+   "children": [],
+   "parent": "b72cbuq",
+   "createdAt": 1791869061793,
+   "checked": true
+  },
+  "b76700a": {
+   "id": "b76700a",
+   "type": "todo",
+   "html": "Write the changelog",
+   "children": [],
+   "parent": "b72cbuq",
+   "createdAt": 1791869061793
+  },
+  "b77f1zk": {
+   "id": "b77f1zk",
+   "type": "h2",
+   "html": "Meetings",
+   "children": [],
+   "parent": "p4vbw8c",
+   "createdAt": 1791869061793
+  },
+  "b785159": {
+   "id": "b785159",
+   "type": "database",
+   "html": "",
+   "children": [],
+   "parent": "p4vbw8c",
+   "createdAt": 1791869061793,
+   "pageId": "p5nuntb"
+  },
+  "b79ep13": {
+   "id": "b79ep13",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "parent": "p4vbw8c",
+   "createdAt": 1791869061793
+  },
+  "381ry8m6pnh3": {
+   "id": "381ry8m6pnh3",
+   "type": "text",
+   "html": "Plain <b>bold</b> <i>it</i> <u>u</u> <s>s</s> <code>c</code> <a href=\"https://example.com/a?b=1&amp;c=2\">link</a> <span class=\"c-red bg-yellow\">color</span> &lt;img src=x onerror=1&gt;",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "xi2v0ou1pnh3": {
+   "id": "xi2v0ou1pnh3",
+   "type": "h1",
+   "html": "Heading one",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "kklxbisqpnh3": {
+   "id": "kklxbisqpnh3",
+   "type": "h2",
+   "html": "Heading two",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "color": "blue"
+  },
+  "xo9wkoegpnh3": {
+   "id": "xo9wkoegpnh3",
+   "type": "h3",
+   "html": "Heading three",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "color": "red_background"
+  },
+  "ntp83asypnh3": {
+   "id": "ntp83asypnh3",
+   "type": "bulleted",
+   "html": "Bullet",
+   "children": [
+    "f78a1ttbpnh3"
+   ],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "f78a1ttbpnh3": {
+   "id": "f78a1ttbpnh3",
+   "type": "bulleted",
+   "html": "Nested bullet",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "ntp83asypnh3"
+  },
+  "m6wkd7dopnh3": {
+   "id": "m6wkd7dopnh3",
+   "type": "numbered",
+   "html": "Numbered",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "pjg932hapnh3": {
+   "id": "pjg932hapnh3",
+   "type": "todo",
+   "html": "Done task",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "checked": true
+  },
+  "rng4fpaqpnh3": {
+   "id": "rng4fpaqpnh3",
+   "type": "todo",
+   "html": "Open task",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "checked": false
+  },
+  "am7tje1fpnh3": {
+   "id": "am7tje1fpnh3",
+   "type": "toggle",
+   "html": "Toggle",
+   "children": [
+    "0rjrki5jpnh3"
+   ],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "open": true
+  },
+  "0rjrki5jpnh3": {
+   "id": "0rjrki5jpnh3",
+   "type": "text",
+   "html": "Inside toggle",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "am7tje1fpnh3"
+  },
+  "67hkzrshpnh3": {
+   "id": "67hkzrshpnh3",
+   "type": "quote",
+   "html": "Quote line<br>second line",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "glyi39xdpnh3": {
+   "id": "glyi39xdpnh3",
+   "type": "callout",
+   "html": "Callout",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "icon": "💡",
+   "color": "gray_background"
+  },
+  "ztiyz3rlpnh3": {
+   "id": "ztiyz3rlpnh3",
+   "type": "divider",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "1dcj8fprpnh3": {
+   "id": "1dcj8fprpnh3",
+   "type": "code",
+   "html": "<img src=x onerror=1>\nconst a = 1 < 2 && \"q\";",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "language": "javascript"
+  },
+  "3zg4avl4pnh3": {
+   "id": "3zg4avl4pnh3",
+   "type": "image",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+   "caption": "A tiny image",
+   "width": 320
+  },
+  "qaulb13spnh3": {
+   "id": "qaulb13spnh3",
+   "type": "image",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "url": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1600&q=80&auto=format&fit=crop",
+   "caption": ""
+  },
+  "2p2wer0dpnh3": {
+   "id": "2p2wer0dpnh3",
+   "type": "table",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "rows": [
+    [
+     "<b>H1</b>",
+     "H2"
+    ],
+    [
+     "a &amp; b",
+     "<a href=\"https://x.example\">x</a>"
+    ]
+   ],
+   "headerRow": true
+  },
+  "98gxxu2fpnh3": {
+   "id": "98gxxu2fpnh3",
+   "type": "bookmark",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "url": "https://example.com/article",
+   "caption": "Bookmark caption"
+  },
+  "hk9aeow2pnh3": {
+   "id": "hk9aeow2pnh3",
+   "type": "text",
+   "html": "Left column",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "7ec7gzrcpnh3"
+  },
+  "7ec7gzrcpnh3": {
+   "id": "7ec7gzrcpnh3",
+   "type": "column",
+   "html": "",
+   "children": [
+    "hk9aeow2pnh3"
+   ],
+   "createdAt": 1792042293783,
+   "parent": "qyqdpjonpnh3"
+  },
+  "iaokez00pnh3": {
+   "id": "iaokez00pnh3",
+   "type": "text",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "00gtyaqfpnh3"
+  },
+  "00gtyaqfpnh3": {
+   "id": "00gtyaqfpnh3",
+   "type": "column",
+   "html": "",
+   "children": [
+    "iaokez00pnh3"
+   ],
+   "createdAt": 1792042293783,
+   "parent": "qyqdpjonpnh3"
+  },
+  "qyqdpjonpnh3": {
+   "id": "qyqdpjonpnh3",
+   "type": "columns",
+   "html": "",
+   "children": [
+    "7ec7gzrcpnh3",
+    "00gtyaqfpnh3"
+   ],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3"
+  },
+  "fqn7qoggpnh3": {
+   "id": "fqn7qoggpnh3",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "pageId": "r3kfrgrhpnh3"
+  },
+  "rch61px7pnh3": {
+   "id": "rch61px7pnh3",
+   "type": "page",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293783,
+   "parent": "x64uwgofpnh3",
+   "pageId": "r3kfrgrhpnh3",
+   "isLink": true
+  },
+  "m4dmq3aqpnh4": {
+   "id": "m4dmq3aqpnh4",
+   "type": "database",
+   "html": "",
+   "children": [],
+   "createdAt": 1792042293784,
+   "parent": "x64uwgofpnh3",
+   "pageId": "joiiy81zpnh4"
+  },
+  "5k4sfgivpnh5": {
+   "id": "5k4sfgivpnh5",
+   "type": "text",
+   "html": "Row body text",
+   "children": [],
+   "createdAt": 1792042293785,
+   "parent": "564evtxnpnh4"
+  }
+ },
+ "workspace": {
+  "name": "My Workspace",
+  "icon": "🏔️",
+  "userName": "You",
+  "userEmail": "you@example.com",
+  "privatePages": [
+   "p1cba5",
+   "pyepmw",
+   "p1agex8",
+   "p23xcxb",
+   "p2tpsff",
+   "p40n21x",
+   "p4lrev0",
+   "x64uwgofpnh3"
+  ],
+  "favorites": [
+   "p2tpsff",
+   "p1agex8",
+   "x64uwgofpnh3"
+  ],
+  "teamspaces": [
+   {
+    "id": "ts1",
+    "name": "General",
+    "icon": "🏠",
+    "pages": [
+     "p4vbw8c",
+     "x1c42prapnh5"
+    ]
+   },
+   {
+    "id": "ts2",
+    "name": "Product",
+    "icon": "🧩",
+    "pages": [
+     "p6d05dt"
+    ]
+   },
+   {
+    "id": "ts3",
+    "name": "Engineering",
+    "icon": "⚙️",
+    "pages": [
+     "p6kat6c"
+    ]
+   }
+  ]
+ },
+ "recent": [
+  {
+   "id": "x64uwgofpnh3",
+   "at": 1792042324204
+  },
+  {
+   "id": "p40n21x",
+   "at": 1792042015572
+  },
+  {
+   "id": "p2tpsff",
+   "at": 1792042007170
+  },
+  {
+   "id": "p1cba5",
+   "at": 1792042005835
+  },
+  {
+   "id": "p1agex8",
+   "at": 1792039461793
+  },
+  {
+   "id": "p23xcxb",
+   "at": 1792031061793
+  },
+  {
+   "id": "pyepmw",
+   "at": 1792023861793
+  },
+  {
+   "id": "p4vbw8c",
+   "at": 1791869061793
+  }
+ ]
+}

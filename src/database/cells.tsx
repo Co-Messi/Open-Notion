@@ -13,6 +13,7 @@ import {
 } from './logic';
 import { createOption, updateOption, deleteOption } from './dbActions';
 import { useFocusLater } from './focus';
+import { openExternal, safeLinkUrl } from '../lib/url';
 
 /* ------------------------------------------------------------------ */
 /* Icons + pills                                                       */
@@ -90,10 +91,12 @@ export function CheckboxBox({ on, onToggle }: { on: boolean; onToggle?: () => vo
 
 export type ValueMode = 'table' | 'card' | 'list' | 'props';
 
-export function linkHref(prop: Property, v: string): string {
-  if (prop.type === 'email') return 'mailto:' + v;
-  if (prop.type === 'phone') return 'tel:' + v;
-  return /^[a-z]+:/i.test(v) ? v : 'https://' + v;
+/** Outbound link for a url, email or phone value; undefined when the scheme is not allowed. */
+export function linkHref(prop: Property, v: string): string | undefined {
+  const s = String(v ?? '').trim();
+  if (prop.type === 'email') return safeLinkUrl('mailto:' + s) ?? undefined;
+  if (prop.type === 'phone') return safeLinkUrl('tel:' + s.replace(/\s+/g, '')) ?? undefined;
+  return (/^[a-z][a-z0-9+.-]*:/i.test(s) ? safeLinkUrl(s) : safeLinkUrl('https://' + s.replace(/^\/+/, ''))) ?? undefined;
 }
 
 /** Read-only rendering of a property value. Returns null when empty. */
@@ -176,7 +179,7 @@ export function PropValue({ row, prop, mode }: { row: Page; prop: Property; mode
               title="Open link"
               onClick={e => {
                 e.stopPropagation();
-                window.open(linkHref(prop, s), '_blank', 'noreferrer');
+                openExternal(linkHref(prop, s));
               }}
             >
               <ArrowUpRight size={12} />

@@ -3,6 +3,7 @@ import { Popover, Menu } from '../components/ui';
 import { getDoc, transact, breakCoalescing } from '../store/store';
 import { pageTitle, txInsertAfter } from '../store/actions';
 import { PageIconView } from '../components/PageIcon';
+import { attrSel } from '../lib/dom';
 
 /** "Link to page" picker opened from the slash menu. */
 export function LinkToPagePicker() {
@@ -10,7 +11,7 @@ export function LinkToPagePicker() {
   useEffect(() => {
     const on = (e: Event) => {
       const blockId = (e as CustomEvent).detail as string;
-      const el = document.querySelector(`.block[data-block-id="${blockId}"]`) as HTMLElement | null;
+      const el = document.querySelector('.block' + attrSel('data-block-id', blockId)) as HTMLElement | null;
       setState({ blockId, rect: el?.getBoundingClientRect() || new DOMRect(300, 300, 0, 0) });
     };
     window.addEventListener('on:link-page', on);

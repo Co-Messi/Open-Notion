@@ -10,5 +10,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
     restoreMocks: true,
+    // Node 25 and later ship their own experimental localStorage global, which shadows jsdom's.
+    poolOptions: { forks: { execArgv: ['--no-experimental-webstorage'] } },
   },
 });

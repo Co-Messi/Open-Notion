@@ -2,6 +2,7 @@ import { getDoc, getUi, transact, setUi } from '../store/store';
 import { txMoveBlock, txMakeColumns } from '../store/actions';
 import { moveBlocksToPage } from './MoveBlocks';
 import { htmlToText } from '../lib/html';
+import { attrSel } from '../lib/dom';
 
 type Drop = { el: HTMLElement; mode: 'before' | 'after' | 'inside' | 'left' | 'right'; blockId: string } | { el: HTMLElement; mode: 'page'; pageId: string };
 
@@ -139,7 +140,7 @@ function findBlockAt(x: number, y: number, exclude: string[]): HTMLElement | nul
   const candidates = Array.from(document.querySelectorAll('[data-editor-scope] .block[data-block-id]')) as HTMLElement[];
   let best: HTMLElement | null = null;
   for (const el of candidates) {
-    if (exclude.some(id => el.dataset.blockId === id || el.closest(`[data-block-id="${id}"]`))) continue;
+    if (exclude.some(id => el.dataset.blockId === id || el.closest(attrSel('data-block-id', id)))) continue;
     const row = el.querySelector(':scope > .block-row') as HTMLElement | null;
     const r = (row || el).getBoundingClientRect();
     // Expand horizontally so the gutter area also counts.
