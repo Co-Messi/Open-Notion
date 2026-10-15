@@ -4,9 +4,15 @@
 /* exactly as before. Hover-only affordances also appear while a       */
 /* keyboard user is on the row or inside it.                           */
 /* ------------------------------------------------------------------ */
+/*
+ * Measured from the Notion desktop app (7.37) on a keyboard focused icon button: a 2px gap in the
+ * page background, a 2px accent ring, then another 2px of page background, with a transparent
+ * outline kept for forced colors mode.
+ */
 :is([role='button'], [role='treeitem'], [role='tab'], [role='checkbox'], [role='switch'], [role='link'], [role='option'], [role='menu'], [tabindex='0']):focus-visible {
-  outline: none;
-  box-shadow: var(--theme-focus-ring);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--blue), 0 0 0 6px var(--bg-primary);
 }
 .popover:focus-visible,
 .modal:focus-visible,
