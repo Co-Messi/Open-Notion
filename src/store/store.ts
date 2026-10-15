@@ -9,7 +9,7 @@ import {
 } from './persist';
 import { getSaveState, setSaveState } from './saveState';
 import { describeStorageFailure, storageAvailable, storageGet, storageGetJson, storageRemove, storageSet, type StorageFailure } from '../lib/storage';
-import { recordError } from '../lib/diagnostics';
+import { DIAGNOSTICS_KEY, recordError } from '../lib/diagnostics';
 import { own } from '../lib/own';
 import { collectInlineImages, mapDocImages, storeInlineImages } from '../lib/images';
 
@@ -263,12 +263,13 @@ function writeDoc(): boolean {
     return false;
   }
   let res = storageSet(DOC_KEY, json);
-  if (!res.ok && res.reason === 'quota' && (storageGet(BACKUP_KEY) !== null || storageGet(REPAIRED_KEY) !== null)) {
-    // Safety copies must never cost the live workspace its save.
-    storageRemove(BACKUP_KEY);
-    storageRemove(REPAIRED_KEY);
-    recordError('save', 'Storage full: removed the rolling safety copies to save the workspace');
+  const spare = !res.ok && res.reason === 'quota' ? [BACKUP_KEY, REPAIRED_KEY, DIAGNOSTICS_KEY].filter(k => storageGet(k) !== null) : [];
+  if (spare.length) {
+    // Rolling safety copies and stored diagnostics must never cost the live workspace its
+    // save. The retry comes before the note, since recording it writes diagnostics again.
+    spare.forEach(k => storageRemove(k));
     res = storageSet(DOC_KEY, json);
+    recordError('save', `Storage full: removed the rolling safety copies and stored diagnostics ${res.ok ? 'to save the workspace' : 'and the workspace still did not fit'}`);
   }
   if (!res.ok) {
     fail(res.reason, res.error);
@@ -614,13 +615,21 @@ export function setRestoreFocus(fn: (f: FocusHint | null | undefined) => void) {
   restoreFocus = fn;
 }
 
+/**
+ * The visit history is not part of undo, but it never lists a page the restored doc lacks
+ * (undoing a new page or an import would otherwise leave dangling ids behind).
+ */
+function recentFor(next: Doc): Doc['recent'] {
+  const r = doc.recent;
+  return r.every(x => Object.hasOwn(next.pages, x.id)) ? r : r.filter(x => Object.hasOwn(next.pages, x.id));
+}
+
 export function undo() {
   if (!canEdit()) return notifyReadOnly();
   const e = undoStack.pop();
   if (!e) return;
   redoStack.push({ doc, focus: focusProvider() });
-  // The visit history is not part of undo.
-  doc = { ...e.doc, recent: doc.recent };
+  doc = { ...e.doc, recent: recentFor(e.doc) };
   lastKey = null;
   markDirty();
   emit();
@@ -632,7 +641,7 @@ export function redo() {
   const e = redoStack.pop();
   if (!e) return;
   undoStack.push({ doc, focus: focusProvider() });
-  doc = { ...e.doc, recent: doc.recent };
+  doc = { ...e.doc, recent: recentFor(e.doc) };
   lastKey = null;
   markDirty();
   emit();

@@ -121,6 +121,63 @@ describe('dbActions with a real store', () => {
     expect(store.getDoc().pages[rid].props![convert.stashKey(text.id)]).toBeUndefined();
   });
 
+  it('converts rows in the Trash too, so a restored row keeps a value of the right type (M1)', async () => {
+    const { store, actions, convert } = await load();
+    const { trashPage, restorePage } = await import('../store/actions');
+    const row = 'efmzmfb7pnh4';
+    const date = propOf(store.getDoc(), 'Date');
+    const original = store.getDoc().pages[row].props![date.id];
+    trashPage(row);
+    expect(store.getDoc().pages[DB].rows).not.toContain(row);
+    // The confirmation counts the trashed row's value as well.
+    expect(actions.previewPropertyTypeChange(DB, date.id, 'checkbox').lost).toBe(2);
+    // Date to checkbox cannot keep the date: the value is stashed, on the trashed row too.
+    actions.changePropertyType(DB, date.id, 'checkbox');
+    restorePage(row);
+    let props = store.getDoc().pages[row].props!;
+    expect(store.getDoc().pages[DB].rows).toContain(row);
+    expect(props[date.id]).toBe(true);
+    expect(props[convert.stashKey(date.id)]).toMatchObject({ type: 'date', value: original });
+    actions.changePropertyType(DB, date.id, 'date');
+    props = store.getDoc().pages[row].props!;
+    expect(props[date.id]).toEqual(original);
+    expect(props[convert.stashKey(date.id)]).toBeUndefined();
+
+    // A lossless change on a trashed row converts it as well (date to text and back).
+    trashPage(row);
+    actions.changePropertyType(DB, date.id, 'text');
+    expect(typeof store.getDoc().pages[row].props![date.id]).toBe('string');
+    actions.changePropertyType(DB, date.id, 'date');
+    expect(store.getDoc().pages[row].props![date.id]).toEqual(original);
+  });
+
+  it('deleteOption, deleteProperty and duplicateProperty reach rows in the Trash', async () => {
+    const { store, actions, convert } = await load();
+    const { restorePage } = await import('../store/actions');
+    const FULL = 'x1c42prapnh5';
+    const trashed = 'kbzorfrvpnh5';
+    const status = '9w651ybjpnh5';
+    const done = 'y748amlcpnh5';
+    expect(store.getDoc().pages[trashed]).toMatchObject({ trashed: true, dbId: FULL });
+    expect(store.getDoc().pages[trashed].props![status]).toBe(done);
+
+    // Duplicating a property copies the trashed row's value.
+    const copy = actions.duplicateProperty(FULL, status);
+    expect(store.getDoc().pages[trashed].props![copy]).toBe(done);
+
+    // Deleting an option clears it from the trashed row, so restoring shows no dead option.
+    actions.deleteOption(FULL, status, done);
+    expect(store.getDoc().pages[trashed].props![status]).toBeUndefined();
+
+    // Deleting a property drops the hidden previous values of trashed rows too.
+    store.transact(tx => tx.setPage(trashed, { props: { ...tx.pages[trashed].props, [convert.stashKey(copy)]: { type: 'text', value: 'x', produced: done } } }));
+    actions.deleteProperty(FULL, copy);
+    expect(store.getDoc().pages[trashed].props![convert.stashKey(copy)]).toBeUndefined();
+
+    restorePage(trashed);
+    expect(store.getDoc().pages[FULL].rows).toContain(trashed);
+  });
+
   it('setRowRange compares instants, not strings', async () => {
     const { store, actions } = await load();
     const rid = store.getDoc().pages[DB].rows![0];

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { SlidersHorizontal, Bell, Settings as Gear, Users, Keyboard, ChevronDown, Download, Upload, RotateCcw, PanelLeft, Check, HardDrive } from 'lucide-react';
 import { useUi, setUi, useSettings, setSettings, useDoc, transact, showToast } from '../store/store';
 import { Popover, Menu, Switch, pressable, useDialog, type Anchor } from './ui';
@@ -13,7 +13,7 @@ import { useSaveState } from '../store/saveState';
 import { describeStorageFailure, storageGet, storageSet } from '../lib/storage';
 import { recordError, subscribeDiagnostics } from '../lib/diagnostics';
 import { formatBytes, formatWhen, isSafari, requestPersistentStorage } from '../lib/backup';
-import { diagnosticsReport, downloadStoredKey, readSafetyCopy, replaceWorkspace } from './workspaceFlows';
+import { deleteKeptCopy, diagnosticsReport, downloadStoredKey, readSafetyCopy, replaceWorkspace } from './workspaceFlows';
 
 export function SettingsModal() {
   const open = useUi(u => u.settingsOpen);
@@ -442,17 +442,29 @@ function StorageSettings() {
         <dd>{save.status}{save.failure ? ` (${save.failure})` : ''}{save.readonlyReason ? ` (${save.readonlyReason})` : ''}</dd>
       </dl>
       {!!report?.unreadableCopies.length && (
-        <Row title="Unreadable data kept" desc="Copies of saved data that could not be opened. Download them before deleting.">
+        <Row title="Unreadable data kept" desc="Copies of saved data that could not be opened. They stay until you delete them; download them before deleting.">
           <div className="set-actions">
             {report.unreadableCopies.map(c => (
-              <button key={c.key} className="btn secondary sm" onClick={() => downloadStoredKey(c.key)}>
-                Download ({formatBytes(c.chars)})
-              </button>
+              <Fragment key={c.key}>
+                <button className="btn secondary sm" onClick={() => downloadStoredKey(c.key)}>
+                  Download ({formatBytes(c.chars)})
+                </button>
+                <button
+                  className="btn danger sm"
+                  aria-label={`Delete the copy kept ${formatWhen(c.at)}`}
+                  onClick={async () => {
+                    await deleteKeptCopy(c.key);
+                    setTick(n => n + 1);
+                  }}
+                >
+                  Delete
+                </button>
+              </Fragment>
             ))}
           </div>
         </Row>
       )}
-      <Row title="Recent errors" desc="Kept only in this tab. Nothing is ever sent anywhere.">
+      <Row title="Recent errors" desc="Kept only in this browser (the last 20 survive a reload). Nothing is ever sent anywhere.">
         <button
           className="btn secondary sm"
           onClick={async () => {

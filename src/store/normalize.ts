@@ -618,6 +618,216 @@ function repairPages(pages: Record<string, Page>, blocks: Record<string, Block>,
   }
 }
 
+/** True when page `id` is `ancestor` or sits below it (through dbId, else parentId). */
+function pageWithin(pages: Record<string, Page>, id: string | null | undefined, ancestor: string): boolean {
+  const seen = new Set<string>();
+  let cur = id;
+  while (cur && Object.hasOwn(pages, cur) && !seen.has(cur)) {
+    if (cur === ancestor) return true;
+    seen.add(cur);
+    cur = pages[cur].dbId || pages[cur].parentId;
+  }
+  return false;
+}
+
+/**
+ * Where each page lives: it is owned by one page block, or listed as a row of its database,
+ * or listed in one root section, or it is in the Trash. Repairs the shapes older builds could
+ * leave behind (H6, H7): rows also owned by a block, page blocks hidden in a database's
+ * content, trashed pages that kept their block, live rows missing from their database, root
+ * entries for pages that live elsewhere, and pages that nothing lists (they join the private
+ * section, the same placement as any root page).
+ */
+function repairPlacement(pages: Record<string, Page>, blocks: Record<string, Block>, ws: Workspace, r: NormalizeReport) {
+  const hasPage = (id: string | null | undefined): id is string => !!id && Object.hasOwn(pages, id);
+  const setPage = (id: string, patch: Partial<Page>) => (pages[id] = { ...pages[id], ...patch });
+  const listOf = (c: string) => (Object.hasOwn(pages, c) ? pages[c].content : blocks[c].children);
+  const setList = (c: string, list: string[]) => {
+    if (Object.hasOwn(pages, c)) setPage(c, { content: list });
+    else blocks[c] = { ...blocks[c], children: list };
+  };
+  const clearDbId = (id: string) => {
+    const db = pages[id].dbId;
+    if (hasPage(db) && pages[db].rows?.includes(id)) setPage(db, { rows: pages[db].rows!.filter(x => x !== id) });
+    const { dbId: _drop, ...rest } = pages[id];
+    pages[id] = rest;
+  };
+  const appendRoot = (id: string) => {
+    setPage(id, { parentId: null });
+    if (!ws.privatePages.includes(id) && !ws.teamspaces.some(t => t.pages.includes(id))) ws.privatePages = [...ws.privatePages, id];
+  };
+
+  // Owning blocks. repairPages already turned every later owner of a page into a link.
+  const owner = new Map<string, string>();
+  for (const id of Object.keys(blocks)) {
+    const b = blocks[id];
+    if ((b.type !== 'page' && b.type !== 'database') || b.isLink) continue;
+    if (!hasPage(b.pageId) || owner.has(b.pageId)) {
+      blocks[id] = { ...b, isLink: true };
+      note(r, `block ${id}: page block without a page of its own turned into a link`);
+      continue;
+    }
+    owner.set(b.pageId, id);
+  }
+  const unlink = (pid: string) => {
+    const bid = owner.get(pid)!;
+    blocks[bid] = { ...blocks[bid], isLink: true };
+    owner.delete(pid);
+  };
+
+  for (const [pid, bid] of [...owner]) {
+    if (pages[pid].trashed) {
+      unlink(pid);
+      note(r, `page ${pid}: trashed page lost its block (now a link)`);
+      continue;
+    }
+    // A row dragged out by an older build: the block is where the user put it, so it wins.
+    if (pages[pid].dbId !== undefined) {
+      clearDbId(pid);
+      note(r, `page ${pid}: row owned by a block left its database`);
+    }
+    const home = pageOfBlock(pages, blocks, bid);
+    if (!home || !pages[home].isDatabase) continue;
+    // A page block inside a database's content is never shown: move it next to the database.
+    const dest = pages[home].parentId;
+    if (hasPage(dest) && !pages[dest].isDatabase && !pageWithin(pages, dest, pid)) {
+      const from = blocks[bid].parent;
+      setList(from, listOf(from).filter(x => x !== bid));
+      const content = [...pages[dest].content];
+      const dbBlock = owner.get(home);
+      const at = dbBlock && blocks[dbBlock].parent === dest ? content.indexOf(dbBlock) + 1 : content.length;
+      content.splice(at, 0, bid);
+      setPage(dest, { content });
+      blocks[bid] = { ...blocks[bid], parent: dest };
+      setPage(pid, { parentId: dest });
+    } else {
+      unlink(pid);
+      appendRoot(pid);
+    }
+    note(r, `page ${pid}: page block moved out of database ${home}`);
+  }
+
+  // Database rows: db.rows lists the live rows, and every live row is listed.
+  for (const id of Object.keys(pages)) {
+    const rows = pages[id].rows;
+    if (!rows) continue;
+    const live = rows.filter(x => hasPage(x) && !pages[x].trashed);
+    if (live.length !== rows.length) {
+      setPage(id, { rows: live });
+      note(r, `page ${id}: trashed rows left the row list`);
+    }
+  }
+  const listedRows = new Map<string, Set<string>>();
+  const isListed = (db: string, id: string) => {
+    let set = listedRows.get(db);
+    if (!set) listedRows.set(db, (set = new Set(pages[db].rows || [])));
+    return set.has(id);
+  };
+  for (const id of Object.keys(pages)) {
+    const db = pages[id].dbId;
+    if (!hasPage(db)) continue;
+    if (!pages[id].trashed && !isListed(db, id)) {
+      setPage(db, { rows: [...(pages[db].rows || []), id] });
+      note(r, `page ${id}: live row added back to its database`);
+    }
+    if (pages[id].parentId !== db) {
+      setPage(id, { parentId: db });
+      note(r, `page ${id}: row parentId repaired`);
+    }
+  }
+
+  // Root sections hold each page once, and only pages that live nowhere else.
+  const seen = new Set<string>();
+  const rootList = (list: string[], what: string): string[] => {
+    const out = list.filter(id => {
+      if (!hasPage(id) || seen.has(id) || owner.has(id) || pages[id].dbId) return false;
+      seen.add(id);
+      return true;
+    });
+    if (out.length !== list.length) note(r, `${what}: pages that live elsewhere dropped`);
+    for (const id of out) {
+      if (pages[id].parentId !== null) {
+        setPage(id, { parentId: null });
+        note(r, `page ${id}: root page parentId cleared`);
+      }
+    }
+    return out.length === list.length ? list : out;
+  };
+  ws.privatePages = rootList(ws.privatePages, 'private pages');
+  ws.teamspaces = ws.teamspaces.map(t => {
+    const pagesOf = rootList(t.pages, `teamspace ${t.id}`);
+    return pagesOf === t.pages ? t : { ...t, pages: pagesOf };
+  });
+
+  // Live pages that no block, database or section lists would only be found by search.
+  for (const id of Object.keys(pages)) {
+    if (pages[id].trashed || owner.has(id) || pages[id].dbId || seen.has(id)) continue;
+    appendRoot(id);
+    seen.add(id);
+    note(r, `page ${id}: unlisted page placed in the private section`);
+  }
+}
+
+/**
+ * Column layout shape: a column list holds two or more columns and nothing else, and a
+ * column sits only in a column list and is never empty. Broken layouts are flattened in place
+ * so no block is lost: stray blocks move out right after their list, a column outside a list
+ * is replaced by its blocks, empty columns go, and a list left with one column becomes that
+ * column's blocks. `roots` are the containers that are not blocks (pages, or the clipboard).
+ */
+function repairColumns(blocks: Record<string, Block>, roots: string[], listOf: (c: string) => string[], setList: (c: string, list: string[]) => void, r: NormalizeReport) {
+  const reparent = (ids: string[], parent: string) => {
+    for (const id of ids) blocks[id] = { ...blocks[id], parent };
+  };
+  /** Puts `ids` in place of `at` (or right after it when `keep`) in the list of `parent`. */
+  const splice = (parent: string, at: string, ids: string[], keep: boolean) => {
+    const list = [...listOf(parent)];
+    const i = list.indexOf(at);
+    list.splice(i < 0 ? list.length : keep ? i + 1 : i, keep || i < 0 ? 0 : 1, ...ids);
+    reparent(ids, parent);
+    setList(parent, list);
+  };
+  const rootSet = new Set(roots);
+  for (let pass = 0; pass < 1000; pass++) {
+    let changed = false;
+    for (const c of [...roots, ...Object.keys(blocks)]) {
+      const isBlock = Object.hasOwn(blocks, c);
+      if (!isBlock && !rootSet.has(c)) continue; // removed earlier in this pass
+      const isList = isBlock && blocks[c].type === 'columns';
+      const list = listOf(c);
+      const next: string[] = [];
+      const stray: string[] = [];
+      for (const id of list) {
+        const b = blocks[id];
+        if (isList) {
+          if (b.type !== 'column') stray.push(id);
+          else if (b.children.length) next.push(id);
+          else delete blocks[id];
+        } else if (b.type === 'column') {
+          reparent(b.children, c);
+          next.push(...b.children);
+          delete blocks[id];
+        } else next.push(id);
+      }
+      const listChanged = next.length !== list.length || next.some((x, i) => x !== list[i]);
+      if (!listChanged && (!isList || next.length >= 2)) continue;
+      changed = true;
+      note(r, `block ${c}: column layout repaired`);
+      setList(c, next);
+      if (!isList) continue;
+      const parent = blocks[c].parent;
+      if (stray.length) splice(parent, c, stray, true);
+      if (next.length < 2) {
+        const inner = next.length ? blocks[next[0]].children : [];
+        if (next.length) delete blocks[next[0]];
+        splice(parent, c, inner, false);
+        delete blocks[c];
+      }
+    }
+    if (!changed) break;
+  }
+}
+
 function filterPages(list: string[], pages: Record<string, Page>, r: NormalizeReport, what: string): string[] {
   const out = dedupe(list.filter(id => Object.hasOwn(pages, id)));
   if (out.length !== list.length) note(r, `${what}: missing or duplicate page dropped`);
@@ -655,6 +865,11 @@ export function normalizeDocWithReport(raw: unknown): NormalizeResult {
       note(r, 'block with an unsafe key dropped');
       continue;
     }
+    if (Object.hasOwn(pages, k)) {
+      // A parent id must name either a page or a block, never both.
+      note(r, `block ${k}: id used by a page, dropped`);
+      continue;
+    }
     const b = normalizeBlockRecord(k, raw.blocks[k], r);
     if (b) blocks[k] = b;
   }
@@ -662,9 +877,16 @@ export function normalizeDocWithReport(raw: unknown): NormalizeResult {
   const ws = normalizeWorkspace(raw.workspace, r);
   // Each cut can expose the next problem in pathological data; repeat until stable so a
   // second normalize finds nothing left to do.
-  for (let i = 0; i < 8; i++) {
+  const pageList = (c: string) => (Object.hasOwn(pages, c) ? pages[c].content : blocks[c].children);
+  const setPageList = (c: string, list: string[]) => {
+    if (Object.hasOwn(pages, c)) pages[c] = { ...pages[c], content: list };
+    else blocks[c] = { ...blocks[c], children: list };
+  };
+  for (let i = 0; i < 16; i++) {
     const before = r.changes;
     repairPages(pages, blocks, ws, r);
+    repairPlacement(pages, blocks, ws, r);
+    repairColumns(blocks, Object.keys(pages), pageList, setPageList, r);
     if (r.changes === before) break;
   }
   ws.privatePages = filterPages(ws.privatePages, pages, r, 'private pages');
@@ -766,5 +988,14 @@ export function normalizeClipboardBlocks(raw: unknown): ClipBlocks | null {
       out[id] = { ...b, children: kids };
     }
   }
-  return roots.length ? { blocks: out, roots } : null;
+  // Parent pointers follow the lists, so column layouts can be repaired like the doc's.
+  const ROOT = '';
+  let list = roots;
+  for (const id of roots) out[id] = { ...out[id], parent: ROOT };
+  for (const id of Object.keys(out)) for (const c of out[id].children) out[c] = { ...out[c], parent: id };
+  repairColumns(out, [ROOT], c => (c === ROOT ? list : out[c].children), (c, l) => {
+    if (c === ROOT) list = l;
+    else out[c] = { ...out[c], children: l };
+  }, r);
+  return list.length ? { blocks: out, roots: list } : null;
 }

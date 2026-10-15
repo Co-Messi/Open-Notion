@@ -251,6 +251,87 @@ describe('saving', () => {
     expect(t.store.getUi().toast).toBe('Could not save: this browser is blocking site storage');
   });
 
+  it('asks the browser to keep the data once, after the first successful save (H9)', async () => {
+    let asked = 0;
+    Object.defineProperty(navigator, 'storage', {
+      configurable: true,
+      value: {
+        persist: () => {
+          asked++;
+          return Promise.resolve(true);
+        },
+      },
+    });
+    try {
+      localStorage.setItem(DOC_KEY, FIXTURE);
+      const t = await tab();
+      // Loading alone never asks.
+      expect(asked).toBe(0);
+      // A save that fails does not count as having something worth keeping.
+      const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw quota();
+      });
+      edit(t, 'first');
+      expect(t.store.flushSave()).toBe(false);
+      expect(asked).toBe(0);
+      spy.mockRestore();
+      expect(t.store.retrySave()).toBe(true);
+      expect(asked).toBe(1);
+      edit(t, 'second');
+      expect(t.store.flushSave()).toBe(true);
+      expect(asked).toBe(1);
+    } finally {
+      delete (navigator as unknown as { storage?: unknown }).storage;
+    }
+    expect('storage' in navigator).toBe(false);
+  });
+
+  it('asks on a first launch too, once the starter content is saved', async () => {
+    let asked = 0;
+    Object.defineProperty(navigator, 'storage', { configurable: true, value: { persist: () => (asked++, Promise.resolve(false)) } });
+    try {
+      await tab();
+      expect(localStorage.getItem(DOC_KEY)).not.toBeNull();
+      expect(asked).toBe(1);
+    } finally {
+      delete (navigator as unknown as { storage?: unknown }).storage;
+    }
+  });
+
+  it('never lets stored diagnostics or safety copies cost the workspace its save', async () => {
+    localStorage.setItem(DOC_KEY, FIXTURE);
+    const t = await tab();
+    const diagnostics = await import('../lib/diagnostics');
+    // Twenty long entries fill the stored diagnostics (a few KB), plus a small safety copy.
+    for (let i = 0; i < 20; i++) diagnostics.recordError('test', 'z'.repeat(290));
+    expect(localStorage.getItem(diagnostics.DIAGNOSTICS_KEY)!.length).toBeGreaterThan(5000);
+    localStorage.setItem('on:doc:backup', 'b'.repeat(200));
+    // A quota measured in characters, the way browsers count localStorage, with little room left.
+    const used = () => {
+      let n = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)!;
+        n += k.length + localStorage.getItem(k)!.length;
+      }
+      return n;
+    };
+    const budget = used() + 500;
+    const orig = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, k: string, v: string) {
+      const prev = this.getItem(k);
+      if (used() - (prev === null ? 0 : k.length + prev.length) + k.length + v.length > budget) throw quota();
+      return orig.call(this, k, v);
+    });
+    edit(t, 'y'.repeat(1000));
+    expect(t.store.flushSave()).toBe(true);
+    expect(JSON.parse(localStorage.getItem(DOC_KEY)!).blocks[BLOCK].html).toBe('y'.repeat(1000));
+    expect(localStorage.getItem('on:doc:backup')).toBeNull();
+    expect(t.saveState.getSaveState().status).toBe('saved');
+    const last = diagnostics.getRecentErrors().at(-1)!;
+    expect(last).toMatchObject({ source: 'save' });
+    expect(last.message).toContain('to save the workspace');
+  });
+
   it('drops the rolling safety copies before failing a save for quota', async () => {
     localStorage.setItem(DOC_KEY, FIXTURE);
     const t = await tab();

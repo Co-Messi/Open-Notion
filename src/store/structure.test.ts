@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtureJson from '../test/fixtures/doc-v2-current.json';
 import { checkInvariants } from '../test/invariants';
-import { getDoc, replaceDoc, transact, undo, redo } from './store';
+import { getDoc, reloadFromStorage, replaceDoc, transact, undo, redo } from './store';
 import { createSeed } from './seed';
+import { normalizeDocWithReport } from './normalize';
 import * as A from './actions';
 import type { Block, BlockType, Doc } from './types';
 import { moveBlocksToPage, moveTargetPages } from '../editor/MoveBlocks';
@@ -10,6 +11,7 @@ import { backspaceAtStart, deleteAtEnd, enterAt, type PrevEditable } from '../ed
 import { applyBlockDrop } from '../editor/dnd';
 import { turnIntoPage } from '../editor/BlockMenu';
 import { escapeHtml, htmlToText } from '../lib/html';
+import { CLIPBOARD_MIME, copyBlocks, cutBlocks, decodeClipboard, insertSerialized } from '../editor/clipboard';
 
 /**
  * Property test for the document structure. Random sequences of the editor's store level
@@ -40,6 +42,8 @@ const LIST_TYPES: BlockType[] = ['bulleted', 'numbered', 'todo', 'toggle'];
 interface Ctx {
   r: () => number;
   log: string[];
+  /** What the last copy or cut put on the clipboard (MIME type to data), kept across ops. */
+  clip?: Record<string, string>;
 }
 const pick = <T,>(c: Ctx, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(c.r() * xs.length)] : undefined);
 const blocksOf = () => Object.values(getDoc().blocks);
@@ -104,6 +108,31 @@ function domNeighbor(id: string, dir: -1 | 1): PrevEditable {
   const order = editableOrder(page);
   const i = order.findIndex(e => e && 'block' in e && e.block === id);
   return i < 0 ? null : order[i + dir] || null;
+}
+
+/** A block selection the way topLevelSelection reports it: no block inside another selected one. */
+function topLevel(ids: string[]): string[] {
+  const d = getDoc();
+  const uniq = Array.from(new Set(ids));
+  return uniq.filter(id => !uniq.some(o => o !== id && A.isBlockWithin(d, d.blocks[id]?.parent, o)));
+}
+
+/** Blocks the editor lets a user select (columns are not selectable on their own). */
+const selectable = () => blocksOf().filter(b => b.type !== 'column');
+
+/** Picks one or two blocks to copy or cut, often a page block (the M2 and H6 shapes). */
+function pickSelection(c: Ctx): string[] {
+  const pages = selectable().filter(b => A.ownsPage(b));
+  const first = c.r() < 0.5 ? pick(c, pages) : pick(c, selectable());
+  const second = c.r() < 0.3 ? pick(c, selectable()) : undefined;
+  return topLevel([first?.id, second?.id].filter(Boolean) as string[]);
+}
+
+/** A clipboard event as the browser hands it to the copy and cut handlers. */
+function clipEvent(c: Ctx): ClipboardEvent {
+  const data: Record<string, string> = {};
+  c.clip = data;
+  return { clipboardData: { setData: (k: string, v: string) => (data[k] = v) }, preventDefault: () => {} } as unknown as ClipboardEvent;
 }
 
 type Op = (c: Ctx) => void;
@@ -325,6 +354,45 @@ const OPS: Record<string, Op> = {
     c.log.push(`addRow ${db.id}`);
     A.addRow(db.id);
   },
+  cut: c => {
+    // The document cut handler: copy with the trashed pages noted, then delete (selection.ts).
+    const ids = pickSelection(c);
+    if (!ids.length) return;
+    c.log.push(`cut [${ids}]`);
+    cutBlocks(ids, clipEvent(c));
+  },
+  copy: c => {
+    const ids = pickSelection(c);
+    if (!ids.length) return;
+    c.log.push(`copy [${ids}]`);
+    copyBlocks(ids, clipEvent(c));
+  },
+  paste: c => {
+    // What handlePaste and the block selection paste do: decode (nonce and normalizer), insert.
+    const data = c.clip && decodeClipboard(c.clip[CLIPBOARD_MIME]);
+    if (!data) return;
+    const cutPages = (data.cut?.pages || []).filter(p => getDoc().pages[p]);
+    const roll = c.r();
+    if (cutPages.length && roll < 0.4) {
+      // Into the cut page itself or one of its descendants: the H6 cycle shape.
+      const p = pick(c, cutPages)!;
+      const target = pick(c, [p, ...descendantsOf(p)])!;
+      const content = getDoc().pages[target].content;
+      const anchor = c.r() < 0.5 ? pick(c, content.filter(id => getDoc().blocks[id]?.type !== 'column')) : undefined;
+      c.log.push(`paste into cut page ${p} via ${target} ${anchor ? 'after ' + anchor : 'at 0'}`);
+      insertSerialized(data, anchor ? { afterId: anchor } : { parent: target, index: 0 });
+    } else if (roll < 0.8) {
+      const anchor = pick(c, selectable());
+      if (!anchor) return;
+      c.log.push(`paste after ${anchor.id}`);
+      insertSerialized(data, { afterId: anchor.id });
+    } else {
+      const page = pick(c, pagesOf())!;
+      const index = Math.floor(c.r() * (page.content.length + 1));
+      c.log.push(`paste into page ${page.id} at ${index}`);
+      insertSerialized(data, { parent: page.id, index });
+    }
+  },
   undo: c => {
     c.log.push('undo');
     undo();
@@ -342,27 +410,33 @@ function shape(d: Doc): string {
   return b.join('|') + p.join('|') + JSON.stringify(d.workspace);
 }
 
-const changed: Record<string, number> = {};
-
-/** Runs one random sequence; returns the first violation with the op log, or null. */
-function runSequence(seed: number, start: Doc, steps: number): string | null {
+/**
+ * Runs one random sequence; returns the first violation with the op log, or null. With a
+ * tally, counts per operation how often it actually changed the document.
+ */
+function runSequence(seed: number, start: Doc, steps: number, tally?: Record<string, number>): string | null {
   const r = prng(seed);
   vi.spyOn(Math, 'random').mockImplementation(prng(seed ^ 0x9e3779b9));
   replaceDoc(clone(start));
+  // Start with empty undo history, so a printed seed replays on its own.
+  expect(reloadFromStorage()).toBe(true);
   const c: Ctx = { r, log: [] };
   const names = Object.keys(OPS);
   for (let i = 0; i < steps; i++) {
     const name = pick(c, names)!;
-    const before = seed % 4 === 0 ? shape(getDoc()) : '';
+    const before = tally ? shape(getDoc()) : '';
     try {
       OPS[name](c);
     } catch (e) {
       return `seed ${seed}: ${name} threw ${(e as Error).stack}\nops:\n${c.log.join('\n')}`;
     }
-    if (before && shape(getDoc()) !== before) changed[name] = (changed[name] || 0) + 1;
+    if (tally && shape(getDoc()) !== before) tally[name] = (tally[name] || 0) + 1;
     const v = checkInvariants(getDoc());
     if (v.length) return `seed ${seed} after step ${i}:\n  ${v.join('\n  ')}\nops:\n${c.log.join('\n')}`;
   }
+  // What the app writes must load without a single repair (no repaired copy, no notes).
+  const { report } = normalizeDocWithReport(clone(getDoc()));
+  if (report.changes) return `seed ${seed}: the normalizer changed app data: ${report.notes.join('; ')}\nops:\n${c.log.join('\n')}`;
   return null;
 }
 
@@ -402,9 +476,17 @@ describe('structural invariants under random edit sequences', () => {
     }
   }, 60000);
 
-  it('actually exercised every kind of edit', () => {
-    // Guards the test itself: an operation that never changes anything proves nothing.
-    const mustChange = Object.keys(OPS).filter(n => !['movePageBlockIntoDescendant', 'moveSubtreeIntoOwnedPage', 'redo'].includes(n));
-    for (const n of mustChange) expect(changed[n] || 0, `${n} never changed the document`).toBeGreaterThan(0);
-  });
+  it('actually exercises every kind of edit', () => {
+    // Guards the test itself: an operation that never changes anything proves nothing. It runs
+    // its own sequences, so it does not depend on the tests above or on test order.
+    const tally: Record<string, number> = {};
+    const seed = createSeed();
+    for (let s = 1; s <= 60; s++) {
+      const failure = runSequence(s, s % 2 ? fixture : seed, STEPS, tally);
+      if (failure) throw new Error(failure);
+    }
+    const never = ['movePageBlockIntoDescendant', 'moveSubtreeIntoOwnedPage', 'redo', 'copy'];
+    const mustChange = Object.keys(OPS).filter(n => !never.includes(n));
+    for (const n of mustChange) expect(tally[n] || 0, `${n} never changed the document`).toBeGreaterThan(0);
+  }, 60000);
 });

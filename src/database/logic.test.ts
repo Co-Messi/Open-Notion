@@ -9,6 +9,8 @@ import type { DbView, Filter, Page, Property } from '../store/types';
 const plain = (s: string) => s.split(String.fromCharCode(0x202f)).join(' ').split(String.fromCharCode(0xa0)).join(' ');
 
 const ZONES = ['America/New_York', 'Europe/London', 'Asia/Kolkata', 'Pacific/Auckland', 'UTC'];
+// Node's process global, typed locally so the suite does not depend on @types/node being installed.
+const process = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process;
 const originalTz = process.env.TZ;
 
 function setZone(tz: string | undefined) {

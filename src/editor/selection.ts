@@ -2,7 +2,7 @@ import { getUi, setUi, getDoc, transact, undo, redo, breakCoalescing } from '../
 import { deleteBlocks, duplicateBlocks, turnInto, txInsertAfter } from '../store/actions';
 import { focusBlock, selectBlocks, clearBlockSelection } from './controller';
 import { indentBlocks, NON_EDITABLE } from './ops';
-import { CLIPBOARD_MIME, copyBlocks, decodeClipboard, insertSerialized } from './clipboard';
+import { CLIPBOARD_MIME, copyBlocks, cutBlocks, decodeClipboard, insertSerialized } from './clipboard';
 import type { BlockType } from '../store/types';
 import { attrSel } from '../lib/dom';
 
@@ -164,10 +164,7 @@ export function installSelectionKeys() {
     const sel = getUi().selectedBlocks;
     const ae = document.activeElement as HTMLElement | null;
     if (!sel.length || (ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA'))) return;
-    const top = topLevelSelection();
-    // The payload remembers which pages this cut sends to Trash, so pasting them is a move.
-    copyBlocks(top, e, { cut: true });
-    deleteBlocks(top);
+    cutBlocks(topLevelSelection(), e);
     clearBlockSelection();
   };
   const onPaste = (e: ClipboardEvent) => {

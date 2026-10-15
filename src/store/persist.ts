@@ -5,12 +5,15 @@
 import type { Doc } from './types';
 import { DOC_VERSION, migrateDoc } from './migrate';
 import { normalizeDocWithReport, normalizeRecent, type NormalizeReport } from './normalize';
-import { storageGet, storageGetJson, storageKeys, storageRemove, storageSet, type StorageResult } from '../lib/storage';
+import { storageGet, storageGetJson, storageKeys, storageSet, type StorageResult } from '../lib/storage';
 import { recordError } from '../lib/diagnostics';
 
 export const DOC_KEY = 'on:doc:v2';
 export const RECENT_KEY = 'on:recent:v1';
-/** Unreadable data found on load, kept verbatim (at most MAX_CORRUPT copies). */
+/**
+ * Unreadable data found on load, kept verbatim, one copy per distinct value. Copies are never
+ * deleted automatically: only the user deletes them (Settings, Storage) after downloading.
+ */
 export const CORRUPT_PREFIX = 'on:doc:corrupt:';
 /** The stored string as it was before load time repairs (one rolling copy). */
 export const REPAIRED_KEY = 'on:doc:repaired';
@@ -19,7 +22,6 @@ export const BACKUP_KEY = 'on:doc:backup';
 export const BACKUP_META_KEY = 'on:doc:backup:meta';
 export const INSTALLED_KEY = 'on:installed-at';
 export const LAST_BACKUP_KEY = 'on:backup:last';
-const MAX_CORRUPT = 2;
 
 const REV_RE = /^\{"rev":"([A-Za-z0-9_-]{1,64})"/;
 
@@ -70,8 +72,6 @@ export function preserveCorrupt(raw: string): string | null {
     recordError('load', `Could not keep a copy of unreadable data (${r.reason})`);
     return null;
   }
-  const all = [...keys, key];
-  while (all.length > MAX_CORRUPT) storageRemove(all.shift()!);
   return key;
 }
 

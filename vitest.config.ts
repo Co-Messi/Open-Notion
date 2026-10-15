@@ -15,6 +15,8 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
     restoreMocks: true,
+    // The property and fuzz suites run thousands of operations; shared CI runners are several times slower.
+    testTimeout: 60000,
     poolOptions: { forks: { execArgv: knowsWebstorageFlag ? ['--no-experimental-webstorage'] : [] } },
   },
 });
