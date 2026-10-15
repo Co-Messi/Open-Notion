@@ -3,6 +3,7 @@ import fixtureJson from '../test/fixtures/doc-v2-current.json';
 import { checkInvariants } from '../test/invariants';
 import { getDoc, replaceDoc, transact, undo, redo } from './store';
 import { createSeed } from './seed';
+import { normalizeDocWithReport } from './normalize';
 import * as A from './actions';
 import type { Block, BlockType, Doc } from './types';
 import { moveBlocksToPage, moveTargetPages } from '../editor/MoveBlocks';
@@ -431,6 +432,9 @@ function runSequence(seed: number, start: Doc, steps: number, tally?: Record<str
     const v = checkInvariants(getDoc());
     if (v.length) return `seed ${seed} after step ${i}:\n  ${v.join('\n  ')}\nops:\n${c.log.join('\n')}`;
   }
+  // What the app writes must load without a single repair (no repaired copy, no notes).
+  const { report } = normalizeDocWithReport(clone(getDoc()));
+  if (report.changes) return `seed ${seed}: the normalizer changed app data: ${report.notes.join('; ')}\nops:\n${c.log.join('\n')}`;
   return null;
 }
 
