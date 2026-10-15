@@ -51,6 +51,8 @@ beforeEach(() => {
   vi.resetModules();
 });
 afterEach(() => {
+  // Unmount under reduced motion so no exit copy outlives this test and leaks into the next one.
+  motion(true);
   if (root) act(() => root!.unmount());
   root = null;
   document.body.innerHTML = '';
