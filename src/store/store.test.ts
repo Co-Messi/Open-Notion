@@ -106,6 +106,18 @@ describe('store core', () => {
   });
 });
 
+describe('settings', () => {
+  it('keeps settings keys this build does not know about, but never prototype keys', async () => {
+    localStorage.setItem('on:settings:v1', '{"theme":"dark","futureFlag":true,"__proto__":{"polluted":1},"startPage":"bogus"}');
+    const t = await tab({ start: false });
+    const s = t.store.getSettings() as unknown as Record<string, unknown>;
+    expect(s).toMatchObject({ theme: 'dark', futureFlag: true, startPage: 'last' });
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    t.store.setSettings({ sidebarOpen: false });
+    expect(JSON.parse(localStorage.getItem('on:settings:v1')!)).toMatchObject({ futureFlag: true, sidebarOpen: false });
+  });
+});
+
 describe('loading', () => {
   it('loads the current stored shape with zero loss', async () => {
     const raw = JSON.stringify(fixture);

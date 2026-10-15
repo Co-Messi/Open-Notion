@@ -325,8 +325,10 @@ export async function storeInlineImages(urls: string[]): Promise<Map<string, str
 }
 
 /**
- * Stores the images that came with a backup under their original ids. Refs whose bytes
- * cannot be stored become inline data URLs again, so nothing in the backup is lost.
+ * Stores the images that came with a backup under their original ids. Ids already in this
+ * browser are never overwritten (ids are random or content hashes, so an honest backup never
+ * needs to). Refs whose bytes cannot be stored become inline data URLs again, so nothing in
+ * the backup is lost.
  */
 export async function restoreImages(doc: Doc, images: Record<string, unknown>): Promise<Doc> {
   const refs = collectImageRefs(doc);
@@ -338,8 +340,10 @@ export async function restoreImages(doc: Doc, images: Record<string, unknown>): 
   }
   if (!usable.size) return doc;
   if (await imageStoreAvailable()) {
+    const have = await existingImageIds([...usable.keys()].map(refId));
     const records: StoredImage[] = [];
     for (const [ref, url] of usable) {
+      if (have.has(refId(ref))) continue;
       const decoded = dataUrlToBytes(url)!;
       const bytes = decoded.bytes.buffer.slice(decoded.bytes.byteOffset, decoded.bytes.byteOffset + decoded.bytes.byteLength) as ArrayBuffer;
       records.push({ id: refId(ref), type: decoded.type, bytes, size: bytes.byteLength, createdAt: Date.now() });

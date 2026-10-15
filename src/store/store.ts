@@ -153,7 +153,11 @@ function loadSettings(): Settings {
   const raw = storageGetJson<unknown>(SETTINGS_KEY, null);
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return def;
   const r = raw as Partial<Settings>;
+  // Unknown keys pass through so settings added elsewhere survive a load and the next save.
+  const rest: Record<string, unknown> = {};
+  for (const k of Object.keys(r)) if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') rest[k] = (r as Record<string, unknown>)[k];
   return {
+    ...(rest as Partial<Settings>),
     theme: r.theme === 'light' || r.theme === 'dark' || r.theme === 'system' ? r.theme : def.theme,
     sidebarWidth: typeof r.sidebarWidth === 'number' && Number.isFinite(r.sidebarWidth) ? r.sidebarWidth : def.sidebarWidth,
     sidebarOpen: typeof r.sidebarOpen === 'boolean' ? r.sidebarOpen : def.sidebarOpen,
@@ -635,8 +639,9 @@ export function redo() {
 }
 
 /**
- * Replaces the whole workspace (import, reset, restore). The input is normalized again, the
- * previous doc stays one undo step away for this session, and the redo stack is cleared.
+ * Replaces the whole workspace (import, reset, restore). A plain replace: callers pass a doc
+ * that already went through the normalizer (parseWorkspaceBackup, normalizeDoc, createSeed).
+ * The previous doc stays one undo step away for this session and the redo stack is cleared.
  * Callers keep a safety copy first (backupCurrentDoc). Returns false when the tab is read only.
  */
 export function replaceDoc(d: Doc): boolean {
@@ -648,7 +653,7 @@ export function replaceDoc(d: Doc): boolean {
   if (undoStack.length > UNDO_LIMIT) undoStack.shift();
   redoStack.length = 0;
   lastKey = null;
-  doc = normalizeDoc(d);
+  doc = d;
   dirty = true;
   userDirty = true;
   writeDoc();

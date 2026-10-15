@@ -119,6 +119,21 @@ describe('backups', () => {
     expect(restored).toStrictEqual(expected);
   });
 
+  it('never overwrites an image that already exists in this browser', async () => {
+    localStorage.setItem(DOC_KEY, JSON.stringify(fixture));
+    const a = await tab();
+    await a.store.imageMigrationIdle();
+    const ref = a.store.getDoc().blocks[IMG_BLOCK].url!;
+    const id = ref.slice('on-img:'.length);
+    const { json } = await a.exporter.buildWorkspaceBackup();
+    const crafted = JSON.parse(json);
+    crafted.images[id] = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+    await a.exporter.parseWorkspaceBackup(JSON.stringify(crafted));
+    const rec = await a.blobs.getImage(id);
+    expect(rec?.type).toBe('image/png');
+    expect(Array.from(new Uint8Array(rec!.bytes))).toEqual(bytesOf(TINY));
+  });
+
   it('imports an old plain doc export and migrates its inline images', async () => {
     const b = await tab();
     const doc = await b.exporter.parseWorkspaceBackup(JSON.stringify(fixture));
