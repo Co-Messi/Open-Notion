@@ -131,9 +131,10 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
       setDrag(null);
       if (!started) return;
       if (!t) return;
+      // movePage refuses (with a toast) a page dropped into itself or among another database's rows:
+      // a database shows rows, never content, so the page would vanish.
       if (t.kind === 'into') {
-        movePage(pageId, { pageId: t.pageId });
-        setOpen(t.pageId, true);
+        if (movePage(pageId, { pageId: t.pageId })) setOpen(t.pageId, true);
       } else if (t.parentId) {
         movePage(pageId, { pageId: t.parentId, index: t.index });
       } else {

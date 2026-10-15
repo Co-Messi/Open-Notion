@@ -210,12 +210,10 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
       if (alt) {
         nid = txInsertBlock(tx, { parent: b.parent, type: 'text', html: '' }, tx.siblings(id).indexOf(id));
       } else {
-        const cur = tx.block(id);
         const next = tx.siblings(id)[tx.siblings(id).indexOf(id) + 1];
         const nextB = next ? tx.block(next) : null;
         if (nextB && nextB.type === 'text' && !nextB.html && nextB.children.length === 0) nid = nextB.id;
         else nid = txInsertAfter(tx, id, { type: 'text', html: '' });
-        void cur;
       }
     });
     breakCoalescing();

@@ -1,6 +1,7 @@
-import { getDoc, transact, breakCoalescing } from '../store/store';
+import { getDoc, transact, breakCoalescing, type Tx } from '../store/store';
 import {
   txInsertBlock, txInsertAfter, txTurnInto, txOutdent, txIndent, txDeleteBlock, txMoveBlock, txDuplicateBlock,
+  CONTAINER_TYPES, columnOf, isBlockWithin, pageOfBlockIn,
 } from '../store/actions';
 import type { BlockType } from '../store/types';
 import { sanitizeInline, htmlToText, escapeHtml } from '../lib/html';
@@ -15,44 +16,67 @@ export const NON_EDITABLE: BlockType[] = ['divider', 'image', 'page', 'database'
 const isEmptyHtml = (h: string) => !htmlToText(h).replace(/\n/g, '').length;
 
 /* ------------------------------------------------------------------ */
-/* Enter                                                               */
+/* Store level edits behind Enter, Backspace and Delete                */
 /* ------------------------------------------------------------------ */
 
-export function handleEnter(el: HTMLElement, blockId: string) {
-  const d = getDoc();
-  const b = d.blocks[blockId];
-  if (!b) return;
-  const [rawBefore, rawAfter] = splitAtSelection(el);
-  const before = sanitizeInline(rawBefore);
-  const after = sanitizeInline(rawAfter);
-  const wholeEmpty = isEmptyHtml(before) && isEmptyHtml(after);
+/** Where the caret goes after a keyboard edit. */
+export type CaretAfter = { block: string; at: number | 'start' | 'end' } | { title: string; at: number } | { select: string } | null;
 
-  // Empty list item: outdent if nested, else turn into text.
-  if (wholeEmpty && (CONTINUE_TYPES.includes(b.type) || b.type === 'quote' || b.type === 'callout')) {
+/** Outcome of a key handled by the editor: `handled` stops the browser default. */
+export interface KeyResult {
+  handled: boolean;
+  caret: CaretAfter;
+}
+
+/** The editable just before a block in document order: the page title or another block. */
+export type PrevEditable = { title: string } | { block: string } | null;
+
+const ABORT = new Error('no change');
+const unchanged = (handled: boolean, caret: CaretAfter = null): KeyResult & { changed: false } => ({ handled, caret, changed: false });
+
+/** Runs an edit as one undo step. An edit that reports no change commits nothing (no empty undo step). */
+function edit(fn: (tx: Tx) => KeyResult & { changed: boolean }): KeyResult {
+  let out: KeyResult = { handled: false, caret: null };
+  try {
     transact(tx => {
-      if (!tx.pages[b.parent] && CONTINUE_TYPES.includes(b.type)) txOutdent(tx, blockId);
-      else txTurnInto(tx, blockId, 'text');
+      const r = fn(tx);
+      out = { handled: r.handled, caret: r.caret };
+      if (!r.changed) throw ABORT;
     });
-    breakCoalescing();
-    focusBlock(blockId, 'start');
-    return;
+  } catch (e) {
+    if (e !== ABORT) throw e;
   }
+  breakCoalescing();
+  return out;
+}
 
-  const nextType: BlockType = CONTINUE_TYPES.includes(b.type) ? b.type : 'text';
-  let newId = '';
+/** True when a block sits at the root of a page or of a column (nothing to outdent from). */
+function atRoot(tx: Tx, id: string): boolean {
+  const b = tx.blocks[id];
+  return !!b && (!!tx.pages[b.parent] || tx.blocks[b.parent]?.type === 'column');
+}
 
-  // Caret at the very start of a non-empty block: push an empty block above.
-  if (isEmptyHtml(before) && !isEmptyHtml(after) && !before.includes('<br')) {
-    transact(tx => {
-      const list = tx.siblings(blockId);
-      newId = txInsertBlock(tx, { parent: b.parent, type: nextType, html: '', open: nextType === 'toggle' ? false : undefined }, list.indexOf(blockId));
-    });
-    breakCoalescing();
-    focusBlock(blockId, 'start');
-    return;
-  }
+/** Two blocks may merge only on the same page, in the same column (or both outside columns). */
+function sameScope(tx: Tx, a: string, b: string): boolean {
+  return pageOfBlockIn(tx, a) === pageOfBlockIn(tx, b) && columnOf(tx, a) === columnOf(tx, b);
+}
 
-  transact(tx => {
+/** Enter with the selection split into `before` and `after` (sanitized html). */
+export function enterAt(blockId: string, before: string, after: string): KeyResult {
+  return edit(tx => {
+    const b = tx.block(blockId);
+    if (!b) return unchanged(false);
+    // Empty list item: outdent if nested, else (at the root of a page or a column) turn into text.
+    if (isEmptyHtml(before) && isEmptyHtml(after) && (CONTINUE_TYPES.includes(b.type) || b.type === 'quote' || b.type === 'callout')) {
+      if (!(CONTINUE_TYPES.includes(b.type) && txOutdent(tx, blockId))) txTurnInto(tx, blockId, 'text');
+      return { handled: true, changed: true, caret: { block: blockId, at: 'start' } };
+    }
+    const nextType: BlockType = CONTINUE_TYPES.includes(b.type) ? b.type : 'text';
+    // Caret at the very start of a non-empty block: push an empty block above.
+    if (isEmptyHtml(before) && !isEmptyHtml(after) && !before.includes('<br')) {
+      txInsertBlock(tx, { parent: b.parent, type: nextType, html: '', open: nextType === 'toggle' ? false : undefined }, tx.siblings(blockId).indexOf(blockId));
+      return { handled: true, changed: true, caret: { block: blockId, at: 'start' } };
+    }
     tx.setBlock(blockId, { html: before });
     const partial = {
       type: nextType,
@@ -61,119 +85,126 @@ export function handleEnter(el: HTMLElement, blockId: string) {
       open: nextType === 'toggle' ? false : undefined,
     };
     const opensInside = (b.type === 'toggle' && b.open) || (b.children.length > 0 && b.type !== 'toggle');
-    if (opensInside) {
-      newId = txInsertBlock(tx, { ...partial, type: b.type === 'toggle' ? 'text' : partial.type, parent: blockId }, 0);
-    } else {
-      newId = txInsertAfter(tx, blockId, partial);
-    }
+    const newId = opensInside
+      ? txInsertBlock(tx, { ...partial, type: b.type === 'toggle' ? 'text' : partial.type, parent: blockId }, 0)
+      : txInsertAfter(tx, blockId, partial);
+    return { handled: true, changed: true, caret: { block: newId, at: 'start' } };
   });
-  breakCoalescing();
-  focusBlock(newId, 'start');
+}
+
+/**
+ * Backspace with the caret at the start of a block whose current html is `html`. `prev` is the
+ * editable before it in document order. Blocks at the root of a page or a column merge with
+ * the previous block in the same column; they never merge across columns, and only a block at
+ * the top of the page itself merges into the title.
+ */
+export function backspaceAtStart(blockId: string, html: string, prev: PrevEditable): KeyResult {
+  return edit(tx => {
+    const b = tx.block(blockId);
+    if (!b) return unchanged(false);
+    if (b.type !== 'text') {
+      txTurnInto(tx, blockId, 'text');
+      return { handled: true, changed: true, caret: { block: blockId, at: 'start' } };
+    }
+    if (!atRoot(tx, blockId)) {
+      const moved = txOutdent(tx, blockId);
+      return { handled: true, changed: moved, caret: { block: blockId, at: 'start' } };
+    }
+    const list = tx.siblings(blockId);
+    const idx = list.indexOf(blockId);
+    // Previous sibling that cannot hold text: select it (or remove the empty current block).
+    const prevSib = idx > 0 ? tx.blocks[list[idx - 1]] : null;
+    if (prevSib && (NON_EDITABLE.includes(prevSib.type) || prevSib.type === 'columns')) {
+      const remove = isEmptyHtml(html) && b.children.length === 0;
+      if (remove) txDeleteBlock(tx, blockId);
+      return { handled: true, changed: remove, caret: { select: prevSib.id } };
+    }
+    if (!prev) return unchanged(false);
+    if ('title' in prev) {
+      // Inside a column the title is only the neighbour in document order: never merge into it.
+      if (prev.title !== b.parent || idx !== 0) return unchanged(true);
+      const p = tx.page(prev.title);
+      const len = p.title.length;
+      if (!isEmptyHtml(html)) tx.setPage(p.id, { title: p.title + htmlToText(html).replace(/\n/g, ' ') });
+      // Children move up to the page.
+      tx.block(blockId).children.forEach((c, i) => txMoveBlock(tx, c, p.id, idx + i + 1));
+      txDeleteBlock(tx, blockId);
+      return { handled: true, changed: true, caret: { title: p.id, at: len } };
+    }
+    const target = tx.blocks[prev.block];
+    if (!target || target.id === blockId) return unchanged(false);
+    if (!sameScope(tx, target.id, blockId) || isBlockWithin(tx, target.id, blockId)) return unchanged(true);
+    if (target.type === 'code') {
+      const remove = isEmptyHtml(html) && b.children.length === 0;
+      if (remove) txDeleteBlock(tx, blockId);
+      return { handled: true, changed: remove, caret: remove ? { block: target.id, at: 'end' } : { select: target.id } };
+    }
+    if (!CONTAINER_TYPES.includes(target.type)) return unchanged(true);
+    const junction = plainLength(target.html);
+    tx.setBlock(target.id, { html: sanitizeInline(target.html + html) });
+    [...tx.block(blockId).children].forEach(k => txMoveBlock(tx, k, target.id, tx.block(target.id).children.length));
+    txDeleteBlock(tx, blockId);
+    return { handled: true, changed: true, caret: { block: target.id, at: junction } };
+  });
+}
+
+/** Delete with the caret at the end of a block: pulls the next editable block (same column only) into it. */
+export function deleteAtEnd(blockId: string, html: string, nextId: string | null): KeyResult {
+  return edit(tx => {
+    const cur = tx.blocks[blockId];
+    const next = nextId ? tx.blocks[nextId] : undefined;
+    if (!cur || !next || next.id === blockId || !CONTAINER_TYPES.includes(next.type)) return unchanged(false);
+    if (!sameScope(tx, next.id, blockId) || isBlockWithin(tx, blockId, next.id)) return unchanged(false);
+    const junction = plainLength(html);
+    tx.setBlock(blockId, { html: sanitizeInline(html + next.html) });
+    [...next.children].forEach(k => txMoveBlock(tx, k, blockId, tx.block(blockId).children.length));
+    txDeleteBlock(tx, next.id);
+    return { handled: true, changed: true, caret: { block: blockId, at: junction } };
+  });
+}
+
+/** Puts the caret where a keyboard edit says. */
+export function applyCaret(c: CaretAfter) {
+  if (!c) return;
+  if ('select' in c) selectBlocks([c.select]);
+  else if ('title' in c) focusTitle(c.title, c.at);
+  else focusBlock(c.block, c.at);
+}
+
+/* ------------------------------------------------------------------ */
+/* Enter                                                               */
+/* ------------------------------------------------------------------ */
+
+export function handleEnter(el: HTMLElement, blockId: string) {
+  if (!getDoc().blocks[blockId]) return;
+  const [rawBefore, rawAfter] = splitAtSelection(el);
+  applyCaret(enterAt(blockId, sanitizeInline(rawBefore), sanitizeInline(rawAfter)).caret);
 }
 
 /* ------------------------------------------------------------------ */
 /* Backspace at start / Delete at end                                  */
 /* ------------------------------------------------------------------ */
 
+/** The page title or block editable that precedes or follows `el` in document order. */
+function editableNeighbor(el: HTMLElement, dir: -1 | 1): PrevEditable {
+  const n = neighbor(el, dir);
+  if (!n) return null;
+  if (n.dataset.title !== undefined) return { title: n.dataset.title };
+  return n.dataset.editableId ? { block: n.dataset.editableId } : null;
+}
+
 /** Returns true when handled. */
 export function handleBackspaceAtStart(el: HTMLElement, blockId: string): boolean {
-  const d = getDoc();
-  const b = d.blocks[blockId];
-  if (!b) return false;
-
-  if (b.type !== 'text') {
-    transact(tx => txTurnInto(tx, blockId, 'text'));
-    breakCoalescing();
-    focusBlock(blockId, 'start');
-    return true;
-  }
-  if (!d.pages[b.parent]) {
-    transact(tx => txOutdent(tx, blockId));
-    breakCoalescing();
-    focusBlock(blockId, 'start');
-    return true;
-  }
-
-  // Previous sibling that cannot hold text: select it (or remove the empty current block).
-  const list = d.pages[b.parent].content;
-  const idx = list.indexOf(blockId);
-  const prevSib = idx > 0 ? d.blocks[list[idx - 1]] : null;
-  if (prevSib && NON_EDITABLE.includes(prevSib.type)) {
-    if (isEmptyHtml(b.html) && b.children.length === 0) {
-      transact(tx => txDeleteBlock(tx, blockId));
-    }
-    selectBlocks([prevSib.id]);
-    return true;
-  }
-
-  const prevEl = neighbor(el, -1);
-  if (!prevEl) return false;
-  const html = sanitizeInline(el.innerHTML);
-
-  // Merge into the page title.
-  if (prevEl.dataset.title !== undefined) {
-    const pageId = prevEl.dataset.title!;
-    const p = d.pages[pageId];
-    const len = (p?.title || '').length;
-    transact(tx => {
-      if (!isEmptyHtml(html)) tx.setPage(pageId, { title: (p?.title || '') + htmlToText(html) });
-      // Children move up to the page.
-      const cur = tx.block(blockId);
-      cur.children.forEach((c, i) => txMoveBlock(tx, c, pageId, idx + i + 1));
-      txDeleteBlock(tx, blockId);
-    });
-    breakCoalescing();
-    focusTitle(pageId, len);
-    return true;
-  }
-
-  const prevId = prevEl.dataset.editableId;
-  if (!prevId) return false;
-  const prev = d.blocks[prevId];
-  if (!prev) return false;
-  if (prev.type === 'code') {
-    if (isEmptyHtml(html)) {
-      transact(tx => txDeleteBlock(tx, blockId));
-      focusBlock(prevId, 'end');
-    } else selectBlocks([prevId]);
-    return true;
-  }
-  const junction = plainLength(prev.html);
-  transact(tx => {
-    tx.setBlock(prevId, { html: sanitizeInline(prev.html + html) });
-    const cur = tx.block(blockId);
-    const kids = [...cur.children];
-    const target = tx.block(prevId);
-    kids.forEach(k => txMoveBlock(tx, k, prevId, tx.block(prevId).children.length));
-    void target;
-    txDeleteBlock(tx, blockId);
-  });
-  breakCoalescing();
-  focusBlock(prevId, junction);
-  return true;
+  const r = backspaceAtStart(blockId, sanitizeInline(el.innerHTML), editableNeighbor(el, -1));
+  applyCaret(r.caret);
+  return r.handled;
 }
 
 export function handleDeleteAtEnd(el: HTMLElement, blockId: string): boolean {
-  const d = getDoc();
-  const nextEl = neighbor(el, 1);
-  if (!nextEl) return false;
-  const nextId = nextEl.dataset.editableId;
-  if (!nextId) return false;
-  const next = d.blocks[nextId];
-  if (!next || next.type === 'code') return false;
-  const cur = d.blocks[blockId];
-  const html = sanitizeInline(el.innerHTML);
-  const junction = plainLength(html);
-  transact(tx => {
-    tx.setBlock(blockId, { html: sanitizeInline(html + next.html) });
-    const nb = tx.block(nextId);
-    [...nb.children].forEach(k => txMoveBlock(tx, k, blockId, tx.block(blockId).children.length));
-    txDeleteBlock(tx, nextId);
-  });
-  void cur;
-  breakCoalescing();
-  focusBlock(blockId, junction);
-  return true;
+  const next = editableNeighbor(el, 1);
+  const r = deleteAtEnd(blockId, sanitizeInline(el.innerHTML), next && 'block' in next ? next.block : null);
+  applyCaret(r.caret);
+  return r.handled;
 }
 
 export function focusTitle(pageId: string, offset: number | 'end' = 'end') {
@@ -184,6 +215,7 @@ export function focusTitle(pageId: string, offset: number | 'end' = 'end') {
     setCaret(t, offset);
   });
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Indent                                                              */

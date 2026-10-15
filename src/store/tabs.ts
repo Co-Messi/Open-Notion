@@ -153,3 +153,37 @@ export function forward() {
 export function openInNewTab(pageId: string) {
   newTab(`#/p/${pageId}`);
 }
+
+/**
+ * Called after pages are deleted forever: tabs showing one of them close, and history entries
+ * that point at them are dropped from the other tabs.
+ */
+export function forgetPagesInTabs(ids: Iterable<string>) {
+  const gone = new Set(ids);
+  if (!gone.size) return;
+  const isGone = (h: string) => {
+    const r = parseHash(h);
+    return r.name === 'page' && gone.has(r.pageId);
+  };
+  if (!state.tabs.some(t => t.stack.some(isGone))) return;
+  const before = currentHash(activeTab());
+  let tabs: Tab[] = [];
+  for (const t of state.tabs) {
+    if (isGone(currentHash(t))) continue;
+    const keep = t.stack.map((h, i) => ({ h, i })).filter(x => !isGone(x.h));
+    const stack = keep.map(x => x.h);
+    const idx = Math.max(0, keep.filter(x => x.i <= t.idx).length - 1);
+    tabs.push({ ...t, stack, idx });
+  }
+  if (!tabs.length) tabs = [{ id: newId(), stack: ['#/home'], idx: 0 }];
+  let active = state.active;
+  if (!tabs.some(t => t.id === active)) {
+    // Like closing a tab by hand: the next tab to the right, else the nearest one to the left.
+    const i = state.tabs.findIndex(x => x.id === active);
+    const nearest = [...state.tabs.slice(i + 1), ...state.tabs.slice(0, Math.max(0, i)).reverse()].find(x => tabs.some(t => t.id === x.id));
+    active = nearest ? nearest.id : tabs[0].id;
+  }
+  set({ tabs, active });
+  const now = currentHash(tabs.find(t => t.id === active)!);
+  if (now !== before) go(now);
+}
