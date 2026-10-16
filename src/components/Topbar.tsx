@@ -6,7 +6,7 @@ import {
 import { useDoc, useUi, setUi, getDoc, showToast, undo } from '../store/store';
 import { pagePath, pageTitle, openPage, toggleFavorite, duplicatePage, trashPage, updatePage } from '../store/actions';
 import { PageIconView } from './PageIcon';
-import { Popover, Menu, Switch, Tooltip, MOD, relTime, type Anchor } from './ui';
+import { Popover, Menu, Switch, Tooltip, MOD, relTime, type Anchor, pressable } from './ui';
 import { MovePagePopover, copyPageLink } from './PageMenus';
 import { SidebarOpener, WorkspaceIcon } from './Sidebar';
 import { exportPageMarkdown, pageToMarkdown } from '../lib/exporter';
@@ -58,28 +58,28 @@ function PageTopbar({ pageId }: { pageId: string }) {
           </span>
         ))}
       </div>
-      <div className="privacy" onClick={e => setShare(e.currentTarget.getBoundingClientRect())}>
+      <div {...pressable()} aria-haspopup="dialog" className="privacy" onClick={e => setShare(e.currentTarget.getBoundingClientRect())}>
         {inTeam ? <Users size={14} /> : <Lock size={13} />}
         <span>{inTeam || 'Private'}</span>
         <ChevronDown size={13} />
       </div>
       <div className="spacer" />
-      <div className="tb-btn" onClick={e => setShare(e.currentTarget.getBoundingClientRect())} role="button">
+      <div className="tb-btn" onClick={e => setShare(e.currentTarget.getBoundingClientRect())} {...pressable()}>
         <Lock size={14} />
         Share
       </div>
       <Tooltip label="Copy link" shortcut={`${MOD}L`}>
-        <div className="icon-btn" role="button" onClick={() => copyPageLink(pageId)}>
+        <div className="icon-btn" {...pressable()} onClick={() => copyPageLink(pageId)}>
           <Link2 size={17} strokeWidth={1.6} />
         </div>
       </Tooltip>
       <Tooltip label={fav ? 'Remove from Favorites' : 'Add to Favorites'}>
-        <div className={'icon-btn' + (fav ? ' fav-on' : '')} role="button" onClick={() => toggleFavorite(pageId)}>
+        <div className={'icon-btn' + (fav ? ' fav-on' : '')} {...pressable()} onClick={() => toggleFavorite(pageId)}>
           <Star size={17} strokeWidth={1.6} fill={fav ? 'currentColor' : 'none'} />
         </div>
       </Tooltip>
       <Tooltip label="Style, export, and more…">
-        <div className="icon-btn" role="button" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())} style={menu ? { background: 'var(--hover)' } : undefined}>
+        <div className="icon-btn" {...pressable()} onClick={e => setMenu(e.currentTarget.getBoundingClientRect())} style={menu ? { background: 'var(--hover)' } : undefined}>
           <MoreHorizontal size={18} />
         </div>
       </Tooltip>
@@ -93,7 +93,7 @@ function Crumb({ id }: { id: string }) {
   const p = useDoc(d => d.pages[id], Object.is);
   if (!p) return null;
   return (
-    <div className="crumb" onClick={() => openPage(id)} role="button">
+    <div className="crumb" onClick={() => openPage(id)} {...pressable()}>
       {(p.icon || p.isDatabase) && <PageIconView page={p} size={16} emojiSize={15} />}
       <span className="t">{pageTitle(p)}</span>
     </div>
@@ -136,7 +136,7 @@ export function PageActionsMenu({ pageId, anchor, onClose }: { pageId: string; a
               showToast('Copied page contents');
             },
           },
-          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', right: `${MOD}D`, onSelect: () => openPage(duplicatePage(pageId)) },
+          { id: 'dup', icon: <Copy size={16} />, label: 'Duplicate', onSelect: () => openPage(duplicatePage(pageId)) },
           { id: 'move', icon: <CornerUpRight size={16} />, label: 'Move to', right: `${MOD}⇧P`, keepOpen: true, onSelect: () => setMove(anchor) },
           {
             id: 'trash', icon: <Trash2 size={16} />, label: 'Move to Trash', danger: true,
@@ -211,10 +211,10 @@ function SharePopover({ pageId, anchor, onClose }: { pageId: string; anchor: Anc
   return (
     <Popover anchor={anchor} onClose={onClose} width={440} placement="bottom-end" className="share-pop">
       <div className="share-tabs">
-        <div className={'ep-tab' + (tab === 'share' ? ' on' : '')} onClick={() => setTab('share')}>
+        <div {...pressable()} aria-pressed={tab === 'share'} className={'ep-tab' + (tab === 'share' ? ' on' : '')} onClick={() => setTab('share')}>
           Share
         </div>
-        <div className={'ep-tab' + (tab === 'publish' ? ' on' : '')} onClick={() => setTab('publish')}>
+        <div {...pressable()} aria-pressed={tab === 'publish'} className={'ep-tab' + (tab === 'publish' ? ' on' : '')} onClick={() => setTab('publish')}>
           Publish
         </div>
       </div>
@@ -242,7 +242,7 @@ function SharePopover({ pageId, anchor, onClose }: { pageId: string; anchor: Anc
             </div>
             <span className="sub">Full access</span>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 500 }}>General access</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>General access</div>
           <div className="share-person">
             <span className="ws-icon" style={{ width: 24, height: 24 }}>
               <Lock size={13} />
@@ -261,7 +261,7 @@ function SharePopover({ pageId, anchor, onClose }: { pageId: string; anchor: Anc
         </div>
       )}
       <div className="share-footer">
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <WorkspaceIcon size={16} /> {ws.name}
         </span>
         <button className="btn secondary sm" onClick={() => copyPageLink(pageId)}>

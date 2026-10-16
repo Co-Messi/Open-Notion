@@ -189,10 +189,11 @@ export function placeAtX(el: HTMLElement, x: number, line: 'first' | 'last') {
   }
 }
 
+/** Serializes cloned editor content; the nodes move into an inert template document first. */
 function serialize(frag: DocumentFragment): string {
-  const d = document.createElement('div');
-  d.appendChild(frag);
-  return d.innerHTML;
+  const t = document.createElement('template');
+  t.content.appendChild(frag);
+  return t.innerHTML;
 }
 
 /** Splits the editable's HTML at the selection: [before, after] (selected content is dropped). */
@@ -226,8 +227,9 @@ export function deleteBeforeCaret(el: HTMLElement, count: number) {
   document.execCommand('delete');
 }
 
+/** Text length of stored html (a <br> counts as one). Parsed inside an inert template. */
 export function plainLength(html: string): number {
-  const d = document.createElement('div');
-  d.innerHTML = html;
-  return lengthOf(d);
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  return lengthOf(t.content);
 }

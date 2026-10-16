@@ -4,7 +4,8 @@ import { openPage } from '../store/actions';
 import { PropValue } from './cells';
 import { visibleProps, isEmptyValue } from './logic';
 import { addRowAt } from './dbActions';
-import { TitleEditor, RowMenu, RowIcon, type ViewProps } from './shared';
+import { TitleEditor, RowMenu, RowIcon, rowItemProps, type ViewProps } from './shared';
+import { pressable } from '../components/ui';
 
 export function ListView({ dbId, view, rows, schema, defaults, editingTitle, setEditingTitle }: ViewProps) {
   const props = visibleProps(schema, view).filter(p => p.type !== 'title');
@@ -16,7 +17,7 @@ export function ListView({ dbId, view, rows, schema, defaults, editingTitle, set
           key={row.id}
           data-row-id={row.id}
           className="db-list-row"
-          role="button"
+          {...rowItemProps(row, rect => setRowMenu({ rowId: row.id, rect }))}
           onClick={() => editingTitle !== row.id && openPage(row.id, { peek: true })}
           onContextMenu={e => {
             e.preventDefault();
@@ -43,7 +44,7 @@ export function ListView({ dbId, view, rows, schema, defaults, editingTitle, set
           </div>
         </div>
       ))}
-      <div className="db-new-row list" role="button" onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
+      <div className="db-new-row list" {...pressable()} onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
         <Plus size={16} /> New page
       </div>
       {rowMenu && <RowMenu rowId={rowMenu.rowId} rect={rowMenu.rect} onClose={() => setRowMenu(null)} />}

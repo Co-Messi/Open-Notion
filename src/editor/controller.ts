@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { setCaret, placeAtX, caretOffset } from './caret';
 import { getUi, setUi, setFocusProvider, setRestoreFocus, type FocusHint } from '../store/store';
+import { attrSel } from '../lib/dom';
 
 /* ------------------------------------------------------------------ */
 /* Tiny observable used for editor overlays                            */
@@ -52,7 +53,7 @@ export const mentionState = observable<MentionState | null>(null);
 export type FocusPos = 'start' | 'end' | number | { x: number; line: 'first' | 'last' } | { start: number; end: number };
 
 export function editableFor(blockId: string): HTMLElement | null {
-  return document.querySelector(`[data-editable-id="${blockId}"]`) as HTMLElement | null;
+  return document.querySelector(attrSel('data-editable-id', blockId)) as HTMLElement | null;
 }
 
 /** Focus a block's editable once it is in the DOM. */

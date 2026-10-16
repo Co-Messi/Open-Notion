@@ -6,6 +6,7 @@ import { caretOffset, setCaret } from './caret';
 import { transact } from '../store/store';
 import { sanitizeInline } from '../lib/html';
 import { splitAtSelection } from './caret';
+import { SLASH_CHARS, asciiShortcut } from './ops';
 
 function readQuery(): { q: string; valid: boolean } {
   const s = slashState.get();
@@ -14,8 +15,9 @@ function readQuery(): { q: string; valid: boolean } {
   if (!el || document.activeElement !== el) return { q: '', valid: false };
   const off = caretOffset(el);
   const text = el.textContent || '';
-  if (off === null || off <= s.start || text[s.start] !== '/') return { q: '', valid: false };
-  return { q: text.slice(s.start + 1, off), valid: true };
+  if (off === null || off <= s.start || !SLASH_CHARS.includes(text[s.start])) return { q: '', valid: false };
+  // Full width letters typed with a CJK input method match like their ASCII forms.
+  return { q: asciiShortcut(text.slice(s.start + 1, off)), valid: true };
 }
 
 function score(item: SlashItem, q: string): number {
@@ -104,6 +106,7 @@ export function SlashMenu() {
       setCaret(el, st.start, off);
       const [before, after] = splitAtSelection(el);
       const html = sanitizeInline(before + after);
+      // Sanitized just above: the editable shows exactly what the store will hold.
       el.innerHTML = html;
       transact(tx => tx.setBlock(st.blockId, { html }), 'push');
     }
@@ -129,7 +132,8 @@ export function SlashMenu() {
         choose(results[active]);
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        e.stopPropagation();
+        // Only the slash menu closes; other layers keep their own Escape.
+        e.stopImmediatePropagation();
         slashState.set(null);
       }
     };
@@ -152,18 +156,34 @@ export function SlashMenu() {
     listRef.current?.querySelector('.menu-item.active')?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
+  // The caret stays in the editable, so the highlighted option is exposed through it.
+  const activeId = results[active] ? 'slash-opt-' + results[active].id : undefined;
+  useEffect(() => {
+    const el = s ? editableFor(s.blockId) : null;
+    if (!el || !activeId) return;
+    el.setAttribute('aria-controls', 'slash-listbox');
+    el.setAttribute('aria-activedescendant', activeId);
+    return () => {
+      el.removeAttribute('aria-controls');
+      el.removeAttribute('aria-activedescendant');
+    };
+  }, [s, activeId]);
+
   if (!s || results.length === 0) return null;
   let last = '';
   return createPortal(
     <div ref={boxRef} className="popover" style={{ ...pos, width: 324 }} onMouseDown={e => e.preventDefault()}>
-      <div className="menu" ref={listRef} style={{ maxHeight: 340 }}>
+      <div className="menu" ref={listRef} id="slash-listbox" role="listbox" aria-label="Insert a block" style={{ maxHeight: 340 }}>
         {results.map((item, idx) => {
           const head = !q && item.section !== last ? item.section : q && idx === 0 ? 'Results' : null;
           last = item.section;
           return (
-            <div key={item.id}>
-              {head && <div className="menu-label">{head}</div>}
+            <div key={item.id} role="presentation">
+              {head && <div className="menu-label" role="presentation">{head}</div>}
               <div
+                id={'slash-opt-' + item.id}
+                role="option"
+                aria-selected={idx === active}
                 className={'menu-item' + (idx === active ? ' active' : '')}
                 onMouseMove={() => idx !== active && setActive(idx)}
                 onClick={() => choose(item)}
@@ -179,7 +199,7 @@ export function SlashMenu() {
       <div className="menu-footer" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 14px' }}>
         <span>Type '/' on the page</span>
         <span>
-          esc <span style={{ marginLeft: 4 }}>Close menu</span>
+          esc <span style={{ marginInlineStart: 4 }}>Close menu</span>
         </span>
       </div>
     </div>,

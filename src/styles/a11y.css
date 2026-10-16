@@ -1,0 +1,82 @@
+/* Accessibility layer. Loaded last so the focus and reveal rules win over the component styles. */
+/* ------------------------------------------------------------------ */
+/* Keyboard focus. Shown only for :focus-visible, so mouse clicks look */
+/* exactly as before. Hover-only affordances also appear while a       */
+/* keyboard user is on the row or inside it.                           */
+/* ------------------------------------------------------------------ */
+/*
+ * Measured from the Notion desktop app (7.37) on a keyboard focused icon button: a 2px gap in the
+ * page background, a 2px accent ring, then another 2px of page background, with a transparent
+ * outline kept for forced colors mode.
+ */
+:is([role='button'], [role='treeitem'], [role='tab'], [role='checkbox'], [role='switch'], [role='link'], [role='option'], [role='menu'], [tabindex='0']):focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--blue), 0 0 0 6px var(--bg-primary);
+}
+.popover:focus-visible,
+.modal:focus-visible,
+.menu:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+/*
+ * Controls that are display:none until hover cannot receive keyboard focus, and focus is lost when
+ * the row stops matching while focus moves into the control. So the resting state is a clipped,
+ * one pixel box (still focusable, takes no space) and the shown state is the normal one.
+ */
+.sb-row:not(:hover, .menu-open, :focus-visible, :has(:focus-visible)) > .sb-actions,
+.sb-section-header:not(:hover, :focus-visible, :has(:focus-visible)) > .sb-actions,
+.db-tr:not(:hover, :has(:focus-visible)) .db-open-btn,
+.db-td:not(:hover, :has(:focus-visible)) .db-link-open,
+.pp-value:not(:hover, :has(:focus-visible)) .db-link-open {
+  display: flex;
+  position: absolute;
+  inset: auto;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.sb-row:not(:hover, :focus-visible, :has(:focus-visible)) .sb-caret {
+  display: flex;
+  inset: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.sb-row:is(:focus-visible, :has(:focus-visible)) > .sb-actions,
+.sb-section-header:is(:focus-visible, :has(:focus-visible)) > .sb-actions {
+  display: flex;
+}
+.sb-row:is(:focus-visible, :has(:focus-visible)) .sb-caret {
+  display: flex;
+}
+.tab-close:focus-visible {
+  opacity: 1;
+}
+.db-header:has(:focus-visible) .db-open-full,
+.db-open-full:focus-visible,
+.db-tr:has(:focus-visible) .db-row-actions,
+.db-ra-btn:focus-visible,
+.db-opt-row:has(:focus-visible) .db-opt-more,
+.db-opt-more:focus-visible,
+.db-col-head:has(:focus-visible) .db-col-act,
+.db-col-act:focus-visible,
+.db-cal-add:focus-visible,
+.block-gutter:has(:focus-visible) {
+  opacity: 1;
+}
+.db-tr:has(:focus-visible) .db-open-btn {
+  display: inline-flex;
+}
+.db-td:has(:focus-visible) .db-link-open,
+.db-td:focus-visible .db-link-open,
+.pp-value:has(:focus-visible) .db-link-open,
+.pp-value:focus-visible .db-link-open {
+  display: flex;
+}

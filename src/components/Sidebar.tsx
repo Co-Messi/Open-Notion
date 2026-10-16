@@ -8,7 +8,7 @@ import { getDoc, setSettings, setUi, useDoc, useSettings, useUi, getUi } from '.
 import { childPagesOf, createPage, openPage, pageTitle, updatePage, movePage, goHome, isTrashedDeep } from '../store/actions';
 import { PageIconView } from './PageIcon';
 import { SidebarPageMenu } from './PageMenus';
-import { Popover, Menu, SearchIcon, Tooltip, MOD, type Anchor } from './ui';
+import { Popover, Menu, SearchIcon, Tooltip, MOD, type Anchor, pressable } from './ui';
 
 const OPEN_KEY = 'on:sb-open';
 function loadOpen(): Record<string, boolean> {
@@ -82,6 +82,34 @@ function useDrag() {
 /* Page tree                                                           */
 /* ------------------------------------------------------------------ */
 
+/** Tree keyboard model: Enter and Space open the row, arrows move between rows and fold them. */
+function treeKey(e: React.KeyboardEvent<HTMLElement>, open: boolean, setFold: (v: boolean) => void, parentId?: string | null) {
+  if (e.target !== e.currentTarget || e.nativeEvent.isComposing) return;
+  const rows = () => Array.from(document.querySelectorAll<HTMLElement>('.sidebar [role="treeitem"]'));
+  const focusAt = (delta: number) => {
+    const all = rows();
+    all[all.indexOf(e.currentTarget) + delta]?.focus();
+  };
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    e.currentTarget.click();
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    focusAt(1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    focusAt(-1);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (!open) setFold(true);
+    else focusAt(1);
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (open) setFold(false);
+    else if (parentId) rows().find(r => r.dataset.sbPage === parentId)?.focus();
+  }
+}
+
 function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; depth: number; section: string; parentId: string | null; index: number }) {
   const page = useDoc(d => d.pages[pageId], Object.is);
   const children = useDoc(d => childPagesOf(d, pageId));
@@ -131,9 +159,10 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
       setDrag(null);
       if (!started) return;
       if (!t) return;
+      // movePage refuses (with a toast) a page dropped into itself or among another database's rows:
+      // a database shows rows, never content, so the page would vanish.
       if (t.kind === 'into') {
-        movePage(pageId, { pageId: t.pageId });
-        setOpen(t.pageId, true);
+        if (movePage(pageId, { pageId: t.pageId })) setOpen(t.pageId, true);
       } else if (t.parentId) {
         movePage(pageId, { pageId: t.parentId, index: t.index });
       } else {
@@ -144,12 +173,20 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
     window.addEventListener('pointerup', up);
   };
 
+  const onRowKey = (e: React.KeyboardEvent<HTMLElement>) => treeKey(e, open, v => setOpen(pageId, v), parentId);
+
   return (
     <>
       <div
         ref={rowRef}
         className={'sb-row' + (isActive ? ' active' : '') + (menu ? ' menu-open' : '') + (dropInto ? ' drop-into' : '')}
-        style={{ paddingLeft: 8 + depth * 12 }}
+        style={{ paddingInlineStart: 8 + depth * 12 }}
+        role="treeitem"
+        tabIndex={0}
+        aria-level={depth + 1}
+        aria-expanded={open}
+        aria-selected={isActive}
+        onKeyDown={onRowKey}
         data-sb-page={pageId}
         data-sb-section={section}
         data-sb-parent={parentId || ''}
@@ -168,8 +205,9 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
           <PageIconView page={page} size={18} />
           <div
             className={'sb-caret' + (open ? ' open' : '')}
-            role="button"
+            {...pressable()}
             aria-label={open ? 'Collapse' : 'Expand'}
+            aria-expanded={open}
             onClick={e => {
               e.stopPropagation();
               setOpen(pageId, !open);
@@ -183,7 +221,7 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
           <Tooltip label="Delete, duplicate, and more…">
             <div
               className="icon-btn"
-              role="button"
+              {...pressable()}
               onClick={e => {
                 e.stopPropagation();
                 setMenu((e.currentTarget as HTMLElement).getBoundingClientRect());
@@ -196,7 +234,7 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
             <Tooltip label="Add a page inside">
               <div
                 className="icon-btn"
-                role="button"
+                {...pressable()}
                 onClick={e => {
                   e.stopPropagation();
                   const id = createPage({ parentId: pageId });
@@ -213,7 +251,7 @@ function PageRow({ pageId, depth, section, parentId, index }: { pageId: string; 
       {open && (
         <>
           {children.length === 0 ? (
-            <div className="sb-empty" style={{ paddingLeft: 46 + depth * 12 }}>
+            <div className="sb-empty" style={{ paddingInlineStart: 46 + depth * 12 }}>
               No pages inside
             </div>
           ) : (
@@ -276,7 +314,7 @@ function Section({
   const collapsed = useOpen(collapsedKey);
   return (
     <div className="sb-section">
-      <div className="sb-section-header" onClick={() => setOpen(collapsedKey, !collapsed)}>
+      <div {...pressable()} className="sb-section-header" aria-expanded={!collapsed} onClick={() => setOpen(collapsedKey, !collapsed)}>
         <span className="grow">
           {title}
           <span className="chev">{collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}</span>
@@ -284,7 +322,7 @@ function Section({
         {onAdd && (
           <span className="sb-actions">
             <Tooltip label="Add a page">
-              <span
+              <span {...pressable()}
                 className="icon-btn"
                 onClick={e => {
                   e.stopPropagation();
@@ -298,12 +336,12 @@ function Section({
         )}
       </div>
       {!collapsed && (
-        <div className="sb-group">
+        <div className="sb-group" role="tree" aria-label={title}>
           {children}
           {pages.map((p, i) => (
             <PageRow key={p} pageId={p} depth={0} section={id} parentId={null} index={i} />
           ))}
-          {pages.length === 0 && emptyText && <div className="sb-empty" style={{ paddingLeft: 46 }}>{emptyText}</div>}
+          {pages.length === 0 && emptyText && <div className="sb-empty" style={{ paddingInlineStart: 46 }}>{emptyText}</div>}
         </div>
       )}
     </div>
@@ -366,26 +404,27 @@ export function Sidebar() {
 
   return (
     <nav
+      aria-label="Sidebar"
       className={'sidebar' + (sbOpen ? '' : ' collapsed') + (!sbOpen && hoverPeek ? ' peek' : '')}
       style={{ width }}
       onMouseLeave={() => !sbOpen && setUi({ sidebarHover: false })}
     >
-      <div className="sb-search" onClick={() => setUi({ searchOpen: true })} role="button">
+      <div className="sb-search" onClick={() => setUi({ searchOpen: true })} {...pressable()}>
         <SearchIcon size={14} />
         <span className="label">Search or ask</span>
         <span className="kbd">⌘K</span>
       </div>
 
       <div className="sb-tabs">
-        <div className={'sb-tab' + (route.name === 'home' ? ' active' : '')} onClick={goHome} role="button">
+        <div className={'sb-tab' + (route.name === 'home' ? ' active' : '')} onClick={goHome} {...pressable()}>
           <House size={18} strokeWidth={route.name === 'home' ? 2 : 1.6} fill={route.name === 'home' ? 'currentColor' : 'none'} />
           Home
         </div>
-        <div className={'sb-tab' + (route.name === 'chat' ? ' active' : '')} onClick={() => (location.hash = '#/chat')} role="button">
+        <div className={'sb-tab' + (route.name === 'chat' ? ' active' : '')} onClick={() => (location.hash = '#/chat')} {...pressable()}>
           <MessageCircle size={17} strokeWidth={1.6} />
           Chat
         </div>
-        <div className={'sb-tab' + (route.name === 'meetings' ? ' active' : '')} onClick={() => (location.hash = '#/meetings')} role="button">
+        <div className={'sb-tab' + (route.name === 'meetings' ? ' active' : '')} onClick={() => (location.hash = '#/meetings')} {...pressable()}>
           <CalendarDays size={17} strokeWidth={1.6} />
           Meetings
         </div>
@@ -393,13 +432,13 @@ export function Sidebar() {
 
       <div className="sidebar-scroll" ref={scrollRef}>
         <div className="sb-group top">
-          <div className="sb-row" onClick={newPrivatePage} role="button">
+          <div className="sb-row" onClick={newPrivatePage} {...pressable()}>
             <div className="sb-icon">
               <SquarePen size={18} strokeWidth={1.6} />
             </div>
             <div className="sb-label">New page</div>
           </div>
-          <div className={'sb-row' + (route.name === 'library' ? ' active' : '')} onClick={() => (location.hash = '#/library')} role="button">
+          <div className={'sb-row' + (route.name === 'library' ? ' active' : '')} onClick={() => (location.hash = '#/library')} {...pressable()}>
             <div className="sb-icon">
               <Library size={18} strokeWidth={1.6} />
             </div>
@@ -418,14 +457,14 @@ export function Sidebar() {
         </Section>
         <div className="sb-group">
           {privatePages.length > 12 && (
-            <div className="sb-row muted" onClick={() => setShowAll(!showAll)} role="button">
+            <div className="sb-row muted" onClick={() => setShowAll(!showAll)} {...pressable()}>
               <div className="sb-icon">
                 <MoreHorizontal size={16} />
               </div>
               <div className="sb-label">{showAll ? 'Show less' : 'View all'}</div>
             </div>
           )}
-          <div className="sb-row muted" onClick={newPrivatePage} role="button">
+          <div className="sb-row muted" onClick={newPrivatePage} {...pressable()}>
             <div className="sb-icon">
               <Plus size={16} />
             </div>
@@ -434,19 +473,19 @@ export function Sidebar() {
         </div>
 
         <div className="sb-group" style={{ marginTop: 16 }}>
-          <div className="sb-row" onClick={() => setUi({ settingsOpen: true, settingsTab: 'preferences' })} role="button">
+          <div className="sb-row" onClick={() => setUi({ settingsOpen: true, settingsTab: 'preferences' })} {...pressable()}>
             <div className="sb-icon">
               <Settings size={18} strokeWidth={1.6} />
             </div>
             <div className="sb-label">Settings</div>
           </div>
-          <div className="sb-row" onClick={() => setUi({ trashOpen: true })} role="button" data-trash-anchor>
+          <div className="sb-row" onClick={() => setUi({ trashOpen: true })} {...pressable()} data-trash-anchor>
             <div className="sb-icon">
               <Trash2 size={18} strokeWidth={1.6} />
             </div>
             <div className="sb-label">Trash</div>
           </div>
-          <div className="sb-row muted" onClick={() => setUi({ settingsOpen: true, settingsTab: 'sidebar' })} role="button">
+          <div className="sb-row muted" onClick={() => setUi({ settingsOpen: true, settingsTab: 'sidebar' })} {...pressable()}>
             <div className="sb-icon">
               <SlidersHorizontal size={17} strokeWidth={1.6} />
             </div>
@@ -457,23 +496,23 @@ export function Sidebar() {
       </div>
 
       <div className={'sb-footer' + (scrolled ? ' scrolled' : '')}>
-        <div className="sb-switcher" onClick={e => setSwitcher(e.currentTarget.getBoundingClientRect())} role="button">
+        <div className="sb-switcher" onClick={e => setSwitcher(e.currentTarget.getBoundingClientRect())} {...pressable()}>
           <WorkspaceIcon />
           <span className="ws-name">{ws.name}</span>
           <ChevronDown size={14} />
         </div>
         <Tooltip label="Templates">
-          <div className="icon-btn" role="button" onClick={() => window.dispatchEvent(new Event('on:templates'))}>
+          <div className="icon-btn" {...pressable()} onClick={() => window.dispatchEvent(new Event('on:templates'))}>
             <LayoutTemplate size={18} strokeWidth={1.6} />
           </div>
         </Tooltip>
         <Tooltip label="Help & support">
-          <div className="icon-btn" role="button" onClick={() => setUi({ settingsOpen: true, settingsTab: 'shortcuts' })}>
+          <div className="icon-btn" {...pressable()} onClick={() => setUi({ settingsOpen: true, settingsTab: 'shortcuts' })}>
             <CircleHelp size={18} strokeWidth={1.6} />
           </div>
         </Tooltip>
         <Tooltip label="Close sidebar" shortcut={`${MOD}\\`}>
-          <div className="icon-btn" role="button" onClick={() => setSettings({ sidebarOpen: false })}>
+          <div className="icon-btn" {...pressable()} onClick={() => setSettings({ sidebarOpen: false })}>
             <ChevronsLeft size={18} strokeWidth={1.6} />
           </div>
         </Tooltip>
@@ -497,7 +536,7 @@ function UpcomingEvents() {
         if (!db.isDatabase || isTrashedDeep(d, db.id)) continue;
         const dateProp = db.schema?.find(s => s.type === 'date');
         if (!dateProp) continue;
-        const color = db.icon ? 'var(--on-blue-icon-secondary)' : 'var(--on-purple-icon-secondary)';
+        const color = db.icon ? 'var(--theme-blue-glyph)' : 'var(--theme-purple-glyph)';
         for (const rid of db.rows || []) {
           const r = d.pages[rid];
           const v = r?.props?.[dateProp.id];
@@ -513,13 +552,13 @@ function UpcomingEvents() {
   const collapsed = useOpen('section:events');
   return (
     <div className="sb-section">
-      <div className="sb-section-header" onClick={() => setOpen('section:events', !collapsed)}>
+      <div {...pressable()} className="sb-section-header" aria-expanded={!collapsed} onClick={() => setOpen('section:events', !collapsed)}>
         <span className="grow">Upcoming events</span>
       </div>
       {!collapsed && (
         <div className="sb-group">
           {events.map(e => (
-            <div key={e.id} className="sb-row sb-event" role="button" onClick={() => openPage(e.id, { peek: true })}>
+            <div key={e.id} className="sb-row sb-event" {...pressable()} onClick={() => openPage(e.id, { peek: true })}>
               <div className="sb-icon">
                 <span className="sb-event-dot" style={{ background: e.color }} />
               </div>
@@ -528,7 +567,7 @@ function UpcomingEvents() {
             </div>
           ))}
           {events.length === 0 && (
-            <div className="sb-row" onClick={() => (location.hash = '#/meetings')} role="button">
+            <div className="sb-row" onClick={() => (location.hash = '#/meetings')} {...pressable()}>
               <div className="sb-icon">
                 <CalendarPlus size={18} strokeWidth={1.6} />
               </div>
@@ -541,25 +580,18 @@ function UpcomingEvents() {
   );
 }
 
-/** "10 – 11AM" for timed events today, otherwise a short weekday/date. */
+/** Time of an upcoming event in the user's locale: a time range today, otherwise a short date. */
 function eventTime(start: string, end?: string): string {
   const s = new Date(start.length > 10 ? start : start + 'T00:00:00');
   const hasTime = start.length > 10;
   const today = new Date();
   const sameDay = s.toDateString() === today.toDateString();
   if (!hasTime) return sameDay ? 'Today' : s.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-  const part = (d: Date) => {
-    const h = d.getHours() % 12 || 12;
-    const m = d.getMinutes();
-    return { t: m ? `${h}:${String(m).padStart(2, '0')}` : String(h), ap: d.getHours() < 12 ? 'AM' : 'PM' };
-  };
-  const a = part(s);
   const prefix = sameDay ? '' : s.toLocaleDateString(undefined, { weekday: 'short' }) + ' ';
-  if (end && end.length > 10 && end.slice(0, 10) === start.slice(0, 10)) {
-    const b = part(new Date(end));
-    return a.ap === b.ap ? `${prefix}${a.t}–${b.t}${b.ap}` : `${prefix}${a.t}${a.ap}–${b.t}${b.ap}`;
-  }
-  return `${prefix}${a.t}${a.ap}`;
+  const e = end && end.length > 10 && end.slice(0, 10) === start.slice(0, 10) ? new Date(end) : null;
+  const onTheHour = s.getMinutes() === 0 && (!e || e.getMinutes() === 0);
+  const fmt = new Intl.DateTimeFormat(undefined, onTheHour ? { hour: 'numeric' } : { hour: 'numeric', minute: '2-digit' });
+  return prefix + (e && e > s ? fmt.formatRange(s, e) : fmt.format(s));
 }
 
 function TeamspacesSection() {
@@ -570,19 +602,19 @@ function TeamspacesSection() {
   const shown = showAll ? ids : ids.slice(0, 3);
   return (
     <div className="sb-section">
-      <div className="sb-section-header" onClick={() => setOpen('section:teamspaces', !collapsed)}>
+      <div {...pressable()} className="sb-section-header" aria-expanded={!collapsed} onClick={() => setOpen('section:teamspaces', !collapsed)}>
         <span className="grow">
           Teamspaces
           <span className="chev">{collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}</span>
         </span>
       </div>
       {!collapsed && (
-        <div className="sb-group">
+        <div className="sb-group" role="tree" aria-label="Teamspaces">
           {shown.map(id => (
             <TeamspaceRows key={id} id={id} />
           ))}
           {ids.length > 3 && (
-            <div className="sb-row muted" role="button" onClick={() => setShowAll(!showAll)}>
+            <div className="sb-row muted" {...pressable()} onClick={() => setShowAll(!showAll)}>
               <div className="sb-icon">
                 <MoreHorizontal size={16} />
               </div>
@@ -602,7 +634,15 @@ function TeamspaceRows({ id }: { id: string }) {
   if (!t) return null;
   return (
     <>
-      <div className="sb-row" onClick={() => setOpen('ts-open:' + id, !open)} role="button" data-sb-page={undefined}>
+      <div
+        className="sb-row"
+        onClick={() => setOpen('ts-open:' + id, !open)}
+        role="treeitem"
+        tabIndex={0}
+        aria-level={1}
+        aria-expanded={open}
+        onKeyDown={e => treeKey(e, open, v => setOpen('ts-open:' + id, v))}
+      >
         <div className="sb-icon">
           <span className="ws-icon ts-icon">{t.icon}</span>
           <div className={'sb-caret' + (open ? ' open' : '')}>
@@ -614,7 +654,7 @@ function TeamspaceRows({ id }: { id: string }) {
           <Tooltip label="Add a page">
             <div
               className="icon-btn"
-              role="button"
+              {...pressable()}
               onClick={e => {
                 e.stopPropagation();
                 setOpen('ts-open:' + id, true);
@@ -627,7 +667,7 @@ function TeamspaceRows({ id }: { id: string }) {
         </div>
       </div>
       {open && pages.map((p, i) => <PageRow key={p} pageId={p} depth={1} section={id} parentId={null} index={i} />)}
-      {open && pages.length === 0 && <div className="sb-empty" style={{ paddingLeft: 58 }}>No pages inside</div>}
+      {open && pages.length === 0 && <div className="sb-empty" style={{ paddingInlineStart: 58 }}>No pages inside</div>}
     </>
   );
 }
@@ -676,7 +716,7 @@ export function SidebarOpener() {
     <Tooltip label="Open sidebar" shortcut={`${MOD}\\`}>
       <div
         className="icon-btn"
-        role="button"
+        {...pressable()}
         style={{ width: 28, height: 28, color: 'var(--icon-primary)' }}
         onMouseEnter={() => setUi({ sidebarHover: true })}
         onClick={() => {

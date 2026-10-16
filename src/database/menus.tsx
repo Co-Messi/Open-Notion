@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { ArrowUp, ArrowDown, EyeOff, WrapText, Copy, Trash2, ListFilter, Settings2, Hash, Check } from 'lucide-react';
 import { useDoc } from '../store/store';
 import { addProperty, updateView } from '../store/actions';
-import type { PropType, DbView } from '../store/types';
+import type { PropType, DbView, Property } from '../store/types';
 import { Popover, Menu, Switch, type Anchor, type MenuItemDef } from '../components/ui';
 import { PropIcon } from './cells';
-import { TYPE_LABEL, ADDABLE_TYPES } from './logic';
+import { TYPE_LABEL, ADDABLE_TYPES, CURRENCY_CODES, NUMBER_FORMAT_LABEL } from './logic';
 import { FocusMenuSearch } from './focus';
-import { renameProperty, changePropertyType, duplicateProperty, deleteProperty, togglePropHidden, setNumberFormat } from './dbActions';
+import { renameProperty, changePropertyType, previewPropertyTypeChange, duplicateProperty, deleteProperty, togglePropHidden, setNumberFormat } from './dbActions';
 
 export function TypeList({ current, onPick, onClose }: { current?: PropType; onPick: (t: PropType) => void; onClose: () => void }) {
   const items: MenuItemDef[] = ADDABLE_TYPES.map(t => ({
@@ -75,7 +75,12 @@ export function PropertyMenu({ dbId, propId, view, anchor, onClose, onFilter }: 
         <TypeList
           current={prop.type}
           onClose={onClose}
-          onPick={t => changePropertyType(dbId, propId, t)}
+          onPick={t => {
+            const { lost } = previewPropertyTypeChange(dbId, propId, t);
+            const msg = `${lost} value${lost === 1 ? '' : 's'} cannot be shown as ${TYPE_LABEL[t]}. They stay hidden and come back if you change the type back. Change the type?`;
+            if (lost > 0 && !window.confirm(msg)) return;
+            changePropertyType(dbId, propId, t);
+          }}
         />
       </div>
     ),
@@ -89,9 +94,9 @@ export function PropertyMenu({ dbId, propId, view, anchor, onClose, onFilter }: 
         <div style={{ width: 200 }}>
           <Menu
             onClose={onClose}
-            items={(['number', 'percent', 'dollar', 'euro'] as const).map(f => ({
+            items={(['number', 'percent', ...Object.keys(CURRENCY_CODES)] as NonNullable<Property['numberFormat']>[]).map(f => ({
               id: f,
-              label: f === 'number' ? 'Number' : f === 'percent' ? 'Percent' : f === 'dollar' ? 'US dollar' : 'Euro',
+              label: NUMBER_FORMAT_LABEL[f],
               right: (prop.numberFormat || 'number') === f ? <Check size={14} /> : undefined,
               onSelect: () => setNumberFormat(dbId, propId, f),
             }))}

@@ -1,9 +1,10 @@
 import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Ellipsis } from 'lucide-react';
+import { attrSel } from '../lib/dom';
 import { openPage, updateView } from '../store/actions';
 import type { Page, SelectOption } from '../store/types';
-import { Popover, Menu } from '../components/ui';
+import { Popover, Menu, pressable } from '../components/ui';
 import { OptionPill, PropValue, PropIcon, OptionMenu } from './cells';
 import { visibleProps, isEmptyValue, rawValue, columnTint } from './logic';
 import { moveRowToGroup, addRowAt } from './dbActions';
@@ -44,7 +45,7 @@ export function BoardView(vp: ViewProps) {
     return (
       <div className="db-empty-state">
         <div>Board views are grouped by a select or status property.</div>
-        <span className="db-fchip add" role="button" onClick={e => setGroupPick(e.currentTarget.getBoundingClientRect())}>
+        <span className="db-fchip add" {...pressable()} onClick={e => setGroupPick(e.currentTarget.getBoundingClientRect())}>
           Group by…
         </span>
         {groupPick && (
@@ -139,6 +140,26 @@ export function BoardView(vp: ViewProps) {
     });
   };
 
+  /** Keyboard path for what the pointer does: open, row menu, and move to the neighbouring group. */
+  const onCardKey = (e: React.KeyboardEvent<HTMLElement>, row: Page, gid: string) => {
+    if (e.target !== e.currentTarget || e.nativeEvent.isComposing) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openPage(row.id, { peek: true });
+    } else if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+      e.preventDefault();
+      setRowMenu({ rowId: row.id, rect: e.currentTarget.getBoundingClientRect() });
+    } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const i = groups.findIndex(g => g.id === gid);
+      const target = groups[i + (e.key === 'ArrowRight' ? 1 : -1)];
+      if (!target) return;
+      e.preventDefault();
+      const list = target.rows.filter(r => r.id !== row.id);
+      moveRowToGroup(dbId, row.id, groupProp.id, valueFor(target.id), list.length ? { after: list[list.length - 1].id } : {});
+      requestAnimationFrame(() => (document.querySelector('.db-card' + attrSel('data-row-id', row.id)) as HTMLElement | null)?.focus());
+    }
+  };
+
   const dragRow = drag ? rows.find(r => r.id === drag.rowId) : null;
   const om = optMenu ? (groupProp.options || []).find(o => o.id === optMenu.optId) : null;
 
@@ -147,6 +168,7 @@ export function BoardView(vp: ViewProps) {
       key={row.id + (ghost ? '-ghost' : '')}
       className={'db-card' + (ghost ? ' ghost' : '')}
       data-row-id={ghost ? undefined : row.id}
+      {...(ghost ? {} : { ...pressable(), onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => onCardKey(e, row, gid), 'aria-label': row.title || 'Untitled', 'aria-keyshortcuts': 'Alt+ArrowLeft Alt+ArrowRight' })}
       onPointerDown={ghost ? undefined : e => onCardDown(e, row, gid)}
       onContextMenu={e => {
         e.preventDefault();
@@ -189,24 +211,24 @@ export function BoardView(vp: ViewProps) {
                 {g.opt ? (
                   <OptionPill opt={g.opt} status={status} />
                 ) : (
-                  <span className="db-pill" style={{ background: 'var(--on-gray-background-secondary-translucent)', color: 'var(--text-secondary)' }}>
-                    {status && <span className="db-dot" style={{ background: 'var(--on-gray-icon-secondary)' }} />}
+                  <span className="db-pill" style={{ background: 'var(--theme-gray-tint-2)', color: 'var(--text-secondary)' }}>
+                    {status && <span className="db-dot" style={{ background: 'var(--theme-gray-glyph)' }} />}
                     <span className="db-pill-text">No {groupProp.name}</span>
                   </span>
                 )}
                 <span className="db-col-count">{g.rows.length}</span>
                 <span className="grow" />
                 {g.opt && (
-                  <span className="icon-btn db-icon-24 db-col-act" role="button" onClick={e => setOptMenu({ optId: g.opt!.id, rect: e.currentTarget.getBoundingClientRect() })}>
+                  <span className="icon-btn db-icon-24 db-col-act" {...pressable()} aria-label="Group options" onClick={e => setOptMenu({ optId: g.opt!.id, rect: e.currentTarget.getBoundingClientRect() })}>
                     <Ellipsis size={14} />
                   </span>
                 )}
-                <span className="icon-btn db-icon-24 db-col-act" role="button" onClick={() => newInGroup(g, true)}>
+                <span className="icon-btn db-icon-24 db-col-act" {...pressable()} aria-label="Add a card to this group" onClick={() => newInGroup(g, true)}>
                   <Plus size={14} />
                 </span>
               </div>
               <div className="db-col-cards">{items}</div>
-              <div className="db-col-new" role="button" onClick={() => newInGroup(g)}>
+              <div className="db-col-new" {...pressable()} onClick={() => newInGroup(g)}>
                 <Plus size={16} /> New page
               </div>
             </div>

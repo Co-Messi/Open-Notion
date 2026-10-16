@@ -19,7 +19,7 @@
 }
 .db-missing {
   padding: 8px 2px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 body.db-dragging,
 body.db-dragging * {
@@ -158,7 +158,7 @@ body.db-col-resizing * {
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 .db-tool {
   width: 28px;
@@ -194,7 +194,7 @@ body.db-col-resizing * {
   display: inline-flex;
   align-items: stretch;
   height: 28px;
-  margin-left: 6px;
+  margin-inline-start: 6px;
   border-radius: 6px;
   overflow: hidden;
   background: var(--blue);
@@ -256,12 +256,12 @@ body.db-col-resizing * {
 }
 .db-fchip.on {
   color: var(--blue);
-  background: var(--on-blue-background-primary);
-  box-shadow: inset 0 0 0 1px var(--on-blue-border-primary);
+  background: var(--theme-blue-wash-1);
+  box-shadow: inset 0 0 0 1px var(--theme-blue-line);
 }
 .db-fchip.add {
   box-shadow: none;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-fbar-sep {
   width: 1px;
@@ -396,7 +396,7 @@ body.db-col-resizing * {
   flex-shrink: 0;
 }
 .db-mi-type {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -442,7 +442,7 @@ body.db-col-resizing * {
 .db-pill-x {
   display: inline-flex;
   align-items: center;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   margin-right: -2px;
   opacity: 0.55;
   cursor: pointer;
@@ -465,7 +465,7 @@ body.db-col-resizing * {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
   color: var(--text-secondary);
   font-weight: 500;
   flex-shrink: 0;
@@ -523,10 +523,10 @@ body.db-col-resizing * {
   justify-content: center;
   width: 20px;
   height: 20px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border-radius: 4px;
   background: var(--popover-bg);
-  box-shadow: var(--on-shadow-outline-sm);
+  box-shadow: var(--theme-shadow-1);
   color: var(--icon-secondary);
   flex-shrink: 0;
   cursor: pointer;
@@ -560,7 +560,7 @@ body.db-col-resizing * {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--on-gray-background-tertiary-translucent) transparent;
+  scrollbar-color: var(--theme-gray-tint-3) transparent;
   padding-bottom: 6px;
 }
 .db-inline .db-table-scroll {
@@ -627,7 +627,7 @@ body.db-col-resizing * {
 }
 .db-resizer:hover,
 body.db-col-resizing .db-resizer:active {
-  background: linear-gradient(to right, transparent 2px, var(--on-palette-ui-blue-400) 2px, var(--on-palette-ui-blue-400) 4px, transparent 4px);
+  background: linear-gradient(to right, transparent 2px, var(--theme-accent-wash-4) 2px, var(--theme-accent-wash-4) 4px, transparent 4px);
 }
 .db-tbody {
   position: relative;
@@ -639,7 +639,7 @@ body.db-col-resizing .db-resizer:active {
   border-bottom: 1px solid var(--border-primary);
 }
 .db-tr:hover {
-  background: var(--on-table-row-hovered-background);
+  background: var(--theme-table-row-hover);
 }
 .db-tr.dragging {
   opacity: 0.4;
@@ -672,7 +672,7 @@ body.db-col-resizing .db-resizer:active {
   border-right: none;
 }
 .db-td.editing {
-  box-shadow: inset 0 0 0 2px var(--on-palette-ui-blue-400);
+  box-shadow: inset 0 0 0 2px var(--theme-accent-wash-4);
 }
 .db-td .db-pills {
   overflow: hidden;
@@ -717,7 +717,7 @@ body.db-col-resizing .db-resizer:active {
   color: var(--text-secondary);
   background: var(--popover-bg);
   border-radius: 6px;
-  box-shadow: var(--on-shadow-outline-sm);
+  box-shadow: var(--theme-shadow-1);
   cursor: pointer;
   user-select: none;
 }
@@ -776,7 +776,7 @@ body.db-col-resizing .db-resizer:active {
   right: 0;
   height: 4px;
   border-radius: 2px;
-  background: var(--on-palette-ui-blue-400);
+  background: var(--theme-accent-wash-4);
   pointer-events: none;
   z-index: 3;
 }
@@ -786,7 +786,7 @@ body.db-col-resizing .db-resizer:active {
   gap: 6px;
   height: 33px;
   padding: 0 8px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
   border-bottom: 1px solid var(--border-primary);
@@ -840,7 +840,7 @@ body.db-col-resizing .db-resizer:active {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-calc-val {
   color: var(--text-secondary);
@@ -878,7 +878,7 @@ body.db-col-resizing .db-resizer:active {
   gap: 6px;
   min-height: 34px;
   padding: 6px 9px;
-  background: var(--on-gray-background-primary-translucent);
+  background: var(--theme-gray-tint-1);
   border-bottom: 1px solid var(--border-secondary-translucent);
   cursor: text;
 }
@@ -956,7 +956,7 @@ body.db-col-resizing .db-resizer:active {
   height: 22px;
   padding: 0 4px 0 2px;
   border-radius: 11px;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
 }
 
 /* Date editor */
@@ -970,14 +970,14 @@ body.db-col-resizing .db-resizer:active {
   padding: 8px 8px 0;
 }
 .db-date-inputs .db-focus-ring {
-  box-shadow: var(--on-input-blue-focus-ring);
+  box-shadow: var(--theme-focus-ring);
 }
 .db-date-foot {
   padding: 2px 0 6px;
   border-top: 1px solid var(--border-secondary-translucent);
 }
 .db-date-foot .menu-item .switch {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .db-dp-today {
   display: flex;
@@ -1003,7 +1003,7 @@ body.db-col-resizing .db-resizer:active {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--on-gray-background-tertiary-translucent) transparent;
+  scrollbar-color: var(--theme-gray-tint-3) transparent;
   padding-bottom: 16px;
 }
 .db-board {
@@ -1047,8 +1047,8 @@ body.db-col-resizing .db-resizer:active {
 }
 .db-card {
   position: relative;
-  background: var(--on-board-item-default-background);
-  box-shadow: var(--on-shadow-outline-sm);
+  background: var(--theme-board-card);
+  box-shadow: var(--theme-shadow-1);
   border-radius: 10px;
   padding: 10px 10px 8px;
   cursor: pointer;
@@ -1056,7 +1056,7 @@ body.db-col-resizing .db-resizer:active {
   transition: background 20ms ease-in;
 }
 .db-card:hover {
-  background-image: linear-gradient(var(--on-card-hovered-background), var(--on-card-hovered-background));
+  background-image: linear-gradient(var(--theme-card-hover), var(--theme-card-hover));
 }
 .db-card.ghost {
   background-color: var(--popover-bg);
@@ -1103,7 +1103,7 @@ body.db-col-resizing .db-resizer:active {
 }
 .db-card-placeholder {
   border-radius: 10px;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
 }
 .db-col-new {
   display: flex;
@@ -1113,7 +1113,7 @@ body.db-col-resizing .db-resizer:active {
   padding: 0 8px;
   margin-top: 6px;
   border-radius: 6px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
 }
@@ -1171,7 +1171,7 @@ body.db-col-resizing .db-resizer:active {
   max-width: 60%;
   min-width: 0;
   overflow: hidden;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .db-list-prop {
@@ -1192,25 +1192,25 @@ body.db-col-resizing .db-resizer:active {
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
-  background: var(--on-board-item-default-background);
-  box-shadow: var(--on-shadow-outline-sm);
+  background: var(--theme-board-card);
+  box-shadow: var(--theme-shadow-1);
   cursor: pointer;
   user-select: none;
   transition: background 20ms ease-in;
 }
 .db-gcard:hover {
-  background-image: linear-gradient(var(--on-card-hovered-background), var(--on-card-hovered-background));
+  background-image: linear-gradient(var(--theme-card-hover), var(--theme-card-hover));
 }
 .db-gcard-preview {
   height: 160px;
   flex-shrink: 0;
-  background: var(--on-card-pressed-background);
+  background: var(--theme-card-press);
   background-size: cover;
   background-position: center;
   box-shadow: inset 0 -1px 0 var(--border-secondary-translucent);
 }
 .db-gcard-preview.content {
-  background: var(--on-ca-col-gal-pre-car-cov);
+  background: var(--theme-gallery-cover);
   overflow: hidden;
 }
 .db-gcard-content {
@@ -1242,7 +1242,7 @@ body.db-col-resizing .db-resizer:active {
   min-height: 72px;
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--border-primary);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-gcard-new:hover {
   background: var(--hover);
@@ -1287,7 +1287,7 @@ body.db-col-resizing .db-resizer:active {
   line-height: 24px;
   font-size: 12px;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .db-cal-weeks {
   margin-bottom: 16px;
@@ -1350,7 +1350,7 @@ body.db-col-resizing .db-resizer:active {
   min-width: 24px;
   height: 24px;
   padding: 0 4px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border-radius: 12px;
   font-size: 12px;
   color: var(--text-secondary);
@@ -1360,7 +1360,7 @@ body.db-col-resizing .db-resizer:active {
   color: var(--text-tertiary);
 }
 .db-cal-num.today {
-  background: var(--on-red-background-accent-primary);
+  background: var(--theme-red-solid);
   color: #fff;
   font-weight: 500;
 }
@@ -1373,7 +1373,7 @@ body.db-col-resizing .db-resizer:active {
   border-radius: 6px;
   color: var(--icon-secondary);
   background: var(--popover-bg);
-  box-shadow: var(--on-shadow-outline-sm);
+  box-shadow: var(--theme-shadow-1);
   opacity: 0;
   cursor: pointer;
   transition: opacity 120ms ease;
@@ -1388,8 +1388,8 @@ body.db-col-resizing .db-resizer:active {
   min-width: 0;
   padding: 2px 6px;
   border-radius: 6px;
-  background: var(--on-calendar-item-background);
-  box-shadow: var(--on-shadow-outline-sm);
+  background: var(--theme-calendar-event);
+  box-shadow: var(--theme-shadow-1);
   font-size: 12px;
   font-weight: 500;
   line-height: 18px;
@@ -1498,7 +1498,7 @@ body.db-col-resizing .db-resizer:active {
   height: 34px;
   padding: 0 6px;
   border-radius: 6px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
 }
@@ -1539,7 +1539,7 @@ body.db-col-resizing .db-resizer:active {
 }
 .db-drag-ghost .db-card {
   background-color: var(--popover-bg);
-  box-shadow: var(--on-shadow-outline-lg);
+  box-shadow: var(--theme-shadow-3);
 }
 
 /* ---------------- Timeline ---------------- */
@@ -1590,7 +1590,7 @@ body.db-col-resizing .db-resizer:active {
   min-width: 0;
 }
 .db-tl-left-row:hover {
-  background: var(--on-table-row-hovered-background);
+  background: var(--theme-table-row-hover);
 }
 .db-tl-title {
   font-weight: 500;
@@ -1600,7 +1600,7 @@ body.db-col-resizing .db-resizer:active {
 }
 .db-new-row.db-tl-new {
   border-bottom: none;
-  padding-left: 4px;
+  padding-inline-start: 4px;
 }
 .db-tl-resizer {
   position: absolute;
@@ -1612,7 +1612,7 @@ body.db-col-resizing .db-resizer:active {
   z-index: 3;
 }
 .db-tl-resizer:hover {
-  background: linear-gradient(to right, transparent 3px, var(--on-palette-ui-blue-400) 3px, var(--on-palette-ui-blue-400) 5px, transparent 5px);
+  background: linear-gradient(to right, transparent 3px, var(--theme-accent-wash-4) 3px, var(--theme-accent-wash-4) 5px, transparent 5px);
 }
 .db-tl-scroll {
   flex: 1;
@@ -1620,7 +1620,7 @@ body.db-col-resizing .db-resizer:active {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  scrollbar-color: var(--on-gray-background-tertiary-translucent) transparent;
+  scrollbar-color: var(--theme-gray-tint-3) transparent;
 }
 .db-tl-canvas {
   position: relative;
@@ -1660,14 +1660,14 @@ body.db-col-resizing .db-resizer:active {
   height: 24px;
   display: flex;
   align-items: center;
-  padding-left: 4px;
+  padding-inline-start: 4px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .db-tl-tick.day {
   justify-content: center;
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 .db-tl-today-num {
   display: inline-flex;
@@ -1676,7 +1676,7 @@ body.db-col-resizing .db-resizer:active {
   min-width: 22px;
   height: 22px;
   border-radius: 11px;
-  background: var(--on-red-background-accent-primary);
+  background: var(--theme-red-solid);
   color: #fff;
   font-weight: 500;
 }
@@ -1686,7 +1686,7 @@ body.db-col-resizing .db-resizer:active {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--on-red-background-accent-primary);
+  background: var(--theme-red-solid);
   z-index: 2;
 }
 .db-tl-rows {
@@ -1705,7 +1705,7 @@ body.db-col-resizing .db-resizer:active {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--on-red-background-accent-primary);
+  background: var(--theme-red-solid);
   pointer-events: none;
   z-index: 2;
 }
@@ -1717,7 +1717,7 @@ body.db-col-resizing .db-resizer:active {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--on-red-background-accent-primary);
+  background: var(--theme-red-solid);
 }
 .db-tl-track {
   position: relative;
@@ -1729,18 +1729,18 @@ body.db-col-resizing .db-resizer:active {
   display: flex;
   align-items: center;
   border-radius: 6px;
-  background: var(--on-gray-background-elevated);
-  box-shadow: var(--on-shadow-outline-sm);
+  background: var(--theme-gray-raised);
+  box-shadow: var(--theme-shadow-1);
   cursor: pointer;
   user-select: none;
   z-index: 1;
   transition: box-shadow 120ms ease;
 }
 .db-tl-bar:hover {
-  box-shadow: var(--on-shadow-outline-md);
+  box-shadow: var(--theme-shadow-2);
 }
 .db-tl-bar.dragging {
-  box-shadow: var(--on-shadow-outline-lg);
+  box-shadow: var(--theme-shadow-3);
   z-index: 3;
 }
 .db-tl-bar-text {
@@ -1805,7 +1805,7 @@ body.db-col-resizing .db-resizer:active {
   justify-content: center;
   border-radius: 6px;
   color: var(--icon-tertiary);
-  background: var(--on-gray-background-primary-translucent);
+  background: var(--theme-gray-tint-1);
   box-shadow: inset 0 0 0 1px var(--border-secondary-translucent);
   cursor: pointer;
 }

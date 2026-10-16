@@ -10,7 +10,12 @@ import { CoverPicker, COVERS } from '../components/CoverPicker';
 import { setCaret, caretOffset } from './caret';
 import { PageProperties, DatabaseFull } from '../database/DatabaseView';
 import { importMarkdownIntoPage } from '../lib/exporter';
-import { relTime } from '../components/ui';
+import { relTime, pressable } from '../components/ui';
+import { sanitizeInline } from '../lib/html';
+import { handleInlineLinkClick } from './Editable';
+import { isImageIcon } from '../lib/url';
+import { useCoverStyle } from '../lib/images';
+import { StoredImg } from '../components/StoredImage';
 
 export function PageView({ pageId, peek = false }: { pageId: string; peek?: boolean }) {
   const page = usePage(pageId);
@@ -26,7 +31,8 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
       const d = (e as CustomEvent).detail;
       if (typeof d === 'string' && d !== pageId) return;
       setCommenting(true);
-      setQuote(typeof d === 'object' && d?.quote ? d.quote : '');
+      // The quote is plain text; it is stored as text and rendered as React text.
+      setQuote(typeof d === 'object' && typeof d?.quote === 'string' ? d.quote : '');
     };
     const onImport = (e: Event) => {
       if ((e as CustomEvent).detail !== pageId) return;
@@ -130,22 +136,18 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
             {hasIcon && (
               <div
                 className="page-icon"
-                role="button"
+                {...pressable()}
+                aria-label="Change page icon"
                 onClick={e => !readOnly && setIconPicker(e.currentTarget.getBoundingClientRect())}
                 style={peek ? { marginTop: hasCover ? undefined : 40 } : undefined}
               >
-                {page.icon!.startsWith('data:') || page.icon!.startsWith('http') ? <img src={page.icon} alt="" /> : page.icon}
+                {isImageIcon(page.icon) ? <StoredImg src={page.icon} /> : page.icon}
               </div>
             )}
             {!readOnly && (
               <div className="page-controls" style={peek && !hasIcon && !hasCover ? { marginTop: 40 } : undefined}>
                 {!hasIcon && (
-                  <button
-                    onClick={e => {
-                      updatePage(pageId, { icon: randomEmoji() });
-                      void e;
-                    }}
-                  >
+                  <button onClick={() => updatePage(pageId, { icon: randomEmoji() })}>
                     <Smile size={16} /> Add icon
                   </button>
                 )}
@@ -166,7 +168,7 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
             {page.locked && (
               <div className="page-locked-banner">
                 <Lock size={12} /> Page is locked.{' '}
-                <span className="btn-link" style={{ fontSize: 12 }} onClick={() => updatePage(pageId, { locked: false })}>
+                <span {...pressable()} className="btn-link" style={{ fontSize: 12 }} onClick={() => updatePage(pageId, { locked: false })}>
                   Unlock
                 </span>
               </div>
@@ -176,7 +178,9 @@ export function PageView({ pageId, peek = false }: { pageId: string; peek?: bool
               <Comments pageId={pageId} open={commenting} quote={quote} onDone={() => setCommenting(false)} />
             )}
           </div>
-          {page.isDatabase && !page.inline ? (
+          {/* An inline database opened as its own page shows the database too; the empty page
+              starter would otherwise offer to reinitialize it and wipe its rows. */}
+          {page.isDatabase ? (
             <DatabaseFull dbId={pageId} />
           ) : (
             <div className="page-content">
@@ -226,15 +230,14 @@ function Cover({
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(page.coverPos ?? 50);
   useEffect(() => setPos(page.coverPos ?? 50), [page.coverPos]);
-  const isImage = /^(data:|https?:|url\()/.test(page.cover || '');
-  const bg = isImage ? `url("${page.cover!.replace(/^url\(["']?|["']?\)$/g, '')}")` : page.cover;
+  // Stored image refs resolve to blob URLs; every other value passes the cover policy.
+  const { style: coverStyle, isImage } = useCoverStyle(page.cover);
   return (
     <div
       ref={ref}
       className={'cover' + (repositioning ? ' repositioning' : '')}
       style={{
-        backgroundImage: bg && (bg.startsWith('url') || bg.includes('gradient')) ? bg : undefined,
-        backgroundColor: bg && !bg.startsWith('url') && !bg.includes('gradient') ? bg : undefined,
+        ...coverStyle,
         backgroundPosition: `center ${pos}%`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
@@ -351,6 +354,9 @@ function Title({ pageId, readOnly }: { pageId: string; readOnly: boolean }) {
       contentEditable={!readOnly}
       suppressContentEditableWarning
       data-title={pageId}
+      role="textbox"
+      aria-label="Page title"
+      aria-readonly={readOnly || undefined}
       data-nav=""
       data-placeholder={page.isDatabase ? 'Untitled' : 'New page'}
       spellCheck
@@ -408,7 +414,7 @@ function EmptyPageStarter({ pageId, onEmpty }: { pageId: string; onEmpty: () => 
   ];
   return (
     <div className="starter">
-      <div className="starter-hint" onClick={onEmpty}>
+      <div {...pressable()} className="starter-hint" onClick={onEmpty}>
         Press <span className="kbd">Enter</span> to continue with an empty page, or pick a template.
       </div>
       <div className="starter-grid">
@@ -429,8 +435,9 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
   const name = getDoc().workspace.userName;
   const add = () => {
     if (!text.trim()) return;
-    const html = (quote ? `<i>“${quote}”</i> ` : '') + text.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    transact(tx => tx.setPage(pageId, { comments: [...(tx.page(pageId).comments || []), { id: uid(), html, createdAt: Date.now(), author: name }] }));
+    // Stored as plain text and rendered as React text, so a quoted block can never become markup.
+    const comment = { id: uid(), text: text.trim(), ...(quote ? { quote } : {}), createdAt: Date.now(), author: name };
+    transact(tx => tx.setPage(pageId, { comments: [...(tx.page(pageId).comments || []), comment] }));
     setText('');
     showToast('Comment added');
     onDone();
@@ -443,12 +450,22 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
           <div style={{ flex: 1 }}>
             <span className="who">{c.author}</span>
             <span className="when">{relTime(c.createdAt)}</span>
-            <div dangerouslySetInnerHTML={{ __html: c.html }} />
+            {c.text !== undefined ? (
+              <div>
+                {c.quote && <i>“{c.quote}” </i>}
+                {c.text}
+              </div>
+            ) : (
+              // Legacy comments stored html; it is sanitized again at render time, and its links
+              // open in a new tab instead of navigating the app away.
+              <div onClick={e => handleInlineLinkClick(e, false)} dangerouslySetInnerHTML={{ __html: sanitizeInline(c.html || '') }} />
+            )}
           </div>
           <span
             className="icon-btn"
             style={{ width: 24, height: 24, fontSize: 12, color: 'var(--text-tertiary)' }}
-            role="button"
+            {...pressable()}
+            aria-label="Delete comment"
             onClick={() => transact(tx => tx.setPage(pageId, { comments: (tx.page(pageId).comments || []).filter(x => x.id !== c.id) }))}
           >
             ✕
@@ -469,7 +486,7 @@ function Comments({ pageId, open, quote, onDone }: { pageId: string; open: boole
             }}
             onBlur={() => !text && onDone()}
           />
-          <span className="icon-btn" role="button" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--on-gray-background-secondary-translucent)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
+          <span className="icon-btn" {...pressable()} aria-label="Add comment" style={{ width: 24, height: 24, borderRadius: 12, background: text ? 'var(--blue)' : 'var(--theme-gray-tint-2)', color: '#fff' }} onMouseDown={e => e.preventDefault()} onClick={add}>
             <ArrowUp size={14} />
           </span>
         </div>

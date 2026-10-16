@@ -1,7 +1,8 @@
-import { getDoc, getUi, transact, setUi } from '../store/store';
-import { txMoveBlock, txMakeColumns } from '../store/actions';
+import { getDoc, getUi, transact, setUi, showToast } from '../store/store';
+import { txMoveBlock, txMakeColumns, moveBlockProblem } from '../store/actions';
 import { moveBlocksToPage } from './MoveBlocks';
 import { htmlToText } from '../lib/html';
+import { attrSel } from '../lib/dom';
 
 type Drop = { el: HTMLElement; mode: 'before' | 'after' | 'inside' | 'left' | 'right'; blockId: string } | { el: HTMLElement; mode: 'page'; pageId: string };
 
@@ -94,33 +95,50 @@ export function startBlockDrag(e: React.PointerEvent, blockId: string, onClick: 
       moveBlocksToPage(ids, drop.pageId);
       return;
     }
-    const target = drop;
-    transact(tx => {
-      const t = tx.block(target.blockId);
-      if (!t) return;
-      if (target.mode === 'left' || target.mode === 'right') {
-        txMakeColumns(tx, target.blockId, ids.filter(id => id !== target.blockId), target.mode);
-        return;
-      }
-      if (target.mode === 'inside') {
-        ids.forEach(id => txMoveBlock(tx, id, target.blockId, tx.block(target.blockId).children.length));
-        tx.setBlock(target.blockId, { open: true });
-        return;
-      }
-      let index = tx.siblings(target.blockId).indexOf(target.blockId) + (target.mode === 'after' ? 1 : 0);
-      const parent = t.parent;
-      for (const id of ids) {
-        const before = tx.childList(parent).indexOf(id);
-        txMoveBlock(tx, id, parent, index);
-        const after = tx.childList(parent).indexOf(id);
-        index = after + 1;
-        void before;
-      }
-    });
+    applyBlockDrop(ids, drop.blockId, drop.mode);
   };
 
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', up);
+}
+
+/**
+ * Drops dragged blocks next to (before or after), inside (a toggle) or beside (columns) a target
+ * block. Each block is placed after the one placed before it, re-reading the target's parent every
+ * time: moving the last block out of a column can unwrap the column list mid drop.
+ */
+export function applyBlockDrop(ids: string[], targetId: string, mode: 'before' | 'after' | 'inside' | 'left' | 'right') {
+  const d = getDoc();
+  if (!d.blocks[targetId]) return;
+  const problems = ids.map(id => moveBlockProblem(d, id, mode === 'inside' ? targetId : d.blocks[targetId].parent));
+  if (problems.every(Boolean)) {
+    const why = problems.find(p => p && p !== 'missing');
+    if (why) showToast(why);
+    return;
+  }
+  transact(tx => {
+    if (mode === 'left' || mode === 'right') {
+      txMakeColumns(tx, targetId, ids.filter(id => id !== targetId), mode);
+      return;
+    }
+    if (mode === 'inside') {
+      let moved = 0;
+      for (const id of ids) if (txMoveBlock(tx, id, targetId, tx.block(targetId).children.length)) moved++;
+      if (moved) tx.setBlock(targetId, { open: true });
+      return;
+    }
+    let anchor = targetId;
+    let after = mode === 'after';
+    for (const id of ids) {
+      const a = tx.block(anchor);
+      if (!a || id === anchor) continue;
+      const index = tx.siblings(anchor).indexOf(anchor) + (after ? 1 : 0);
+      if (txMoveBlock(tx, id, a.parent, index)) {
+        anchor = id;
+        after = true;
+      }
+    }
+  });
 }
 
 function labelFor(id: string) {
@@ -139,7 +157,7 @@ function findBlockAt(x: number, y: number, exclude: string[]): HTMLElement | nul
   const candidates = Array.from(document.querySelectorAll('[data-editor-scope] .block[data-block-id]')) as HTMLElement[];
   let best: HTMLElement | null = null;
   for (const el of candidates) {
-    if (exclude.some(id => el.dataset.blockId === id || el.closest(`[data-block-id="${id}"]`))) continue;
+    if (exclude.some(id => el.dataset.blockId === id || el.closest(attrSel('data-block-id', id)))) continue;
     const row = el.querySelector(':scope > .block-row') as HTMLElement | null;
     const r = (row || el).getBoundingClientRect();
     // Expand horizontally so the gutter area also counts.

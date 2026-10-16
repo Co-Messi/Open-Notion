@@ -9,10 +9,12 @@ import {
 import { atStart, atEnd, onFirstLine, onLastLine, caretRect, caretOffset, isCollapsed } from './caret';
 import { focusBlock, neighbor, selectBlocks, slashState } from './controller';
 import { applyMark } from './InlineToolbar';
-import { BlockActionsMenu, turnIntoPage } from './BlockMenu';
+import { BlockActionsMenu, turnIntoPage, BLOCK_TYPE_LABEL } from './BlockMenu';
 import { openPage, pageTitle, txInsertAfter, txInsertBlock, turnInto } from '../store/actions';
 import { PageIconView } from '../components/PageIcon';
 import { EmojiPicker } from '../components/EmojiPicker';
+import { StoredImg } from '../components/StoredImage';
+import { isImageIcon } from '../lib/url';
 import { CodeBlock } from './CodeBlock';
 import { ImageBlock } from './ImageBlock';
 import { TableBlock } from './TableBlock';
@@ -20,6 +22,8 @@ import { BookmarkBlock } from './BookmarkBlock';
 import { startBlockDrag } from './dnd';
 import { InlineDatabase } from '../database/DatabaseView';
 import { LinkEditorFor } from './LinkShortcut';
+import { attrSel } from '../lib/dom';
+import { pressable } from '../components/ui';
 
 const PLACEHOLDER: Partial<Record<Block['type'], string>> = {
   text: "Write something, or press '/' for commands…",
@@ -209,12 +213,10 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
       if (alt) {
         nid = txInsertBlock(tx, { parent: b.parent, type: 'text', html: '' }, tx.siblings(id).indexOf(id));
       } else {
-        const cur = tx.block(id);
         const next = tx.siblings(id)[tx.siblings(id).indexOf(id) + 1];
         const nextB = next ? tx.block(next) : null;
         if (nextB && nextB.type === 'text' && !nextB.html && nextB.children.length === 0) nid = nextB.id;
         else nid = txInsertAfter(tx, id, { type: 'text', html: '' });
-        void cur;
       }
     });
     breakCoalescing();
@@ -222,7 +224,7 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
     // Open the slash menu like Notion does after clicking "+".
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        const el = document.querySelector(`[data-editable-id="${nid}"]`) as HTMLElement | null;
+        const el = document.querySelector(attrSel('data-editable-id', nid)) as HTMLElement | null;
         if (el && !el.textContent) {
           document.execCommand('insertText', false, '/');
         }
@@ -245,6 +247,7 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
         blockId={id}
         html={b!.html}
         placeholder={PLACEHOLDER[b!.type]}
+        label={BLOCK_TYPE_LABEL[b!.type]}
         readOnly={readOnly}
         onKeyDown={onKeyDown}
       />
@@ -264,8 +267,9 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
           <div key="m" className="marker">
             <div
               className={'checkbox' + (b!.checked ? ' checked' : '')}
-              role="checkbox"
+              {...pressable(undefined, 'checkbox')}
               aria-checked={!!b!.checked}
+              aria-label="Done"
               onMouseDown={e => e.preventDefault()}
               onClick={() => !readOnly && transact(tx => tx.setBlock(id, { checked: !b!.checked }))}
             >
@@ -279,8 +283,9 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
           <div key="m" className="marker">
             <div
               className={'toggle-btn' + (b!.open ? ' open' : '')}
-              role="button"
+              {...pressable()}
               aria-expanded={!!b!.open}
+              aria-label="Toggle"
               onMouseDown={e => e.preventDefault()}
               onClick={() => transact(tx => tx.setBlock(id, { open: !b!.open }), 'none')}
             >
@@ -291,13 +296,14 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
         ];
       case 'callout':
         return [
-          <div
+          <div {...pressable()}
             key="m"
             className="callout-icon"
+            aria-label="Change icon"
             onMouseDown={e => e.preventDefault()}
             onClick={e => !readOnly && setIconPicker(e.currentTarget.getBoundingClientRect())}
           >
-            {b!.icon || '💡'}
+            {isImageIcon(b!.icon) ? <StoredImg src={b!.icon} className="callout-icon-img" /> : b!.icon || '💡'}
           </div>,
           editable,
         ];
@@ -344,12 +350,14 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
       <div className="block-row">
         {showGutter && (
           <div className={'block-gutter' + (hover || menu ? ' visible' : '')} style={{ top: gutterTop }} onMouseDown={e => e.preventDefault()}>
-            <div className="g-btn" title="Click to add below. Option-click to add a block above" role="button" onClick={e => addBelow(e.altKey)}>
+            <div className="g-btn" title="Click to add below. Option-click to add a block above" {...pressable()} aria-label="Add a block below" onClick={e => addBelow(e.altKey)}>
               <Plus size={18} strokeWidth={1.5} />
             </div>
             <div
               className="g-btn drag"
-              role="button"
+              {...pressable(e => openMenuFromHandle(e.currentTarget.getBoundingClientRect()))}
+              aria-label="Block menu"
+              aria-haspopup="menu"
               title="Drag to move. Click to open menu"
               onPointerDown={e => {
                 const handleEl = e.currentTarget as HTMLElement;
@@ -365,7 +373,7 @@ export const BlockView = memo(function BlockView({ id, depth, number, readOnly }
       </div>
       {b.type === 'toggle' && b.open && b.children.length === 0 && !readOnly && (
         <div className="block-children">
-          <div
+          <div {...pressable()}
             className="toggle-empty"
             onClick={() => {
               let nid = '';
@@ -505,7 +513,7 @@ function PageLink({ pageId, isLink }: { pageId: string; isLink?: boolean }) {
     );
   }
   return (
-    <div className="page-link" onClick={e => openPage(pageId, { peek: e.altKey })} role="link">
+    <div className="page-link" onClick={e => openPage(pageId, { peek: e.altKey })} {...pressable(undefined, 'link')}>
       <span className="pl-icon">
         <PageIconView page={p} size={18} emojiSize={17} />
       </span>

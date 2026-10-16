@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { transact, breakCoalescing } from '../store/store';
 import { txCreatePage, txInsertBlock, openPage } from '../store/actions';
 import { markdownToBlocks } from '../lib/exporter';
 import { PHOTOS, COVERS } from './CoverPicker';
+import { pressable, useDialog } from './ui';
 
 interface Template {
   id: string;
@@ -66,29 +67,29 @@ function applyTemplate(t: Template) {
 
 export function TemplatesModal() {
   const [open, setOpen] = useState(false);
-  const [sel, setSel] = useState(TEMPLATES[0].id);
   useEffect(() => {
     const on = () => setOpen(true);
     window.addEventListener('on:templates', on);
     return () => window.removeEventListener('on:templates', on);
   }, []);
-  useEffect(() => {
-    if (!open) return;
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [open]);
   if (!open) return null;
+  return <TemplatesDialog setOpen={setOpen} />;
+}
+
+function TemplatesDialog({ setOpen }: { setOpen: (v: boolean) => void }) {
+  const [sel, setSel] = useState(TEMPLATES[0].id);
+  const box = useRef<HTMLDivElement>(null);
+  useDialog(box, () => setOpen(false));
   const t = TEMPLATES.find(x => x.id === sel)!;
   const blocks = t.body ? markdownToBlocks(t.body) : [];
   let num = 0;
   return (
     <div className="modal-overlay" onMouseDown={() => setOpen(false)}>
-      <div className="modal templates-modal" onMouseDown={e => e.stopPropagation()}>
+      <div ref={box} className="modal templates-modal" role="dialog" aria-modal="true" aria-label="Templates" onMouseDown={e => e.stopPropagation()}>
         <div className="tpl-nav">
           <div className="tpl-head">Templates</div>
           {TEMPLATES.map(x => (
-            <div key={x.id} className={'tpl-item' + (x.id === sel ? ' on' : '')} onClick={() => setSel(x.id)}>
+            <div key={x.id} className={'tpl-item' + (x.id === sel ? ' on' : '')} {...pressable()} aria-pressed={x.id === sel} onClick={() => setSel(x.id)}>
               <span className="tpl-icon">{x.icon}</span>
               <div>
                 <div className="tpl-name">{x.name}</div>
@@ -104,12 +105,12 @@ export function TemplatesModal() {
             <button className="btn primary sm" onClick={() => { setOpen(false); applyTemplate(t); }}>
               Use template
             </button>
-            <div className="icon-btn" style={{ width: 28, height: 28 }} onClick={() => setOpen(false)}>
+            <div className="icon-btn" {...pressable()} aria-label="Close" style={{ width: 28, height: 28 }} onClick={() => setOpen(false)}>
               <X size={16} />
             </div>
           </div>
           <div className="tpl-page">
-            {t.cover && <div className="tpl-cover" style={{ background: /^https?:/.test(t.cover) ? `url("${t.cover}") center/cover` : t.cover }} />}
+            {t.cover && <div className="tpl-cover" style={{ background: /^(https?:|\/)/.test(t.cover) ? `url("${t.cover}") center/cover` : t.cover }} />}
             <div className="tpl-body">
               <div className="tpl-page-icon" style={t.cover ? { marginTop: -30 } : undefined}>{t.icon}</div>
               <h1>{t.name}</h1>

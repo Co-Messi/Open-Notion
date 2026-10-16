@@ -33,10 +33,23 @@ export type ColorName =
   | 'red';
 export type BlockColor = ColorName | `${ColorName}_background`;
 
+/**
+ * Store invariants (enforced by the ingest normalizer on load, import and paste):
+ *
+ * 1. `Block.html` has two meanings. For every type except `code` it is sanitized inline
+ *    HTML (the output of `sanitizeInline`). For `code` blocks it is the raw source text and
+ *    must never be parsed as HTML: read `block.html` directly for code, and convert other
+ *    blocks to text with `htmlToText`, which parses inside an inert template.
+ * 2. Never assign stored html to a live element or to a detached `div.innerHTML`: images in
+ *    a detached div still load and fire `onerror`. Use `htmlToText` or a template element.
+ * 3. URLs (image, bookmark, cover, icon, url properties) pass the policy in `lib/url.ts`.
+ *    Image bytes live in IndexedDB and the doc stores an `on-img:<id>` reference.
+ * 4. Record keys are ids from `uid()`; look up ids that come from outside the store with `own()`.
+ */
 export interface Block {
   id: string;
   type: BlockType;
-  /** Sanitized inline HTML (b, i, u, s, code, a, span.c-*, br). */
+  /** Sanitized inline HTML (b, i, u, s, code, a, span.c-*, br); raw source text for `code`. */
   html: string;
   children: string[];
   /** Parent block id, or page id for top-level blocks. */
@@ -88,7 +101,7 @@ export interface Property {
   name: string;
   type: PropType;
   options?: SelectOption[];
-  numberFormat?: 'number' | 'percent' | 'dollar' | 'euro';
+  numberFormat?: 'number' | 'percent' | 'dollar' | 'euro' | 'pound' | 'yen' | 'yuan' | 'rupee' | 'won' | 'franc' | 'canadian_dollar' | 'australian_dollar';
   width?: number;
 }
 
@@ -158,7 +171,12 @@ export interface Page {
 
 export interface Comment {
   id: string;
-  html: string;
+  /** Plain text of the comment, rendered as React text. */
+  text?: string;
+  /** Plain text of the quoted block, rendered as React text. */
+  quote?: string;
+  /** Legacy comments stored inline HTML; it is rendered only after `sanitizeInline`. */
+  html?: string;
   createdAt: number;
   author: string;
 }

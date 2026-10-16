@@ -2,7 +2,7 @@ import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { Plus, GripVertical, PanelRight, ChevronDown } from 'lucide-react';
 import { setRowProp, openPage } from '../store/actions';
 import type { Page, Property } from '../store/types';
-import { Popover, Menu, type MenuItemDef } from '../components/ui';
+import { Popover, Menu, type MenuItemDef, pressable } from '../components/ui';
 import { PropIcon, PropValue, CellEditor, isEditable } from './cells';
 import { PropertyMenu, AddPropertyMenu } from './menus';
 import { visibleProps, isEmptyValue, rawValue, fmtNumber } from './logic';
@@ -118,7 +118,7 @@ export function TableView(vp: ViewProps) {
               key={p.id}
               className="db-th"
               style={{ width: widthOf(p) }}
-              role="button"
+              {...pressable()}
               onClick={e => setPropMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}
             >
               <span className="db-th-icon"><PropIcon type={p.type} /></span>
@@ -126,7 +126,7 @@ export function TableView(vp: ViewProps) {
               <span className="db-resizer" onPointerDown={e => startResize(e, p)} onClick={e => e.stopPropagation()} />
             </div>
           ))}
-          <div className="db-th db-th-add" style={{ width: ADD_COL }} role="button" onClick={e => setAddProp(e.currentTarget.getBoundingClientRect())}>
+          <div className="db-th db-th-add" style={{ width: ADD_COL }} {...pressable()} onClick={e => setAddProp(e.currentTarget.getBoundingClientRect())}>
             <Plus size={16} />
           </div>
         </div>
@@ -143,15 +143,15 @@ export function TableView(vp: ViewProps) {
               }}
             >
               <div className="db-row-actions">
-                <span className="db-ra-btn" role="button" title="Click to add below" onClick={() => newRow(row.id)}>
+                <span className="db-ra-btn" {...pressable()} aria-label="Add a row below" title="Click to add below" onClick={() => newRow(row.id)}>
                   <Plus size={16} />
                 </span>
-                <span className="db-ra-btn grip" role="button" title="Drag to move. Click to open menu" onPointerDown={e => startRowDrag(e, row)}>
+                <span className="db-ra-btn grip" {...pressable(e => setRowMenu({ rowId: row.id, rect: e.currentTarget.getBoundingClientRect() }))} aria-label="Row menu" aria-haspopup="menu" title="Drag to move. Click to open menu" onPointerDown={e => startRowDrag(e, row)}>
                   <GripVertical size={14} />
                 </span>
               </div>
               {props.map(p => (
-                <div
+                <div {...pressable()}
                   key={p.id}
                   className={'db-td t-' + p.type + (editor && editor.rowId === row.id && editor.propId === p.id ? ' editing' : '')}
                   style={{ width: widthOf(p) }}
@@ -168,7 +168,7 @@ export function TableView(vp: ViewProps) {
                       {editingTitle !== row.id && (
                         <span
                           className="db-open-btn"
-                          role="button"
+                          {...pressable()}
                           onClick={e => {
                             e.stopPropagation();
                             openPage(row.id, { peek: true });
@@ -188,7 +188,7 @@ export function TableView(vp: ViewProps) {
           ))}
           {drag && dropTop !== null && <div className="db-drop-line" style={{ top: dropTop - 2 }} />}
         </div>
-        <div className="db-new-row" role="button" onClick={() => newRow()}>
+        <div className="db-new-row" {...pressable()} onClick={() => newRow()}>
           <Plus size={16} /> New page
         </div>
         <CalcRow {...vp} props={props} widthOf={widthOf} />
@@ -273,7 +273,7 @@ function CalcRow({ dbId, view, rows, props, widthOf }: ViewProps & { props: Prop
             key={p.id}
             className={'db-calc' + (c !== 'none' ? ' set' : '') + (p.type === 'number' ? ' num' : '')}
             style={{ width: widthOf(p) }}
-            role="button"
+            {...pressable()}
             onClick={e => setMenu({ propId: p.id, rect: e.currentTarget.getBoundingClientRect() })}
           >
             {c === 'none' ? (

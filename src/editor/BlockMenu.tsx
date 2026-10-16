@@ -6,8 +6,13 @@ import {
 } from 'lucide-react';
 import { Menu, Popover, MOD, type MenuItemDef } from '../components/ui';
 import { getDoc, getUi, showToast, transact, breakCoalescing } from '../store/store';
-import { turnInto, setBlockColor, deleteBlocks, duplicateBlocks, OPTION_COLORS, txTurnInto, txCreatePage, openPage, txInsertColumns } from '../store/actions';
-import type { BlockType, ColorName } from '../store/types';
+import {
+  turnInto, setBlockColor, deleteBlocks, duplicateBlocks, OPTION_COLORS, txTurnInto, txCreatePage, openPage, txInsertColumns,
+  pageOfBlockIn, txSyncOwnedPages,
+} from '../store/actions';
+import type { Block, BlockType, ColorName } from '../store/types';
+import { htmlToText } from '../lib/html';
+import { TEXTUAL_TYPES } from './ops';
 import { selectBlocks, focusBlock } from './controller';
 import { useState } from 'react';
 import { MoveBlocksPopover } from './MoveBlocks';
@@ -83,20 +88,27 @@ export function TurnIntoMenu({ ids, onClose }: { ids: string[]; onClose: () => v
   );
 }
 
+/** Plain text of a block: code blocks hold raw source, every other block holds sanitized html. */
+export function blockPlainText(b: Block): string {
+  return b.type === 'code' ? b.html || '' : htmlToText(b.html || '');
+}
+
 /** Converts a block (with its text and children) into a sub-page. */
 export function turnIntoPage(blockId: string) {
   const d = getDoc();
   const b = d.blocks[blockId];
-  if (!b) return;
+  // Only text and code blocks become pages; a page block already is one.
+  if (!b || (!TEXTUAL_TYPES.includes(b.type) && b.type !== 'code')) return;
+  const pageOf = pageOfBlockIn(d, blockId);
+  if (!pageOf || d.pages[pageOf].isDatabase) return;
   transact(tx => {
-    const pageOf = tx.pageOfBlock(blockId);
-    const tmp = document.createElement('div');
-    tmp.innerHTML = b.html.replace(/<br>/g, ' ');
-    const pid = txCreatePage(tx, { parentId: pageOf, replaceBlockId: blockId, title: tmp.textContent || '' });
-    // Children become the page content.
+    const title = blockPlainText(b).replace(/\s*\n\s*/g, ' ').trim();
+    const pid = txCreatePage(tx, { parentId: pageOf, replaceBlockId: blockId, title });
+    // Children become the page content; sub pages among them now live in the new page.
     const kids = b.children;
     kids.forEach(k => (tx.blocks[k] = { ...tx.blocks[k], parent: pid }));
     tx.setPage(pid, { content: kids });
+    kids.forEach(k => txSyncOwnedPages(tx, k));
   });
 }
 
@@ -150,7 +162,8 @@ export function BlockActionsMenu({ ids, anchor, onClose }: { ids: string[]; anch
   if (!first) return null;
   if (move) return <MoveBlocksPopover ids={ids} anchor={anchor} onClose={onClose} />;
   const label = ids.length > 1 ? `${ids.length} blocks` : BLOCK_TYPE_LABEL[first.type] || 'Block';
-  const textual = ids.every(id => !['divider', 'image', 'database', 'table', 'bookmark'].includes(d.blocks[id]?.type));
+  // Page blocks and column layouts are structure: turning them into text would orphan a page.
+  const textual = ids.every(id => !['divider', 'image', 'page', 'database', 'table', 'bookmark', 'columns', 'column'].includes(d.blocks[id]?.type));
   const items: MenuItemDef[] = [];
   if (textual) {
     items.push({
@@ -217,15 +230,19 @@ export function BlockActionsMenu({ ids, anchor, onClose }: { ids: string[]; anch
   );
 }
 
-function blocksText(ids: string[]) {
+/** Plain text quoted by "Comment": never parsed into live elements, stored and shown as text. */
+export function blocksText(ids: string[]) {
   const d = getDoc();
   return ids
     .map(id => {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = d.blocks[id]?.html || '';
-      return tmp.textContent || '';
+      const b = d.blocks[id];
+      if (!b) return '';
+      if (b.pageId && (b.type === 'page' || b.type === 'database')) return d.pages[b.pageId]?.title || '';
+      return blockPlainText(b);
     })
     .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
     .slice(0, 140);
 }
 
@@ -296,7 +313,8 @@ export function slashItems(): SlashItem[] {
         }, 'none');
         focusBlock(nid, 'start');
       } else if (type === 'image') {
-        window.dispatchEvent(new CustomEvent('on:image-picker', { detail: id }));
+        // The image block mounts on the next render; ask it to open its picker once it listens.
+        requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('on:image-picker', { detail: id })));
       } else {
         focusBlock(id, 'end');
       }
@@ -349,8 +367,7 @@ export function slashItems(): SlashItem[] {
     {
       id: 'table', label: 'Table', section: 'Basic blocks', icon: TYPE_ICON.table, keywords: 'simple table grid',
       run: (blockId: string) => {
-        const id = convertOrInsert(blockId, 'table', { rows: [['', '', ''], ['', '', ''], ['', '', '']], headerRow: true });
-        void id;
+        convertOrInsert(blockId, 'table', { rows: [['', '', ''], ['', '', ''], ['', '', '']], headerRow: true });
       },
     },
     basic('divider', 'Divider', '---', 'line separator hr'),

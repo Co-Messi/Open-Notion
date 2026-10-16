@@ -1,30 +1,93 @@
 import type { ClipboardEvent } from 'react';
 import { getDoc, transact, breakCoalescing, showToast } from '../store/store';
-import { txInsertBlock, txInsertAfter, uid } from '../store/actions';
+import { deleteBlocks, isPageWithin, isTrashedDeep, pageOfBlockIn, txInsertBlock, txInsertAfter, uid } from '../store/actions';
 import type { Block } from '../store/types';
 import { sanitizeInline, escapeHtml, htmlToText } from '../lib/html';
 import { markdownToBlocks, pageToMarkdown } from '../lib/exporter';
 import { splitAtSelection, isCollapsed } from './caret';
 import { focusBlock } from './controller';
+import { normalizeClipboardBlocks } from '../store/normalize';
+import { storageGet, storageSet } from '../lib/storage';
+import { isSafeId, own } from '../lib/own';
+import { ImageError, ingestImage } from '../lib/images';
+import { recordError } from '../lib/diagnostics';
 
-const MIME = 'application/x-nc-blocks';
+export const CLIPBOARD_MIME = 'application/x-nc-blocks';
+const MIME = CLIPBOARD_MIME;
+const NONCE_KEY = 'on:clip-nonce';
+/** Payloads larger than this are treated as plain text. */
+const MAX_PAYLOAD_CHARS = 8 * 1024 * 1024;
 
-interface Serialized {
-  blocks: Record<string, Block>;
-  roots: string[];
+/** Pages trashed by a cut, so pasting them again is a move rather than a dead link. */
+export interface CutInfo {
+  at: number;
+  pages: string[];
 }
 
-export function serializeBlocks(ids: string[]): Serialized {
+export interface Serialized {
+  blocks: Record<string, Block>;
+  roots: string[];
+  cut?: CutInfo;
+}
+
+let memoryNonce: string | null = null;
+/**
+ * A random secret per install. Structured block payloads are accepted only when they carry
+ * it, so another site cannot plant blocks through the public custom MIME type: without the
+ * nonce a paste is plain text.
+ */
+export function clipboardNonce(): string {
+  const stored = storageGet(NONCE_KEY);
+  if (stored && /^[a-f0-9]{32}$/.test(stored)) return stored;
+  if (!memoryNonce) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    memoryNonce = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  storageSet(NONCE_KEY, memoryNonce);
+  return memoryNonce;
+}
+
+export function encodeClipboard(data: Serialized): string {
+  return JSON.stringify({ v: 1, nonce: clipboardNonce(), ...data });
+}
+
+/**
+ * Reads a custom MIME payload. Returns null (treat the paste as plain text) when it is
+ * malformed, too large or lacks this install's nonce. Accepted payloads still go through
+ * the block normalizer.
+ */
+export function decodeClipboard(raw: string | null | undefined): Serialized | null {
+  if (!raw || raw.length > MAX_PAYLOAD_CHARS) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || (parsed as { nonce?: unknown }).nonce !== clipboardNonce()) return null;
+  const blocks = normalizeClipboardBlocks(parsed);
+  if (!blocks) return null;
+  const c = (parsed as { cut?: unknown }).cut as Partial<CutInfo> | undefined;
+  const cut = c && typeof c.at === 'number' && Array.isArray(c.pages) ? { at: c.at, pages: c.pages.filter(isSafeId).slice(0, 2000) } : undefined;
+  return cut ? { ...blocks, cut } : blocks;
+}
+
+export function serializeBlocks(ids: string[], opts: { cut?: boolean } = {}): Serialized {
   const d = getDoc();
   const out: Record<string, Block> = {};
+  const pages: string[] = [];
   const walk = (id: string) => {
-    const b = d.blocks[id];
-    if (!b) return;
+    const b = own(d.blocks, id);
+    if (!b || out[id]) return;
     out[id] = b;
+    if ((b.type === 'page' || b.type === 'database') && b.pageId && !b.isLink) pages.push(b.pageId);
     b.children.forEach(walk);
   };
   ids.forEach(walk);
-  return { blocks: out, roots: ids };
+  const data: Serialized = { blocks: out, roots: ids.filter(id => out[id]) };
+  if (opts.cut && pages.length) data.cut = { at: Date.now(), pages };
+  return data;
 }
 
 export function blocksToText(ids: string[]): string {
@@ -45,13 +108,13 @@ export function blocksToText(ids: string[]): string {
   return lines.join('\n');
 }
 
-export function copyBlocks(ids: string[], e?: ClipboardEvent | globalThis.ClipboardEvent) {
-  const data = serializeBlocks(ids);
+export function copyBlocks(ids: string[], e?: ClipboardEvent | globalThis.ClipboardEvent, opts: { cut?: boolean } = {}) {
+  const data = serializeBlocks(ids, opts);
   const text = blocksToText(ids);
   if (e && e.clipboardData) {
     e.preventDefault();
     e.clipboardData.setData('text/plain', text);
-    e.clipboardData.setData(MIME, JSON.stringify(data));
+    e.clipboardData.setData(MIME, encodeClipboard(data));
   } else {
     navigator.clipboard?.writeText(text).catch(() => {});
   }
@@ -59,31 +122,73 @@ export function copyBlocks(ids: string[], e?: ClipboardEvent | globalThis.Clipbo
 }
 let lastCopied: Serialized | null = null;
 
-/** Inserts serialized blocks (with fresh ids) after `afterId` or into `parent` at index. */
+/**
+ * Cut: copies the blocks, then deletes them (owned pages go to the Trash). The payload
+ * remembers which pages this cut sent to the Trash, so pasting them is a move.
+ */
+export function cutBlocks(ids: string[], e?: ClipboardEvent | globalThis.ClipboardEvent) {
+  copyBlocks(ids, e, { cut: true });
+  deleteBlocks(ids);
+}
+
+/**
+ * Inserts serialized blocks (with fresh ids) after `afterId` or into `parent` at index.
+ * `data` must come from serializeBlocks or decodeClipboard (both normalized).
+ */
 export function insertSerialized(data: Serialized, target: { afterId?: string; parent?: string; index?: number }): string[] {
   const created: string[] = [];
   transact(tx => {
-    const clone = (id: string, parent: string): Block => {
-      const src = data.blocks[id];
-      const nid = uid();
-      const b: Block = { ...src, id: nid, parent, children: [], createdAt: Date.now() };
-      // Pasted page blocks become links so the original page is not shared by two parents.
-      if ((b.type === 'page' || b.type === 'database') && b.pageId) b.isLink = true;
-      tx.blocks[nid] = b;
-      b.children = src.children.filter(c => data.blocks[c]).map(c => clone(c, nid).id);
-      tx.blocks[nid] = { ...tx.blocks[nid], children: b.children };
-      return tx.blocks[nid];
-    };
     let parent: string;
     let index: number;
     if (target.afterId) {
-      const ref = tx.block(target.afterId);
+      const ref = own(tx.blocks, target.afterId);
+      if (!ref) return;
       parent = ref.parent;
       index = tx.siblings(target.afterId).indexOf(target.afterId) + 1;
     } else {
       parent = target.parent!;
       index = target.index ?? tx.childList(parent).length;
     }
+    // A column list holds only columns: anything pasted at that level goes after the list.
+    const listBlock = own(tx.blocks, parent);
+    if (listBlock?.type === 'columns') {
+      index = tx.siblings(parent).indexOf(parent) + 1;
+      parent = listBlock.parent;
+    }
+    if (!own(tx.pages, parent) && !own(tx.blocks, parent)) return;
+    const home = own(tx.pages, parent) ? parent : pageOfBlockIn(tx, parent);
+    // Pages this payload's cut sent to Trash: the first paste moves them here, unless that
+    // would put a page inside itself or one of its descendants, inside a page that is in the
+    // Trash, or into a database. Those pastes get a link and the page stays in the Trash.
+    const movable = new Set(
+      (data.cut?.pages || []).filter(pid => {
+        const p = own(tx.pages, pid);
+        if (!p || p.trashed !== true || (p.trashedAt ?? 0) < data.cut!.at) return false;
+        if (!home || isPageWithin(tx, home, pid) || isTrashedDeep(tx, home) || tx.pages[home].isDatabase) return false;
+        return true;
+      }),
+    );
+    const moved: { pageId: string; blockId: string }[] = [];
+    const clone = (id: string, parent: string): Block => {
+      const src = data.blocks[id];
+      const nid = uid();
+      const b: Block = { ...src, id: nid, parent, children: [], createdAt: Date.now() };
+      if ((b.type === 'page' || b.type === 'database') && b.pageId) {
+        if (!src.isLink && movable.has(b.pageId)) {
+          // Cut then paste is a move: this block owns the page again.
+          movable.delete(b.pageId);
+          delete b.isLink;
+          moved.push({ pageId: b.pageId, blockId: nid });
+        } else {
+          // Otherwise a link, so the original page is not shared by two parents.
+          b.isLink = true;
+        }
+      }
+      tx.blocks[nid] = b;
+      b.children = src.children.filter(c => data.blocks[c]).map(c => clone(c, nid).id);
+      tx.blocks[nid] = { ...tx.blocks[nid], children: b.children };
+      return tx.blocks[nid];
+    };
     const list = [...tx.childList(parent)];
     data.roots.forEach((r, i) => {
       if (!data.blocks[r]) return;
@@ -92,6 +197,7 @@ export function insertSerialized(data: Serialized, target: { afterId?: string; p
       created.push(b.id);
     });
     tx.setSiblings(parent, list);
+    for (const m of moved) tx.setPage(m.pageId, { trashed: false, trashedAt: undefined, parentId: tx.pageOfBlock(m.blockId) || null });
   });
   breakCoalescing();
   return created;
@@ -103,31 +209,19 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
   const b = d.blocks[blockId];
   if (!b) return;
 
-  // Images
+  // Images: downscaled and stored in IndexedDB; the block keeps a reference.
   const file = Array.from(cd.files || []).find(f => f.type.startsWith('image/'));
   if (file) {
     e.preventDefault();
-    if (file.size > 3 * 1024 * 1024) {
-      showToast('Image is too large to store locally (max 3 MB)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      let nid = '';
-      transact(tx => {
-        nid = txInsertAfter(tx, blockId, { type: 'image', url: String(reader.result) });
-      });
-      void nid;
-    };
-    reader.readAsDataURL(file);
+    void pasteImage(file, blockId);
     return;
   }
 
-  const custom = cd.getData(MIME);
-  if (custom) {
+  // Structured blocks only from this install; anything else falls through to plain text.
+  const data = decodeClipboard(cd.getData(MIME));
+  if (data) {
     e.preventDefault();
     try {
-      const data = JSON.parse(custom) as Serialized;
       const empty = !(el.textContent || '').length;
       const created = insertSerialized(data, { afterId: blockId });
       if (empty && b.type === 'text') transact(tx => {
@@ -138,8 +232,8 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
         }
       });
       if (created.length) focusBlock(created[created.length - 1], 'end');
-    } catch {
-      /* ignore */
+    } catch (err) {
+      recordError('paste', err);
     }
     return;
   }
@@ -163,7 +257,7 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
     const specs = markdownToBlocks(text);
     if (!specs.length) return;
     const [before, after] = splitAtSelection(el);
-    const first = specs.shift()!;
+    const { depth: firstDepth, ...first } = specs.shift()! as Partial<Block> & { depth?: number };
     let lastId = blockId;
     transact(tx => {
       const firstIsPlain = first.type === 'text' || !first.type;
@@ -175,9 +269,17 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
         tx.setBlock(blockId, { html: sanitizeInline(before) });
         lastId = txInsertAfter(tx, lastId, first);
       }
+      // Nested list items keep their depth: depth 0 follows the previous top level block, deeper
+      // items become children of the closest shallower item (same rule as Markdown import).
+      const baseDepth = firstDepth || 0;
+      const stack: string[] = [lastId];
       for (const s of specs) {
-        delete (s as any).depth;
-        lastId = txInsertAfter(tx, lastId, s);
+        const { depth: raw, ...spec } = s as Partial<Block> & { depth?: number };
+        const d = Math.max(0, Math.min((raw || 0) - baseDepth, stack.length));
+        const id = d === 0 ? txInsertAfter(tx, stack[0], spec) : txInsertBlock(tx, { ...spec, parent: stack[d - 1] });
+        stack[d] = id;
+        stack.length = d + 1;
+        lastId = id;
       }
       if (htmlToText(after)) {
         const last = tx.block(lastId);
@@ -193,6 +295,30 @@ export function handlePaste(e: ClipboardEvent<HTMLElement>, blockId: string, el:
   const inline = html ? sanitizeInline(html) : escapeHtml(text);
   document.execCommand('insertHTML', false, inline);
   commit();
+}
+
+/** Stores a pasted image and inserts it after the block (or at the end of its page). */
+async function pasteImage(file: File, blockId: string) {
+  const d = getDoc();
+  const startBlock = own(d.blocks, blockId);
+  let pageId = '';
+  for (let cur = startBlock, g = 0; cur && g < 1000; g++) {
+    if (own(d.pages, cur.parent)) {
+      pageId = cur.parent;
+      break;
+    }
+    cur = own(d.blocks, cur.parent);
+  }
+  try {
+    const url = await ingestImage(file);
+    transact(tx => {
+      if (own(tx.blocks, blockId)) txInsertAfter(tx, blockId, { type: 'image', url });
+      else if (pageId && own(tx.pages, pageId)) txInsertBlock(tx, { parent: pageId, type: 'image', url });
+    });
+  } catch (err) {
+    recordError('paste', err);
+    showToast(err instanceof ImageError ? err.message : 'Could not paste the image');
+  }
 }
 
 export function pasteIntoSelection(afterId: string) {

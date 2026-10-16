@@ -6,7 +6,7 @@ import {
 import { transact, useDoc } from '../store/store';
 import { addView, deleteView, updateView, uid, defaultStatusOptions } from '../store/actions';
 import type { DbView, Page, Property, ViewType } from '../store/types';
-import { Popover, Menu, Switch, Tooltip, type MenuItemDef } from '../components/ui';
+import { Popover, Menu, Switch, Tooltip, type MenuItemDef, pressable } from '../components/ui';
 import { PropIcon } from './cells';
 import { orderedProps } from './logic';
 import { duplicateView, togglePropHidden, setAllHidden } from './dbActions';
@@ -102,12 +102,13 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
 
   return (
     <div className="db-viewbar">
-      <div className="db-tabs">
+      <div className="db-tabs" role="tablist" aria-label="Views">
         {views.map(v => (
           <div
             key={v.id}
             className={'db-tab' + (v.id === view.id ? ' on' : '')}
-            role="button"
+            {...pressable(undefined, 'tab')}
+            aria-selected={v.id === view.id}
             onClick={e => {
               if (v.id === view.id) setTabMenu({ id: v.id, rect: e.currentTarget.getBoundingClientRect() });
               else setViewId(v.id);
@@ -124,7 +125,7 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
           </div>
         ))}
         <Tooltip label="Add a new view">
-          <span className="icon-btn db-icon-24" role="button" onClick={e => setAddMenu(e.currentTarget.getBoundingClientRect())}>
+          <span className="icon-btn db-icon-24" {...pressable()} onClick={e => setAddMenu(e.currentTarget.getBoundingClientRect())}>
             <Plus size={16} />
           </span>
         </Tooltip>
@@ -133,7 +134,7 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
         <Tooltip label="Filter">
           <span
             className={'icon-btn db-tool' + (hasFilters ? ' on' : '')}
-            role="button"
+            {...pressable()}
             onClick={e => {
               if (hasFilters) setBarOpen(!barOpen);
               else setFilterPick(e.currentTarget.getBoundingClientRect());
@@ -145,7 +146,7 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
         <Tooltip label="Sort">
           <span
             className={'icon-btn db-tool' + (hasSorts ? ' on' : '')}
-            role="button"
+            {...pressable()}
             onClick={e => {
               const r = e.currentTarget.getBoundingClientRect();
               if (hasSorts) setSortOpen(r);
@@ -157,7 +158,7 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
         </Tooltip>
         <div className={'db-search' + (searchOpen ? ' open' : '')}>
           <Tooltip label="Search">
-            <span className="icon-btn db-tool" role="button" onClick={() => (searchOpen ? searchRef.current?.focus() : setSearchOpen(true))}>
+            <span className="icon-btn db-tool" {...pressable()} onClick={() => (searchOpen ? searchRef.current?.focus() : setSearchOpen(true))}>
               <Search size={16} />
             </span>
           </Tooltip>
@@ -178,15 +179,15 @@ export function ViewBar({ dbId, db, view, setViewId, query, setQuery, onNew, sta
           )}
         </div>
         <Tooltip label="View settings">
-          <span ref={optionsBtn} className="icon-btn db-tool" role="button" onClick={e => setOptions(e.currentTarget.getBoundingClientRect())}>
+          <span ref={optionsBtn} className="icon-btn db-tool" {...pressable()} onClick={e => setOptions(e.currentTarget.getBoundingClientRect())}>
             <Ellipsis size={16} />
           </span>
         </Tooltip>
         <div className="db-new">
-          <span className="db-new-main" role="button" onClick={onNew}>
+          <span className="db-new-main" {...pressable()} onClick={onNew}>
             New
           </span>
-          <span className="db-new-chev" role="button" onClick={e => setNewMenu((e.currentTarget.parentElement as HTMLElement).getBoundingClientRect())}>
+          <span className="db-new-chev" {...pressable()} aria-label="New item options" aria-haspopup="menu" onClick={e => setNewMenu((e.currentTarget.parentElement as HTMLElement).getBoundingClientRect())}>
             <ChevronDown size={14} strokeWidth={2} />
           </span>
         </div>
@@ -447,7 +448,7 @@ function PropertyToggles({ dbId, viewId }: { dbId: string; viewId: string }) {
     <div className="db-prop-toggles">
       <div className="menu-label">
         <span>Shown in {view.type}</span>
-        <span className="db-link-btn" role="button" onClick={() => setAllHidden(dbId, viewId, allShown)}>
+        <span className="db-link-btn" {...pressable()} onClick={() => setAllHidden(dbId, viewId, allShown)}>
           {allShown ? 'Hide all' : 'Show all'}
         </span>
       </div>
@@ -455,7 +456,7 @@ function PropertyToggles({ dbId, viewId }: { dbId: string; viewId: string }) {
         {props.map(p => {
           const on = p.type === 'title' || !view.hidden.includes(p.id);
           return (
-            <div
+            <div {...pressable()}
               key={p.id}
               className={'menu-item' + (p.type === 'title' ? ' disabled' : '')}
               onClick={() => p.type !== 'title' && togglePropHidden(dbId, viewId, p.id, on)}

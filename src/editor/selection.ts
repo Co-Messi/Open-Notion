@@ -2,11 +2,12 @@ import { getUi, setUi, getDoc, transact, undo, redo, breakCoalescing } from '../
 import { deleteBlocks, duplicateBlocks, turnInto, txInsertAfter } from '../store/actions';
 import { focusBlock, selectBlocks, clearBlockSelection } from './controller';
 import { indentBlocks, NON_EDITABLE } from './ops';
-import { copyBlocks, insertSerialized } from './clipboard';
+import { CLIPBOARD_MIME, copyBlocks, cutBlocks, decodeClipboard, insertSerialized } from './clipboard';
 import type { BlockType } from '../store/types';
+import { attrSel } from '../lib/dom';
 
 function scopeOf(id: string): Element | null {
-  return document.querySelector(`.block[data-block-id="${id}"]`)?.closest('[data-editor-scope]') || null;
+  return document.querySelector('.block' + attrSel('data-block-id', id))?.closest('[data-editor-scope]') || null;
 }
 
 function visible(scope: Element | null): string[] {
@@ -162,20 +163,19 @@ export function installSelectionKeys() {
     const sel = getUi().selectedBlocks;
     const ae = document.activeElement as HTMLElement | null;
     if (!sel.length || (ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA'))) return;
-    const top = topLevelSelection();
-    copyBlocks(top, e);
-    deleteBlocks(top);
+    cutBlocks(topLevelSelection(), e);
     clearBlockSelection();
   };
   const onPaste = (e: ClipboardEvent) => {
     const sel = getUi().selectedBlocks;
     const ae = document.activeElement as HTMLElement | null;
     if (!sel.length || (ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA'))) return;
-    const raw = e.clipboardData?.getData('application/x-nc-blocks');
-    if (!raw) return;
+    // Without this install's nonce the payload is plain text, which this mode ignores.
+    const data = decodeClipboard(e.clipboardData?.getData(CLIPBOARD_MIME));
+    if (!data) return;
     e.preventDefault();
     const top = topLevelSelection();
-    const created = insertSerialized(JSON.parse(raw), { afterId: top[top.length - 1] });
+    const created = insertSerialized(data, { afterId: top[top.length - 1] });
     selectBlocks(created);
   };
   window.addEventListener('keydown', onKey);

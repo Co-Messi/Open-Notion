@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Undo2, Trash2, CircleHelp } from 'lucide-react';
 import { useUi, setUi, useDoc } from '../store/store';
 import { restorePage, deletePageForever, openPage, pageTitle, pagePath } from '../store/actions';
-import { Popover, Tooltip, SearchIcon } from './ui';
+import { Popover, Tooltip, SearchIcon, pressable } from './ui';
 import { PageIconView } from './PageIcon';
 
 export function TrashPopover() {
@@ -25,7 +25,7 @@ function TrashInner() {
   const close = () => setUi({ trashOpen: false });
   const shown = trashed.filter(id => pageTitle(pages[id]).toLowerCase().includes(q.toLowerCase()));
   return (
-    <Popover anchor={anchor} onClose={close} placement="right-start" className="trash-pop">
+    <Popover anchor={anchor} onClose={close} placement="right-start" className="trash-pop" label="Trash">
       <div className="menu-search icon" style={{ paddingTop: 10 }}>
         <SearchIcon size={14} />
         <input autoFocus placeholder="Search pages in Trash" value={q} onChange={e => setQ(e.target.value)} />
@@ -44,7 +44,7 @@ function TrashInner() {
             .map(x => pageTitle(x))
             .join(' / ');
           return (
-            <div
+            <div {...pressable()}
               key={id}
               className="trash-item"
               onClick={() => {
@@ -58,7 +58,7 @@ function TrashInner() {
                 {path && <div className="p">{path}</div>}
               </div>
               <Tooltip label="Restore">
-                <div
+                <div {...pressable()}
                   className="icon-btn"
                   onClick={e => {
                     e.stopPropagation();
@@ -79,7 +79,7 @@ function TrashInner() {
                 </span>
               ) : (
                 <Tooltip label="Delete from Trash">
-                  <div
+                  <div {...pressable()}
                     className="icon-btn"
                     onClick={e => {
                       e.stopPropagation();

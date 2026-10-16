@@ -404,13 +404,13 @@ const VALUES = [
     icon: HardDrive,
     tone: 'green' as const,
     title: 'Yours',
-    body: 'Everything lives in your browser. There is no account to create and no server to trust. Download a full JSON backup whenever you like.',
+    body: 'Everything lives in your browser. There is no account to create and no server to trust, and its own fonts and images come from this site only (an image you add by link loads from where it lives). Download a full JSON backup whenever you like.',
   },
   {
     icon: Zap,
     tone: 'orange' as const,
     title: 'Instant',
-    body: 'No spinners and no round trips. Pages open the moment you click, typing never lags, and once loaded it keeps working without a connection.',
+    body: 'No spinners and no round trips. Pages open the moment you click, typing never lags, and an open tab keeps working even if your connection drops.',
   },
   {
     icon: Blocks,
@@ -720,7 +720,7 @@ function Rows() {
               view is tuned for both.
             </>
           }
-          bullets={['Icons and covers from emoji, gradients, photos or uploads', 'Serif and mono page fonts, small text and full width', 'Import Markdown and export any page as Markdown']}
+          bullets={['Icons and covers from emoji, gradients, illustrations or uploads', 'Serif and mono page fonts, small text and full width', 'Import Markdown and export any page as Markdown']}
           visual={
             <img
               className="shot"
@@ -844,7 +844,7 @@ const COMPARE: { label: string; ours: [Mark, string]; theirs: [Mark, string] }[]
   { label: 'Price', ours: ['plain', 'Free'], theirs: ['plain', 'Free plan and paid plans'] },
   { label: 'Account required', ours: ['yes', 'Not needed'], theirs: ['plain', 'Yes'] },
   { label: 'Where your data lives', ours: ['plain', 'Your browser'], theirs: ['plain', "Notion's cloud"] },
-  { label: 'Works offline', ours: ['yes', 'Yes, once loaded'], theirs: ['plain', 'Partially'] },
+  { label: 'Works offline', ours: ['plain', 'In an open tab'], theirs: ['plain', 'Partially'] },
   { label: 'Self hosting', ours: ['yes', 'Any static host'], theirs: ['no', 'Not available'] },
   { label: 'Real time collaboration', ours: ['no', 'Not yet'], theirs: ['yes', 'Yes'] },
   { label: 'AI features', ours: ['no', 'No'], theirs: ['yes', 'Yes'] },
@@ -926,7 +926,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'Where is my data stored?',
     a: (
       <>
-        In your browser's local storage, on your device only. Nothing is sent to a server. Open{' '}
+        In your browser's local storage, on your device only. Nothing you write is sent to a server, and the only network requests are for this site's own files and for images you add by link, which load from the site that hosts them. Open{' '}
         <strong>Settings</strong>, then <strong>Import and export</strong>, to download a full JSON backup and restore
         it later or in another browser.
       </>

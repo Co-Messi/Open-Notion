@@ -2,39 +2,39 @@
 :root,
 .theme-light,
 .theme-dark {
-  --text-primary: var(--on-text-primary);
-  --text-secondary: var(--on-text-secondary);
-  --text-tertiary: var(--on-text-tertiary);
-  --text-disabled: var(--on-text-disabled);
-  --text-accent: var(--on-text-accent-primary);
-  --icon-primary: var(--on-icon-primary);
-  --icon-secondary: var(--on-icon-secondary);
-  --icon-tertiary: var(--on-icon-tertiary);
-  --border-primary: var(--on-border-primary);
-  --border-translucent: var(--on-border-primary-translucent);
-  --border-secondary-translucent: var(--on-border-secondary-translucent);
-  --bg-primary: var(--on-background-primary);
-  --bg-secondary: var(--on-background-secondary);
-  --bg-tertiary: var(--on-background-tertiary);
-  --bg-elevated: var(--on-background-elevated);
-  --hover: var(--on-state-hover);
-  --pressed: var(--on-state-pressed);
-  --button-hover: var(--on-button-hovered-background);
-  --popover-bg: var(--on-popover-background);
-  --sidebar-bg: var(--on-background-secondary);
-  --sidebar-selected: var(--on-sidebar-item-selected-background);
-  --blue: var(--on-palette-ui-blue-600);
-  --blue-hover: var(--on-blue-button-hovered-background);
-  --select-blue: var(--on-palette-ui-blue-200);
-  --select-blue-strong: var(--on-palette-ui-blue-300);
-  --link-deco: var(--on-link-decoration-color);
-  --code-bg: var(--on-code-block-background);
-  --overlay: var(--on-overlay-smokescreen);
-  --shadow-menu: var(--on-shadow-mdprimary-outline);
-  --shadow-modal: var(--on-shadow-outline-scrim);
-  --shadow-card: var(--on-shadow-outline-sm);
-  --title-placeholder: var(--on-page-title-placeholder-text-color);
-  --favorite: var(--on-topbar-favorite);
+  --text-primary: var(--theme-ink);
+  --text-secondary: var(--theme-ink-muted);
+  --text-tertiary: var(--theme-ink-faint);
+  --text-disabled: var(--theme-ink-disabled);
+  --text-accent: var(--theme-ink-emphasis);
+  --icon-primary: var(--theme-glyph);
+  --icon-secondary: var(--theme-glyph-muted);
+  --icon-tertiary: var(--theme-glyph-faint);
+  --border-primary: var(--theme-line);
+  --border-translucent: var(--theme-line-alpha);
+  --border-secondary-translucent: var(--theme-line-alpha-soft);
+  --bg-primary: var(--theme-surface);
+  --bg-secondary: var(--theme-surface-sunken);
+  --bg-tertiary: var(--theme-surface-muted);
+  --bg-elevated: var(--theme-surface-raised);
+  --hover: var(--theme-hover);
+  --pressed: var(--theme-press);
+  --button-hover: var(--theme-button-hover);
+  --popover-bg: var(--theme-popover);
+  --sidebar-bg: var(--theme-surface-sunken);
+  --sidebar-selected: var(--theme-sidebar-active);
+  --blue: var(--theme-accent);
+  --blue-hover: var(--theme-accent-hover);
+  --select-blue: var(--theme-accent-wash-2);
+  --select-blue-strong: var(--theme-accent-wash-3);
+  --link-deco: var(--theme-link-underline);
+  --code-bg: var(--theme-code-surface);
+  --overlay: var(--theme-scrim);
+  --shadow-menu: var(--theme-shadow-menu);
+  --shadow-modal: var(--theme-shadow-dialog);
+  --shadow-card: var(--theme-shadow-1);
+  --title-placeholder: var(--theme-title-hint);
+  --favorite: var(--theme-star);
 
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica,
     "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
@@ -47,27 +47,27 @@
 :root,
 .theme-light,
 .theme-dark {
-  --color-gray: var(--on-gray-text-secondary);
-  --color-brown: var(--on-brown-text-secondary);
-  --color-orange: var(--on-orange-text-secondary);
-  --color-yellow: var(--on-yellow-text-secondary);
-  --color-green: var(--on-green-text-secondary);
-  --color-blue: var(--on-blue-text-secondary);
-  --color-purple: var(--on-purple-text-secondary);
-  --color-pink: var(--on-pink-text-secondary);
-  --color-red: var(--on-red-text-secondary);
-  --bgcolor-gray: var(--on-gray-background-secondary);
-  --bgcolor-brown: var(--on-brown-background-secondary);
-  --bgcolor-orange: var(--on-orange-background-secondary);
-  --bgcolor-yellow: var(--on-yellow-background-secondary);
-  --bgcolor-green: var(--on-green-background-secondary);
-  --bgcolor-blue: var(--on-blue-background-secondary);
-  --bgcolor-purple: var(--on-purple-background-secondary);
-  --bgcolor-pink: var(--on-pink-background-secondary);
-  --bgcolor-red: var(--on-red-background-secondary);
+  --color-gray: var(--theme-gray-ink);
+  --color-brown: var(--theme-brown-ink);
+  --color-orange: var(--theme-orange-ink);
+  --color-yellow: var(--theme-yellow-ink);
+  --color-green: var(--theme-green-ink);
+  --color-blue: var(--theme-blue-ink);
+  --color-purple: var(--theme-purple-ink);
+  --color-pink: var(--theme-pink-ink);
+  --color-red: var(--theme-red-ink);
+  --bgcolor-gray: var(--theme-gray-wash-2);
+  --bgcolor-brown: var(--theme-brown-wash-2);
+  --bgcolor-orange: var(--theme-orange-wash-2);
+  --bgcolor-yellow: var(--theme-yellow-wash-2);
+  --bgcolor-green: var(--theme-green-wash-2);
+  --bgcolor-blue: var(--theme-blue-wash-2);
+  --bgcolor-purple: var(--theme-purple-wash-2);
+  --bgcolor-pink: var(--theme-pink-wash-2);
+  --bgcolor-red: var(--theme-red-wash-2);
   /* Database option tags */
-  --tag-default-bg: var(--on-gray-background-secondary);
-  --tag-default-fg: var(--on-gray-text-primary);
+  --tag-default-bg: var(--theme-gray-wash-2);
+  --tag-default-fg: var(--theme-gray-ink-strong);
 }
 
 * {
@@ -114,7 +114,7 @@ a {
 }
 
 ::selection {
-  background: var(--on-palette-ui-blue-300);
+  background: var(--theme-accent-wash-3);
 }
 
 .c-gray { color: var(--color-gray); }
@@ -140,7 +140,7 @@ a {
 .scroller {
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--on-gray-background-tertiary-translucent) transparent;
+  scrollbar-color: var(--theme-gray-tint-3) transparent;
 }
 
 .sr-only {
@@ -175,5 +175,5 @@ a {
   color: var(--text-tertiary);
   border-radius: 4px;
   padding: 0 4px;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
 }

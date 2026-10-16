@@ -1,7 +1,19 @@
 import { transact, getDoc } from '../store/store';
 import { uid, txAddRow, defaultStatusOptions, randomOptionColor } from '../store/actions';
-import { shiftDate } from './logic';
-import type { DbView, Property, PropType, SelectOption, ColorName } from '../store/types';
+import { shiftDate, orderRange } from './logic';
+import { planTypeChange, fixViewsForTypeChange, fixFiltersForDeletedOption, stashKey, type ConvertCtx } from './convert';
+import type { DbView, Page, Property, PropType, SelectOption, ColorName } from '../store/types';
+
+/**
+ * Every row of a database: the listed rows first, then rows in the Trash that still point at
+ * it. Restoring a row puts it back, so its values must follow schema changes like the others.
+ */
+function allRows(pages: Record<string, Page>, dbId: string): Page[] {
+  const out = (pages[dbId]?.rows || []).map(id => pages[id]).filter(Boolean);
+  const seen = new Set(out.map(p => p.id));
+  for (const p of Object.values(pages)) if (p.dbId === dbId && !seen.has(p.id)) out.push(p);
+  return out;
+}
 
 /** Moves `rowId` so it sits before `beforeId` (or at the end when null) in db.rows. */
 function reorder(rows: string[], rowId: string, beforeId: string | null, afterId?: string | null): string[] {
@@ -49,9 +61,7 @@ export function setRowRange(rowId: string, propId: string, start: string, end?: 
   transact(tx => {
     const r = tx.pages[rowId];
     if (!r) return;
-    let s = start;
-    let e = end;
-    if (e && e < s) [s, e] = [e, s];
+    const [s, e] = orderRange(start, end);
     const next = e && e !== s ? { start: s, end: e } : { start: s };
     tx.setPage(rowId, { props: { ...(r.props || {}), [propId]: next } });
   });
@@ -100,56 +110,37 @@ export function setNumberFormat(dbId: string, propId: string, numberFormat: Prop
   patchProp(dbId, propId, p => ({ ...p, numberFormat }));
 }
 
-/** Converts a property to another type, converting existing values where it makes sense. */
+function convertCtx(): ConvertCtx {
+  return { userName: getDoc().workspace.userName || 'Me', newId: uid, newColor: randomOptionColor, statusDefaults: defaultStatusOptions };
+}
+
+/**
+ * How many values a type change cannot represent (0 means nothing is lost). Those values are
+ * kept under a hidden key so changing back restores them, but the UI still asks first.
+ */
+export function previewPropertyTypeChange(dbId: string, propId: string, type: PropType): { lost: number } {
+  const d = getDoc();
+  const db = d.pages[dbId];
+  const prop = db?.schema?.find(p => p.id === propId);
+  if (!db || !prop || prop.type === type || prop.type === 'title') return { lost: 0 };
+  return { lost: planTypeChange(prop, type, allRows(d.pages, dbId), convertCtx()).lost };
+}
+
+/** Converts a property to another type, converting existing values as losslessly as possible. */
 export function changePropertyType(dbId: string, propId: string, type: PropType) {
   transact(tx => {
     const db = tx.pages[dbId];
     const prop = (db.schema || []).find(p => p.id === propId);
     if (!prop || prop.type === type || prop.type === 'title') return;
-    let options: SelectOption[] | undefined = prop.options;
-    const isSel = (t: PropType) => t === 'select' || t === 'multi_select' || t === 'status';
-    if (type === 'status') {
-      const base = defaultStatusOptions();
-      options = isSel(prop.type) && prop.options?.length ? prop.options.map((o, i) => ({ ...o, group: o.group || (i === 0 ? 'todo' : 'in_progress') })) : base;
-    } else if (isSel(type)) {
-      options = (prop.options || []).map(o => ({ id: o.id, name: o.name, color: o.color }));
-    }
-    // Build options from text values when converting text -> select.
-    const textish = (t: PropType) => ['text', 'url', 'email', 'phone', 'number'].includes(t);
-    const newOpts = [...(options || [])];
-    for (const rid of db.rows || []) {
-      const r = tx.pages[rid];
-      if (!r) continue;
-      const v = r.props?.[propId];
-      let nv: any = undefined;
-      if (v === undefined || v === null) continue;
-      if (isSel(prop.type) && isSel(type)) {
-        if (type === 'multi_select') nv = Array.isArray(v) ? v : v ? [v] : [];
-        else nv = Array.isArray(v) ? v[0] : v;
-        if (type === 'status' && nv && !newOpts.some(o => o.id === nv)) nv = undefined;
-      } else if (textish(prop.type) && isSel(type) && type !== 'status') {
-        const s = String(v).trim();
-        if (s) {
-          let o = newOpts.find(x => x.name === s);
-          if (!o) {
-            o = { id: uid(), name: s, color: randomOptionColor() };
-            newOpts.push(o);
-          }
-          nv = type === 'multi_select' ? [o.id] : o.id;
-        }
-      } else if (isSel(prop.type) && textish(type)) {
-        const ids = Array.isArray(v) ? v : [v];
-        nv = ids.map(id => (prop.options || []).find(o => o.id === id)?.name || '').filter(Boolean).join(', ');
-        if (type === 'number') nv = Number(nv) || undefined;
-      } else if (textish(prop.type) && textish(type)) {
-        nv = type === 'number' ? (Number.isNaN(Number(v)) ? undefined : Number(v)) : String(v);
-      } else if (type === 'checkbox') {
-        nv = !!v && v !== 'false';
-      }
-      tx.setPage(rid, { props: { ...(r.props || {}), [propId]: nv } });
+    const plan = planTypeChange(prop, type, allRows(tx.pages, dbId), convertCtx());
+    for (const c of plan.changes) {
+      tx.setPage(c.rowId, { props: c.props });
+      // A schema change is not an edit of the row: keep its Last edited time.
+      tx.touched.delete(c.rowId);
     }
     tx.setPage(dbId, {
-      schema: (db.schema || []).map(p => (p.id === propId ? { ...p, type, options: isSel(type) ? newOpts : undefined } : p)),
+      schema: (db.schema || []).map(p => (p.id === propId ? { ...p, type, options: plan.options ?? p.options } : p)),
+      views: fixViewsForTypeChange(db.views || [], propId, prop.type, type),
     });
   });
 }
@@ -166,9 +157,12 @@ export function duplicateProperty(dbId: string, propId: string): string {
     const next = [...schema];
     next.splice(i + 1, 0, copy);
     tx.setPage(dbId, { schema: next });
-    for (const rid of db.rows || []) {
-      const r = tx.pages[rid];
-      if (r?.props && r.props[propId] !== undefined) tx.setPage(rid, { props: { ...r.props, [nid]: r.props[propId] } });
+    for (const r of allRows(tx.pages, dbId)) {
+      const rid = r.id;
+      if (r.props && r.props[propId] !== undefined) {
+        const extra = r.props[stashKey(propId)] !== undefined ? { [stashKey(nid)]: r.props[stashKey(propId)] } : {};
+        tx.setPage(rid, { props: { ...r.props, [nid]: r.props[propId], ...extra } });
+      }
     }
     // Keep the copy next to the original in ordered views.
     tx.setPage(dbId, {
@@ -187,6 +181,13 @@ export function duplicateProperty(dbId: string, propId: string): string {
 export function deleteProperty(dbId: string, propId: string) {
   transact(tx => {
     const db = tx.pages[dbId];
+    // Drop the hidden previous values kept by type changes.
+    for (const r of allRows(tx.pages, dbId)) {
+      if (r.props && stashKey(propId) in r.props) {
+        const { [stashKey(propId)]: _gone, ...rest } = r.props;
+        tx.setPage(r.id, { props: rest });
+      }
+    }
     tx.setPage(dbId, {
       schema: (db.schema || []).filter(p => p.id !== propId || p.type === 'title'),
       views: (db.views || []).map(v => ({
@@ -226,12 +227,13 @@ export function deleteOption(dbId: string, propId: string, optId: string) {
     const db = tx.pages[dbId];
     tx.setPage(dbId, {
       schema: (db.schema || []).map(p => (p.id === propId ? { ...p, options: (p.options || []).filter(o => o.id !== optId) } : p)),
+      // Filters that pointed at the option would hide rows behind a pill with no label.
+      views: fixFiltersForDeletedOption(db.views || [], propId, optId),
     });
-    for (const rid of db.rows || []) {
-      const r = tx.pages[rid];
-      const v = r?.props?.[propId];
-      if (v === optId) tx.setPage(rid, { props: { ...r.props, [propId]: undefined } });
-      else if (Array.isArray(v) && v.includes(optId)) tx.setPage(rid, { props: { ...r.props, [propId]: v.filter((x: string) => x !== optId) } });
+    for (const r of allRows(tx.pages, dbId)) {
+      const v = r.props?.[propId];
+      if (v === optId) tx.setPage(r.id, { props: { ...r.props, [propId]: undefined } });
+      else if (Array.isArray(v) && v.includes(optId)) tx.setPage(r.id, { props: { ...r.props, [propId]: v.filter((x: string) => x !== optId) } });
     }
   });
 }

@@ -12,22 +12,20 @@ import { InlineToolbar } from './editor/InlineToolbar';
 import { LinkToPagePicker } from './editor/LinkToPage';
 import { installSelectionKeys } from './editor/selection';
 import { useUi, useSettings, setUi, setSettings, getUi, getDoc, undo, redo, getSettings, useDoc } from './store/store';
-import { createPage, openPage, visitPage, pageTitle, duplicatePage } from './store/actions';
+import { createPage, openPage, visitPage, pageTitle } from './store/actions';
 import type { Route } from './store/store';
 import { Tooltip, MOD } from './components/ui';
 import { focusBlock } from './editor/controller';
 import { TabBar } from './components/TabBar';
 import { TemplatesModal } from './components/Templates';
 import { onHashChange, back as tabBack, forward as tabForward, newTab } from './store/tabs';
-
-function parseHash(): Route {
-  const h = location.hash.replace(/^#\/?/, '');
-  if (h.startsWith('p/')) return { name: 'page', pageId: h.slice(2).split('?')[0] };
-  if (h === 'chat') return { name: 'chat' };
-  if (h === 'meetings') return { name: 'meetings' };
-  if (h === 'library') return { name: 'library' };
-  return { name: 'home' };
-}
+import { attrSel } from './lib/dom';
+import { isSafeId, own } from './lib/own';
+import { parseHash } from './store/route';
+import { storageGet, storageSet } from './lib/storage';
+import { isImageIcon } from './lib/url';
+import { StoredImg } from './components/StoredImage';
+import { pressable } from './components/ui';
 
 function useTheme() {
   const theme = useSettings(s => s.theme);
@@ -56,7 +54,7 @@ export function App() {
     const apply = () => {
       onHashChange();
       const r = parseHash();
-      if (r.name === 'page' && !getDoc().pages[r.pageId]) {
+      if ((r.name === 'page' && !own(getDoc().pages, r.pageId)) || (r.name !== 'page' && /^#\/?p\//.test(location.hash))) {
         location.replace('#/home');
         return;
       }
@@ -65,16 +63,17 @@ export function App() {
         visitPage(r.pageId);
         expandSidebarTo(r.pageId);
         const blockId = new URLSearchParams(location.hash.split('?')[1] || '').get('b');
-        if (blockId) setTimeout(() => {
-          const el = document.querySelector(`.block[data-block-id="${blockId}"]`);
+        if (blockId && isSafeId(blockId)) setTimeout(() => {
+          const el = document.querySelector('.block' + attrSel('data-block-id', blockId));
           el?.scrollIntoView({ block: 'center' });
           if (el) setUi({ selectedBlocks: [blockId] });
         }, 50);
       }
     };
     if (!location.hash || location.hash === '#' || location.hash === '#/') {
-      const last = getDoc().recent[0]?.id;
-      if (getSettings().startPage === 'last' && last && getDoc().pages[last] && !getDoc().pages[last].trashed) location.hash = `#/p/${last}`;
+      const last = getDoc().recent?.[0]?.id;
+      const lastPage = own(getDoc().pages, last);
+      if (getSettings().startPage === 'last' && lastPage && !lastPage.trashed) location.hash = `#/p/${lastPage.id}`;
       else location.hash = '#/home';
     }
     apply();
@@ -83,7 +82,7 @@ export function App() {
   }, []);
 
   // Document title
-  const title = useDoc(d => (route.name === 'page' ? (d.pages[route.pageId]?.icon && !/^(data|http)/.test(d.pages[route.pageId]!.icon!) ? d.pages[route.pageId]!.icon + ' ' : '') + pageTitle(d.pages[route.pageId]) : route.name === 'home' ? 'Home' : route.name === 'chat' ? 'New AI chat' : route.name === 'meetings' ? 'Meetings' : 'Library'), Object.is);
+  const title = useDoc(d => (route.name === 'page' ? (d.pages[route.pageId]?.icon && !isImageIcon(d.pages[route.pageId]!.icon) ? d.pages[route.pageId]!.icon + ' ' : '') + pageTitle(d.pages[route.pageId]) : route.name === 'home' ? 'Home' : route.name === 'chat' ? 'New AI chat' : route.name === 'meetings' ? 'Meetings' : 'Library'), Object.is);
   useEffect(() => {
     document.title = title;
   }, [title]);
@@ -104,7 +103,7 @@ export function App() {
       const k = e.key.toLowerCase();
       const ae = document.activeElement as HTMLElement | null;
       const editing = !!ae && (ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
-      if ((k === 'k' && !editing) || k === 'p' && !e.shiftKey || (k === 'k' && editing && window.getSelection()?.isCollapsed)) {
+      if ((k === 'k' && !editing) || (k === 'k' && editing && window.getSelection()?.isCollapsed)) {
         e.preventDefault();
         setUi({ searchOpen: !getUi().searchOpen });
       } else if (e.key === '\\' || e.code === 'Backslash') {
@@ -114,7 +113,7 @@ export function App() {
         e.preventDefault();
         const dark = document.body.classList.contains('theme-dark');
         setSettings({ theme: dark ? 'light' : 'dark' });
-      } else if (k === 'n' && !e.shiftKey && !e.altKey) {
+      } else if ((k === 'n' || (e.altKey && e.code === 'KeyN')) && !e.shiftKey) {
         e.preventDefault();
         openPage(createPage({ section: 'private' }));
       } else if (k === 'z' && !editing) {
@@ -130,14 +129,12 @@ export function App() {
       } else if (k === ']') {
         e.preventDefault();
         tabForward();
-      } else if (k === 't' && e.altKey) {
+      } else if ((k === 't' || e.code === 'KeyT') && e.altKey) {
         e.preventDefault();
         newTab();
-      } else if (k === 'd' && !editing && !getUi().selectedBlocks.length && getUi().route.name === 'page') {
-        e.preventDefault();
-        const r = getUi().route;
-        if (r.name === 'page') openPage(duplicatePage(r.pageId));
       }
+      // Cmd+D is left to the browser (bookmark) unless blocks are selected; block duplication is
+      // handled by the selection keys. Pages are duplicated from their menus.
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -174,10 +171,14 @@ export function App() {
   );
 }
 
-function Toast() {
+export function Toast() {
   const t = useUi(u => u.toast);
-  if (!t) return null;
-  return <div className="toast">{t}</div>;
+  // The live region stays mounted so a message that appears later is announced.
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true" data-toast-live style={{ position: 'fixed', left: 0, bottom: 0, width: 0, height: 0 }}>
+      {t && <div className="toast">{t}</div>}
+    </div>
+  );
 }
 
 function ChatView() {
@@ -186,7 +187,7 @@ function ChatView() {
       <div className="empty-view">
         <MessageCircle size={36} color="var(--icon-tertiary)" />
         <h2>AI chat isn’t available</h2>
-        <div>This is a local workspace without an AI backend. Everything else works offline in your browser.</div>
+        <div>This is a local workspace without an AI backend. Everything else runs in your browser, and an open tab keeps working without a connection.</div>
       </div>
     </div>
   );
@@ -219,8 +220,8 @@ function LibraryView() {
         {pages.map(id => {
           const p = all[id];
           return (
-            <div key={id} className="lib-row" onClick={() => openPage(id)}>
-              <span style={{ width: 20, display: 'flex', justifyContent: 'center', color: 'var(--icon-secondary)' }}>{p.icon || (p.isDatabase ? '▦' : '📄')}</span>
+            <div {...pressable()} key={id} className="lib-row" onClick={() => openPage(id)}>
+              <span style={{ width: 20, display: 'flex', justifyContent: 'center', color: 'var(--icon-secondary)' }}>{isImageIcon(p.icon) ? <StoredImg src={p.icon} style={{ width: 18, height: 18, objectFit: 'cover', borderRadius: 3 }} /> : p.icon || (p.isDatabase ? '▦' : '📄')}</span>
               <span className="grow">{pageTitle(p)}</span>
               <span className="muted">Edited {new Date(p.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
             </div>
@@ -235,7 +236,7 @@ function SidePeek() {
   const rowId = useUi(u => u.peekRowId);
   const page = useDoc(d => (rowId ? d.pages[rowId] : undefined), Object.is);
   const [menu, setMenu] = useState<DOMRect | null>(null);
-  const [width, setWidth] = useState(() => Number(localStorage.getItem('on:peek-w')) || 560);
+  const [width, setWidth] = useState(() => Number(storageGet('on:peek-w')) || 560);
   const widthRef = useRef(width);
   widthRef.current = width;
   if (!rowId || !page) return null;
@@ -248,7 +249,7 @@ function SidePeek() {
   const idx = rows.indexOf(rowId);
   const close = () => setUi({ peekRowId: null });
   return (
-    <div className="side-peek" style={{ width }} onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}>
+    <div className="side-peek" role="complementary" aria-label="Side peek" style={{ width }} onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}>
       <div
         className="peek-resizer"
         onPointerDown={e => {
@@ -259,7 +260,7 @@ function SidePeek() {
           const up = () => {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
-            localStorage.setItem('on:peek-w', String(widthRef.current));
+            storageSet('on:peek-w', String(widthRef.current));
           };
           window.addEventListener('pointermove', move);
           window.addEventListener('pointerup', up);
@@ -267,23 +268,23 @@ function SidePeek() {
       />
       <div className="peek-top">
         <Tooltip label="Close" shortcut="Esc">
-          <div className="icon-btn" onClick={close}>
+          <div {...pressable()} className="icon-btn" onClick={close}>
             <ChevronsRight size={18} />
           </div>
         </Tooltip>
         <Tooltip label="Open as full page">
-          <div className="icon-btn" onClick={() => openPage(rowId)}>
+          <div {...pressable()} className="icon-btn" onClick={() => openPage(rowId)}>
             <Maximize2 size={15} />
           </div>
         </Tooltip>
-        <div className="icon-btn" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
+        <div {...pressable()} aria-label="Previous page" aria-disabled={idx <= 0} className="icon-btn" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
           <ChevronUp size={18} />
         </div>
-        <div className="icon-btn" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
+        <div {...pressable()} aria-label="Next page" aria-disabled={idx >= rows.length - 1} className="icon-btn" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
           <ChevronDown size={18} />
         </div>
         <span style={{ flex: 1 }} />
-        <div className="icon-btn" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())}>
+        <div {...pressable()} aria-label="More actions" className="icon-btn" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())}>
           <MoreHorizontal size={18} />
         </div>
       </div>

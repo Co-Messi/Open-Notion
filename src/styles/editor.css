@@ -95,7 +95,7 @@
   cursor: pointer;
   user-select: none;
   margin-top: 80px;
-  margin-left: 2px;
+  margin-inline-start: 2px;
   transition: background 20ms ease-in;
 }
 .page-icon:hover {
@@ -143,7 +143,7 @@
   padding: 0 6px;
   border-radius: 6px;
   font-size: 14px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .page-controls button svg {
@@ -172,7 +172,7 @@
   color: var(--title-placeholder);
 }
 .theme-dark .page-title:empty::before {
-  color: var(--on-text-disabled);
+  color: var(--theme-ink-disabled);
 }
 
 /* Database-row property list under the title */
@@ -193,7 +193,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin: 6px 0;
 }
 
@@ -229,7 +229,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--on-palette-ui-blue-400);
+  background: var(--theme-accent-wash-4);
   border-radius: 2px;
   z-index: 3;
   pointer-events: none;
@@ -241,11 +241,11 @@
   bottom: -3px;
 }
 .block.drop-inside > .block-row {
-  box-shadow: inset 0 0 0 2px var(--on-palette-ui-blue-400);
+  box-shadow: inset 0 0 0 2px var(--theme-accent-wash-4);
 }
 
 .block-children {
-  padding-left: 26px;
+  padding-inline-start: 26px;
 }
 
 .editable {
@@ -278,7 +278,7 @@
 .inline-code {
   font-family: var(--font-code);
   line-height: normal;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
   color: #eb5757;
   border-radius: 4px;
   font-size: 85%;
@@ -421,7 +421,7 @@
 }
 .t-todo.done > .block-row > .editable {
   text-decoration: line-through;
-  text-decoration-color: var(--on-text-tertiary);
+  text-decoration-color: var(--theme-ink-faint);
   color: var(--text-secondary);
 }
 .toggle-btn {
@@ -468,7 +468,7 @@
 .t-callout > .block-row {
   border-radius: 10px;
   padding: 14px 16px 14px 12px;
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
   margin: 2px 0;
 }
 .t-callout.has-children > .block-row {
@@ -476,7 +476,7 @@
   border-bottom-right-radius: 0;
 }
 .t-callout > .block-children {
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
   border-radius: 0 0 10px 10px;
   padding: 0 16px 10px 46px;
   margin-top: -2px;
@@ -523,7 +523,7 @@
   background: var(--border-translucent);
 }
 .theme-dark .divider::after {
-  background: var(--on-border-primary);
+  background: var(--theme-line);
 }
 
 /* Page link */
@@ -643,7 +643,7 @@
   padding: 0;
 }
 .code-area textarea::selection {
-  background: var(--on-palette-ui-blue-300);
+  background: var(--theme-accent-wash-3);
   color: transparent;
 }
 .tok-k { color: #d73a49; }
@@ -714,14 +714,14 @@
   height: 46px;
   padding: 0 12px;
   border-radius: 6px;
-  background: var(--on-embed-placeholder-background);
+  background: var(--theme-placeholder-surface);
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
   user-select: none;
 }
 .image-placeholder:hover {
-  background: var(--on-gray-background-secondary-translucent);
+  background: var(--theme-gray-tint-2);
 }
 .image-caption {
   width: 100%;
@@ -791,15 +791,15 @@
   word-break: break-word;
 }
 .simple-table tr.header td {
-  background: var(--on-table-header-row-column-background);
+  background: var(--theme-table-header);
   font-weight: 500;
 }
 .simple-table td:focus {
-  box-shadow: inset 0 0 0 2px var(--on-palette-ui-blue-400);
+  box-shadow: inset 0 0 0 2px var(--theme-accent-wash-4);
 }
 .table-add {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-top: 4px;
   display: flex;
   gap: 8px;
@@ -851,8 +851,8 @@
 /* Rubber band selection */
 .rubber-band {
   position: fixed;
-  background: var(--on-palette-ui-blue-100);
-  border: 1px solid var(--on-palette-ui-blue-300);
+  background: var(--theme-accent-wash-1);
+  border: 1px solid var(--theme-accent-wash-3);
   pointer-events: none;
   z-index: 50;
 }
@@ -889,7 +889,7 @@
   margin-right: 6px;
 }
 .comment .when {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 .comment-input {
@@ -976,7 +976,7 @@
   bottom: 0;
   width: 4px;
   border-radius: 2px;
-  background: var(--on-palette-ui-blue-400);
+  background: var(--theme-accent-wash-4);
   z-index: 3;
 }
 .block.drop-left > .block-row::before {

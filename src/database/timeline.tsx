@@ -2,11 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPoi
 import { ChevronLeft, ChevronRight, ChevronDown, Plus, FileText } from 'lucide-react';
 import { openPage, updateView } from '../store/actions';
 import type { Page } from '../store/types';
-import { Popover, Menu } from '../components/ui';
+import { Popover, Menu, pressable } from '../components/ui';
 import { PropIcon } from './cells';
-import { ymd, parseYmd, todayYmd, monthLabel, dayOf, timeOf, withTime, addDays, diffDays, shortMonth, readPref, writePref } from './logic';
+import { ymd, parseYmd, todayYmd, monthLabel, dayOf, timeOf, withTime, addDays, diffDays, shortMonth, readPref, writePref, weekStartDay } from './logic';
 import { addRowAt, setRowRange, shiftRowDate } from './dbActions';
-import { TitleEditor, RowMenu, RowIcon, startPointerDrag, type ViewProps } from './shared';
+import { TitleEditor, RowMenu, RowIcon, startPointerDrag, rowItemProps, type ViewProps } from './shared';
 
 type Zoom = 'days' | 'weeks' | 'months';
 const DAY_W: Record<Zoom, number> = { days: 40, weeks: 14, months: 4 };
@@ -81,7 +81,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
     return (
       <div className="db-empty-state">
         <div>Timeline views show pages by a date property.</div>
-        <span className="db-fchip add" role="button" onClick={e => setPick(e.currentTarget.getBoundingClientRect())}>
+        <span className="db-fchip add" {...pressable()} onClick={e => setPick(e.currentTarget.getBoundingClientRect())}>
           Timeline by…
         </span>
         {pick && (
@@ -206,7 +206,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
         bottom.push({ k, x: i * dayW, w: dayW, label: String(Number(k.slice(8))), today: k === today });
       }
     } else {
-      const lead = (7 - first.getDay()) % 7; // first Sunday
+      const lead = (7 + weekStartDay() - first.getDay()) % 7; // first day of the user's week
       for (let i = lead; i < total; i += 7) {
         const k = addDays(origin, i);
         bottom.push({ k, x: i * dayW, w: 7 * dayW, label: String(Number(k.slice(8))) });
@@ -226,16 +226,16 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
       <div className="db-tl-toolbar">
         <span className="db-cal-month">{monthLabel(lab.getFullYear(), lab.getMonth())}</span>
         <span className="grow" />
-        <span className="db-cal-today" role="button" onClick={e => setZoomMenu(e.currentTarget.getBoundingClientRect())}>
-          {ZOOM_LABEL[zoom]} <ChevronDown size={12} style={{ marginLeft: 4 }} />
+        <span className="db-cal-today" {...pressable()} onClick={e => setZoomMenu(e.currentTarget.getBoundingClientRect())}>
+          {ZOOM_LABEL[zoom]} <ChevronDown size={12} style={{ marginInlineStart: 4 }} />
         </span>
-        <span className="db-cal-today" role="button" onClick={() => scrollToDay(today, true)}>
+        <span className="db-cal-today" {...pressable()} onClick={() => scrollToDay(today, true)}>
           Today
         </span>
-        <span className="icon-btn db-icon-24" role="button" onClick={() => scrollRef.current?.scrollBy({ left: -scrollRef.current.clientWidth / 2, behavior: 'smooth' })}>
+        <span className="icon-btn db-icon-24" {...pressable()} aria-label="Scroll left" onClick={() => scrollRef.current?.scrollBy({ left: -scrollRef.current.clientWidth / 2, behavior: 'smooth' })}>
           <ChevronLeft size={16} />
         </span>
-        <span className="icon-btn db-icon-24" role="button" onClick={() => scrollRef.current?.scrollBy({ left: scrollRef.current.clientWidth / 2, behavior: 'smooth' })}>
+        <span className="icon-btn db-icon-24" {...pressable()} aria-label="Scroll right" onClick={() => scrollRef.current?.scrollBy({ left: scrollRef.current.clientWidth / 2, behavior: 'smooth' })}>
           <ChevronRight size={16} />
         </span>
       </div>
@@ -250,7 +250,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
               key={r.id}
               className="db-tl-left-row"
               style={{ height: ROW_H }}
-              role="button"
+              {...pressable()}
               onClick={() => editingTitle !== r.id && openPage(r.id, { peek: true })}
               onContextMenu={e => {
                 e.preventDefault();
@@ -266,7 +266,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
               )}
             </div>
           ))}
-          <div className="db-new-row db-tl-new" style={{ height: ROW_H }} role="button" onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
+          <div className="db-new-row db-tl-new" style={{ height: ROW_H }} {...pressable()} onClick={() => setEditingTitle(addRowAt(dbId, { ...defaults }))}>
             <Plus size={16} /> New page
           </div>
           <span className="db-tl-resizer" onPointerDown={startResizeLeft} />
@@ -313,6 +313,7 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
                         <div
                           className={'db-tl-bar' + (preview?.rowId === r.id ? ' dragging' : '')}
                           style={{ left, width: Math.max(width, 8) }}
+                          {...rowItemProps(r, rect => setRowMenu({ rowId: r.id, rect }), r.title || 'Untitled')}
                           onPointerDown={e => startBarDrag(e, r, 'move')}
                           onContextMenu={e => {
                             e.preventDefault();
@@ -339,8 +340,9 @@ export function TimelineView({ dbId, view, rows, schema, defaults, editingTitle,
                       hoverAdd?.rowId === r.id && (
                         <span
                           className="db-tl-add"
+                          aria-label="Add an item here"
                           style={{ left: hoverAdd.idx * dayW, width: Math.max(dayW, 24) }}
-                          role="button"
+                          {...pressable()}
                           onClick={() => setRowRange(r.id, propId, addDays(origin, hoverAdd.idx))}
                         >
                           <Plus size={14} />

@@ -49,11 +49,11 @@
   <tr>
     <td width="33%" valign="top">
       <h3>🔒 Yours</h3>
-      Everything lives in your browser's storage. There is no account to create, no server to trust and nothing leaves your machine. Export a full JSON backup whenever you want.
+      Everything lives in your browser's storage. There is no account to create, no server to trust and nothing you write leaves your machine. The app loads its own scripts, fonts and images from its own host; an image you add by link loads from the site that hosts it. Export a full JSON backup whenever you want.
     </td>
     <td width="33%" valign="top">
       <h3>⚡ Instant</h3>
-      No loading spinners and no network round trips. Pages open immediately, typing never lags and it keeps working when you are offline.
+      No loading spinners and no network round trips. Pages open immediately, typing never lags and an open tab keeps working if your connection drops (a reload needs the network, because there is no service worker yet).
     </td>
     <td width="33%" valign="top">
       <h3>🧱 Familiar</h3>
@@ -75,7 +75,7 @@ Open <http://localhost:5174/app/> for the workspace (the landing page is at <htt
 
 Or skip the install and use the hosted demo at **[open-notion-app.vercel.app](https://open-notion-app.vercel.app/app/)**. Your data still stays in your own browser.
 
-To host it yourself, run `npm run build` and serve the `dist/` folder from any static host (GitHub Pages, Vercel, Netlify, Cloudflare Pages or a plain web server). Each visitor gets their own private workspace in their own browser.
+To host it yourself, run `npm run build` and serve the `dist/` folder from any static host (GitHub Pages, Vercel, Netlify, Cloudflare Pages or a plain web server). Each visitor gets their own private workspace in their own browser. The security headers (a strict Content-Security-Policy, `Referrer-Policy: no-referrer` and `nosniff`) live in `vercel.json`; on another host, send the same headers (the built pages also carry the policy as a meta tag for hosts that cannot send headers). `npm run preview` serves them locally. Give OpenNotion its own origin: on a GitHub Pages user site (`username.github.io`) every project shares one origin, so any other page hosted there could read the notes stored by this one.
 
 ## Features
 
@@ -208,7 +208,7 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
   </tr>
   <tr>
     <td valign="top"><b>Light, dark or system</b> theme. Toggle any time with <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>L</kbd>.</td>
-    <td valign="top"><b>Icons and covers</b> from 1,000+ emoji, gradients, photos, uploads or any image link. Reposition covers by dragging.</td>
+    <td valign="top"><b>Icons and covers</b> from 1,000+ emoji, gradients, bundled illustrations, uploads or any image link. Reposition covers by dragging.</td>
   </tr>
 </table>
 
@@ -224,7 +224,7 @@ To host it yourself, run `npm run build` and serve the `dist/` folder from any s
 | Price | Free | Free plan, paid tiers |
 | Account required | No | Yes |
 | Where your data lives | Your browser | Notion's cloud |
-| Works offline | ✅ Fully | Partially |
+| Works offline | In an open tab, no offline reload yet | Partially |
 | Self hosting | Any static host | ❌ |
 | Real time collaboration | Not yet | ✅ |
 | AI features | ❌ | ✅ |
@@ -352,6 +352,12 @@ In your browser's `localStorage`, on your device only. Use <b>Settings → Impor
 </details>
 
 <details>
+<summary><b>Does it contact any other servers?</b></summary>
+
+Only the host that serves the app, for its own files. There is no analytics, error reporting or font host. An image you add by link, or an older workspace that already stores an image link (the starter workspace used to link Unsplash photos), is fetched from that image's site when the page is shown, and nothing is rewritten for you. The `Referrer-Policy: no-referrer` header stops your page address from being sent along.
+</details>
+
+<details>
 <summary><b>Can I use it with my team?</b></summary>
 
 Not yet. Each browser has its own workspace. An optional sync server for real time collaboration is on the roadmap.
@@ -374,7 +380,8 @@ If you represent Notion Labs, Inc. or any other rights holder and have a concern
 ## Credits
 
 - Icons from [Lucide](https://lucide.dev) (ISC License)
-- Photos in the starter workspace from [Unsplash](https://unsplash.com) (Unsplash License)
+- Covers in the starter workspace are illustrations generated for this project
+- [Inter](https://rsms.me/inter/) by The Inter Project Authors (SIL Open Font License 1.1), served from this site
 - Built with [React](https://react.dev), [TypeScript](https://www.typescriptlang.org) and [Vite](https://vite.dev)
 
 ## License

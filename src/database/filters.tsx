@@ -3,10 +3,11 @@ import { ChevronDown, Trash2, Plus, ArrowUpDown, X, GripVertical, ArrowUp, Arrow
 import { useDoc, transact } from '../store/store';
 import { uid } from '../store/actions';
 import type { DbView, Filter, Property, Sort } from '../store/types';
-import { Popover, Menu, type Anchor, type MenuItemDef } from '../components/ui';
+import { Popover, Menu, type Anchor, type MenuItemDef, pressable } from '../components/ui';
 import { PropIcon, OptionPill, Avatar, DatePicker, CheckboxBox } from './cells';
 import { FocusMenuSearch } from './focus';
 import { opsFor, opDef, defaultOp, filterActive, optionById, fmtDate, orderedProps } from './logic';
+import { attrSel } from '../lib/dom';
 
 /* ------------------------------------------------------------------ */
 /* View patch helpers                                                  */
@@ -99,7 +100,7 @@ export function FilterBar({ dbId, view, schema, editing, setEditing }: FilterBar
       setEditRect(null);
       return;
     }
-    const el = barRef.current?.querySelector(`[data-fid="${editing}"]`) as HTMLElement | null;
+    const el = barRef.current?.querySelector(attrSel('data-fid', editing)) as HTMLElement | null;
     if (el) setEditRect(el.getBoundingClientRect());
   }, [editing]);
 
@@ -111,7 +112,7 @@ export function FilterBar({ dbId, view, schema, editing, setEditing }: FilterBar
     <div className="db-filter-bar" ref={barRef}>
       {sorts.length > 0 && (
         <>
-          <span className="db-fchip on" role="button" onClick={e => setSortOpen(e.currentTarget.getBoundingClientRect())}>
+          <span className="db-fchip on" {...pressable()} onClick={e => setSortOpen(e.currentTarget.getBoundingClientRect())}>
             <ArrowUpDown size={14} />
             {sorts.length === 1 ? firstSort?.name : `${sorts.length} sorts`}
             <ChevronDown size={12} />
@@ -127,7 +128,7 @@ export function FilterBar({ dbId, view, schema, editing, setEditing }: FilterBar
             key={f.id}
             data-fid={f.id}
             className={'db-fchip' + (on ? ' on' : '')}
-            role="button"
+            {...pressable()}
             onClick={() => setEditing(f.id)}
           >
             <PropIcon type={prop.type} size={14} />
@@ -136,7 +137,7 @@ export function FilterBar({ dbId, view, schema, editing, setEditing }: FilterBar
           </span>
         );
       })}
-      <span className="db-fchip add" role="button" onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
+      <span className="db-fchip add" {...pressable()} onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
         <Plus size={14} /> Add filter
       </span>
       {adding && (
@@ -196,7 +197,7 @@ function FilterEditor({ dbId, viewId, filterId, anchor, onClose }: { dbId: strin
           <div className="menu" style={{ maxHeight: 280 }}>
             {shown.length === 0 && <div className="menu-empty">No options</div>}
             {shown.map(o => (
-              <div
+              <div {...pressable()}
                 key={o.id}
                 className="menu-item"
                 onClick={() => patch({ value: sel.includes(o.id) ? sel.filter(x => x !== o.id) : [...sel, o.id] })}
@@ -246,11 +247,11 @@ function FilterEditor({ dbId, viewId, filterId, anchor, onClose }: { dbId: strin
       <FocusMenuSearch />
       <div className="db-filter-head">
         <span className="db-filter-prop">{prop.name}</span>
-        <span className="db-filter-op" role="button" onClick={e => setOpMenu(e.currentTarget.getBoundingClientRect())}>
+        <span className="db-filter-op" {...pressable()} onClick={e => setOpMenu(e.currentTarget.getBoundingClientRect())}>
           {def.label.toLowerCase()} <ChevronDown size={12} />
         </span>
         <span className="grow" />
-        <span className="icon-btn db-icon-24" role="button" title="Delete filter" onClick={remove}>
+        <span className="icon-btn db-icon-24" {...pressable()} title="Delete filter" onClick={remove}>
           <Trash2 size={14} />
         </span>
       </div>
@@ -295,18 +296,18 @@ export function SortPopover({ dbId, viewId, anchor, onClose }: { dbId: string; v
           return (
             <div key={s.id} className="db-sort-row">
               <GripVertical size={14} className="db-sort-grip" />
-              <span className="db-select-btn grow" role="button" onClick={e => setPick({ rect: e.currentTarget.getBoundingClientRect(), sortId: s.id })}>
+              <span className="db-select-btn grow" {...pressable()} onClick={e => setPick({ rect: e.currentTarget.getBoundingClientRect(), sortId: s.id })}>
                 <PropIcon type={prop.type} size={14} />
                 <span className="db-select-btn-text">{prop.name}</span>
                 <ChevronDown size={12} />
               </span>
-              <span className="db-select-btn" role="button" onClick={e => setDirMenu({ rect: e.currentTarget.getBoundingClientRect(), sortId: s.id })}>
+              <span className="db-select-btn" {...pressable()} onClick={e => setDirMenu({ rect: e.currentTarget.getBoundingClientRect(), sortId: s.id })}>
                 {s.dir === 'asc' ? 'Ascending' : 'Descending'}
                 <ChevronDown size={12} />
               </span>
               <span
                 className="icon-btn db-icon-24"
-                role="button"
+                {...pressable()}
                 title="Remove sort"
                 onClick={() => patchView(dbId, viewId, v => ({ sorts: v.sorts.filter(x => x.id !== s.id) }))}
               >
@@ -317,12 +318,12 @@ export function SortPopover({ dbId, viewId, anchor, onClose }: { dbId: string; v
         })}
       </div>
       <div className="menu" style={{ paddingTop: 0 }}>
-        <div className="menu-item db-muted-item" onClick={e => setPick({ rect: e.currentTarget.getBoundingClientRect() })}>
+        <div {...pressable()} className="menu-item db-muted-item" onClick={e => setPick({ rect: e.currentTarget.getBoundingClientRect() })}>
           <span className="mi-icon"><Plus size={16} /></span>
           <span className="mi-text">Add sort</span>
         </div>
         {sorts.length > 0 && (
-          <div
+          <div {...pressable()}
             className="menu-item db-muted-item"
             onClick={() => {
               patchView(dbId, viewId, () => ({ sorts: [] }));

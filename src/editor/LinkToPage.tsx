@@ -3,6 +3,7 @@ import { Popover, Menu } from '../components/ui';
 import { getDoc, transact, breakCoalescing } from '../store/store';
 import { pageTitle, txInsertAfter } from '../store/actions';
 import { PageIconView } from '../components/PageIcon';
+import { attrSel } from '../lib/dom';
 
 /** "Link to page" picker opened from the slash menu. */
 export function LinkToPagePicker() {
@@ -10,7 +11,7 @@ export function LinkToPagePicker() {
   useEffect(() => {
     const on = (e: Event) => {
       const blockId = (e as CustomEvent).detail as string;
-      const el = document.querySelector(`.block[data-block-id="${blockId}"]`) as HTMLElement | null;
+      const el = document.querySelector('.block' + attrSel('data-block-id', blockId)) as HTMLElement | null;
       setState({ blockId, rect: el?.getBoundingClientRect() || new DOMRect(300, 300, 0, 0) });
     };
     window.addEventListener('on:link-page', on);
@@ -39,7 +40,8 @@ export function LinkToPagePicker() {
             transact(tx => {
               const b = tx.block(state.blockId);
               if (!b) return;
-              const empty = !b.html || b.html === '<br>';
+              // Only an empty leaf block is replaced: a link block does not show children.
+              const empty = (!b.html || b.html === '<br>') && b.children.length === 0 && b.type !== 'code';
               const patch = { type: (p.isDatabase ? 'database' : 'page') as 'page' | 'database', pageId: p.id, isLink: true, html: '' };
               if (empty) tx.setBlock(state.blockId, patch);
               else txInsertAfter(tx, state.blockId, patch);

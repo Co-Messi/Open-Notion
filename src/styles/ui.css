@@ -42,13 +42,13 @@
   outline: none;
   padding: 0 8px;
   font-size: 14px;
-  background: var(--on-gray-background-primary-translucent);
+  background: var(--theme-gray-tint-1);
   box-shadow: inset 0 0 0 1px var(--border-translucent);
   color: var(--text-primary);
 }
 .menu-search input:focus,
 .text-input:focus {
-  box-shadow: var(--on-input-blue-focus-ring);
+  box-shadow: var(--theme-focus-ring);
 }
 .menu-search input::placeholder,
 .text-input::placeholder {
@@ -58,7 +58,7 @@
   position: relative;
 }
 .menu-search.icon input {
-  padding-left: 28px;
+  padding-inline-start: 28px;
 }
 .menu-search.icon svg {
   position: absolute;
@@ -70,7 +70,7 @@
   padding: 6px 14px 4px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 16px;
   user-select: none;
   display: flex;
@@ -98,11 +98,11 @@
 }
 .menu-item.danger:hover,
 .menu-item.danger.active {
-  color: var(--on-red-text-secondary);
+  color: var(--theme-red-ink);
 }
 .menu-item.danger:hover svg,
 .menu-item.danger.active svg {
-  color: var(--on-red-text-secondary);
+  color: var(--theme-red-ink);
 }
 .menu-item.disabled {
   opacity: 0.4;
@@ -146,7 +146,7 @@
   text-overflow: ellipsis;
 }
 .menu-item .mi-right {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--text-tertiary);
   font-size: 12px;
   display: flex;
@@ -176,7 +176,7 @@
   width: 30px;
   height: 18px;
   border-radius: 44px;
-  background: var(--on-switcher-toggle-desktop-track-bg);
+  background: var(--theme-switch-track);
   position: relative;
   transition: background 200ms ease;
   flex-shrink: 0;
@@ -267,11 +267,11 @@
   background: var(--hover);
 }
 .btn.danger {
-  box-shadow: inset 0 0 0 1px var(--on-red-border-strong);
-  color: var(--on-red-text-secondary);
+  box-shadow: inset 0 0 0 1px var(--theme-red-line-strong);
+  color: var(--theme-red-ink);
 }
 .btn.danger:hover {
-  background: var(--on-red-background-primary);
+  background: var(--theme-red-wash-1);
 }
 .btn.ghost:hover {
   background: var(--hover);
@@ -367,8 +367,8 @@
 }
 .chip.on {
   color: var(--blue);
-  background: var(--on-blue-background-primary);
-  box-shadow: inset 0 0 0 1px var(--on-blue-border-primary);
+  background: var(--theme-blue-wash-1);
+  box-shadow: inset 0 0 0 1px var(--theme-blue-line);
 }
 .chip svg {
   color: currentColor;
@@ -390,7 +390,7 @@
 .search-group-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 8px 6px;
 }
 .search-item {
@@ -428,7 +428,7 @@
   text-overflow: ellipsis;
 }
 .search-item .si-path {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 400;
 }
 .search-item .si-snippet {
@@ -443,7 +443,7 @@
   color: inherit;
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: var(--on-yellow-background-accent-primary, #f6c050);
+  text-decoration-color: var(--theme-yellow-solid, #f6c050);
   text-decoration-thickness: 2px;
 }
 .search-item .si-enter {
@@ -465,7 +465,7 @@
   position: relative;
 }
 .theme-dark .search-preview {
-  background: var(--on-gray-background-elevated);
+  background: var(--theme-gray-raised);
 }
 .search-preview .sp-cover {
   height: 80px;
@@ -475,7 +475,7 @@
   flex-shrink: 0;
 }
 .theme-dark .search-preview .sp-cover {
-  background-color: var(--on-gray-background-secondary);
+  background-color: var(--theme-gray-wash-2);
 }
 .search-preview .sp-body {
   padding: 20px 24px;
@@ -559,7 +559,7 @@
 .settings-nav .nav-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 12px 4px;
 }
 .settings-nav .nav-item {
@@ -596,7 +596,7 @@
 }
 .settings-user .em {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .settings-content {
   flex: 1;
@@ -773,7 +773,7 @@
 .ep-cat {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 8px 6px 4px;
 }
 .ep-cells {
@@ -865,7 +865,7 @@
 }
 .share-person .sub {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 .share-footer {
   display: flex;
@@ -910,7 +910,7 @@
 }
 .trash-item .p {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -924,8 +924,8 @@
 .tooltip {
   position: fixed;
   z-index: 2000;
-  background: var(--on-background-accent-primary);
-  color: var(--on-text-inverse-primary);
+  background: var(--theme-surface-contrast);
+  color: var(--theme-ink-inverse);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
@@ -936,12 +936,12 @@
   white-space: nowrap;
 }
 .theme-dark .tooltip {
-  background: var(--on-gray-background-secondary);
+  background: var(--theme-gray-wash-2);
   color: var(--text-primary);
 }
 .tooltip .sc {
-  color: var(--on-text-inverse-secondary);
-  margin-left: 4px;
+  color: var(--theme-ink-inverse-muted);
+  margin-inline-start: 4px;
 }
 
 /* Link editor */
@@ -983,7 +983,7 @@
 }
 .dp-dow {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-align: center;
   height: 24px;
   line-height: 24px;
@@ -1005,7 +1005,7 @@
   color: var(--text-tertiary);
 }
 .dp-day.today {
-  color: var(--on-red-text-accent-primary);
+  color: var(--theme-red-ink-bright);
   font-weight: 600;
 }
 .dp-day.sel {
@@ -1116,7 +1116,7 @@
 .tpl-body blockquote {
   margin: 8px 0;
   border-left: 3px solid currentColor;
-  padding-left: 14px;
+  padding-inline-start: 14px;
 }
 .tpl-li {
   display: flex;
@@ -1165,7 +1165,7 @@
 .tpl-db-cell {
   height: 70px;
   border-radius: 8px;
-  box-shadow: var(--on-shadow-outline-sm);
+  box-shadow: var(--theme-shadow-1);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -1177,7 +1177,7 @@
 .tpl-db-cell span {
   height: 6px;
   border-radius: 3px;
-  background: var(--on-gray-background-tertiary-translucent);
+  background: var(--theme-gray-tint-3);
 }
 .tpl-db-cell span + span {
   width: 55%;

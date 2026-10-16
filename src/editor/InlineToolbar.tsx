@@ -8,6 +8,9 @@ import { selectionOffsets, setCaret } from './caret';
 import { Popover, Menu, Tooltip, MOD } from '../components/ui';
 import { TurnIntoMenu, BLOCK_TYPE_LABEL, ColorMenu } from './BlockMenu';
 import type { ColorName } from '../store/types';
+import { attrSel } from '../lib/dom';
+import { normalizeTypedLink } from '../lib/url';
+import { pressable } from '../components/ui';
 
 interface TBState {
   rect: DOMRect;
@@ -52,7 +55,7 @@ function exec(cmd: string, value?: string) {
 }
 
 function commitHost(blockId: string) {
-  const el = document.querySelector(`[data-editable-id="${blockId}"]`) as HTMLElement | null;
+  const el = document.querySelector(attrSel('data-editable-id', blockId)) as HTMLElement | null;
   if (!el) return;
   const offs = selectionOffsets(el);
   const clean = sanitizeInline(el.innerHTML);
@@ -93,9 +96,27 @@ function toggleCode(_blockId: string) {
 
 export function applyColor(blockId: string, color: ColorName, background: boolean) {
   const hex = SENTINEL_FOR[color] || SENTINEL_FOR['default'];
-  if (background) exec('hiliteColor', hex);
-  else exec('foreColor', hex);
+  if (background) applyBackground(color);
+  else exec('foreColor', hex); // emits <font color>, an attribute the sanitizer maps to a class
   commitHost(blockId);
+}
+
+/**
+ * Background colors are applied by wrapping the selection in a span with a color class.
+ * execCommand('hiliteColor') can only write a style attribute, which the production
+ * Content-Security-Policy (style-src 'self') blocks.
+ */
+function applyBackground(color: ColorName) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return;
+  const tpl = document.createElement('template');
+  tpl.content.appendChild(sel.getRangeAt(0).cloneContents());
+  // The new background replaces any background inside the selection.
+  tpl.content.querySelectorAll('[class]').forEach(el => {
+    el.className = el.className.split(/\s+/).filter(c => c && !c.startsWith('bg-')).join(' ');
+  });
+  const inner = tpl.innerHTML;
+  exec('insertHTML', color === 'default' ? inner : `<span class="bg-${color}">${inner}</span>`);
 }
 
 export function applyLink(blockId: string, url: string | null) {
@@ -167,6 +188,8 @@ export function InlineToolbar() {
     <Tooltip label={label} shortcut={sc}>
       <div
         className={'itb' + (marks[key] ? ' on' : '')}
+        role="button"
+        aria-pressed={!!marks[key]}
         onMouseDown={e => {
           e.preventDefault();
           applyMark(s.blockId, key as any);
@@ -190,20 +213,21 @@ export function InlineToolbar() {
 
   return createPortal(
     <>
-      <div ref={ref} className="inline-toolbar" style={pos} onMouseDown={e => e.preventDefault()}>
-        <div className="itb" onMouseDown={open('turn')}>
+      <div ref={ref} className="inline-toolbar" role="toolbar" aria-label="Text formatting" style={pos} onMouseDown={e => e.preventDefault()}>
+        <div className="itb" role="button" aria-haspopup="menu" onMouseDown={open('turn')}>
           {BLOCK_TYPE_LABEL[block.type] || 'Text'}
           <ChevronDown size={12} className="chev" />
         </div>
         <div className="sep" />
         <Tooltip label="Add link" shortcut={`${MOD}K`}>
-          <div className="itb" onMouseDown={open('link')}>
+          <div className="itb" role="button" onMouseDown={open('link')}>
             <Link2 size={16} />
           </div>
         </Tooltip>
         <Tooltip label="Comment" shortcut={`${MOD}⇧M`}>
           <div
             className="itb"
+            role="button"
             onMouseDown={e => {
               e.preventDefault();
               const text = window.getSelection()?.toString() || '';
@@ -221,12 +245,12 @@ export function InlineToolbar() {
         {btn('code', <Code size={16} />, 'Mark as code', `${MOD}E`)}
         <div className="sep" />
         <Tooltip label="Text color">
-          <div className="itb" onMouseDown={open('color')}>
+          <div className="itb" role="button" aria-haspopup="menu" onMouseDown={open('color')}>
             <span style={{ fontWeight: 500, fontSize: 15, textDecoration: 'underline', textUnderlineOffset: 2 }}>A</span>
             <ChevronDown size={12} className="chev" />
           </div>
         </Tooltip>
-        <div className="itb" onMouseDown={open('more')}>
+        <div className="itb" role="button" aria-label="More" aria-haspopup="menu" onMouseDown={open('more')}>
           <MoreHorizontal size={16} />
         </div>
       </div>
@@ -275,14 +299,17 @@ export function LinkEditor({ anchor, blockId, onClose }: { anchor: DOMRect; bloc
   }, []);
   const apply = (v: string | null) => {
     const sel = window.getSelection();
-    const el = document.querySelector(`[data-editable-id="${blockId}"]`) as HTMLElement | null;
+    const el = document.querySelector(attrSel('data-editable-id', blockId)) as HTMLElement | null;
     el?.focus();
     if (saved.current && sel) {
       sel.removeAllRanges();
       sel.addRange(saved.current);
     }
-    let href = v?.trim() || null;
-    if (href && !/^(https?:|mailto:|#|\/)/i.test(href)) href = 'https://' + href;
+    const href = v?.trim() ? normalizeTypedLink(v) : null;
+    if (v?.trim() && !href) {
+      onClose();
+      return;
+    }
     applyLink(blockId, href);
     onClose();
   };
@@ -311,7 +338,7 @@ export function LinkEditor({ anchor, blockId, onClose }: { anchor: DOMRect; bloc
               <span className="mi-text">{url}</span>
               <span className="mi-right">Link</span>
             </div>
-            <div className="menu-item danger" style={{ margin: 0 }} onClick={() => apply(null)}>
+            <div {...pressable()} className="menu-item danger" style={{ margin: 0 }} onClick={() => apply(null)}>
               <span className="mi-text">Remove link</span>
             </div>
           </div>

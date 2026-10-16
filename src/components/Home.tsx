@@ -2,7 +2,8 @@ import { Clock3, BookOpen, CalendarDays, Plus, FileText } from 'lucide-react';
 import { useDoc, getDoc } from '../store/store';
 import { createPage, openPage, pageTitle, isTrashedDeep } from '../store/actions';
 import { PageIconView } from './PageIcon';
-import { relTime } from './ui';
+import { CoverBox } from './StoredImage';
+import { relTime, pressable } from './ui';
 
 function greeting() {
   const h = new Date().getHours();
@@ -27,7 +28,7 @@ export function Home() {
             {recent.map(r => (
               <RecentCard key={r.id} id={r.id} at={r.at} />
             ))}
-            <div
+            <div {...pressable()}
               className="recent-card"
               onClick={() => {
                 const id = createPage({ section: 'private' });
@@ -68,10 +69,9 @@ export function Home() {
 function RecentCard({ id, at }: { id: string; at: number }) {
   const p = useDoc(d => d.pages[id], Object.is);
   if (!p) return null;
-  const cover = p.cover && !/^(data:|https?:)/.test(p.cover) ? p.cover : p.cover ? `url("${p.cover}") center/cover` : undefined;
   return (
-    <div className="recent-card" onClick={() => openPage(id)}>
-      <div className="rc-top" style={cover ? { background: cover } : undefined} />
+    <div {...pressable()} className="recent-card" onClick={() => openPage(id)}>
+      <CoverBox className="rc-top" cover={p.cover} />
       <div className="rc-icon">{p.icon ? <PageIconView page={p} size={26} emojiSize={26} /> : <FileText size={26} strokeWidth={1.4} />}</div>
       <div className="rc-body">
         <div className="rc-title">{pageTitle(p)}</div>
@@ -86,7 +86,7 @@ function RecentCard({ id, at }: { id: string; at: number }) {
 
 function LearnCard({ art, title, meta, page }: { art: React.ReactNode; title: string; meta: string; page: string }) {
   return (
-    <div
+    <div {...pressable()}
       className="learn-card"
       onClick={() => {
         const p = Object.values(getDoc().pages).find(x => x.title === page && !x.trashed);
@@ -132,7 +132,7 @@ function UpcomingEvents() {
       <div className="ev-list">
         {events.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No upcoming events</div>}
         {events.map(e => (
-          <div key={e.id} className="ev-item" style={{ cursor: 'pointer' }} onClick={() => openPage(e.id, { peek: true })}>
+          <div {...pressable()} key={e.id} className="ev-item" style={{ cursor: 'pointer' }} onClick={() => openPage(e.id, { peek: true })}>
             <div className="bar" />
             <div>
               <div>{e.title}</div>

@@ -6,13 +6,14 @@ import {
 import { useDoc, getDoc } from '../store/store';
 import { setRowProp, OPTION_COLORS } from '../store/actions';
 import type { ColorName, Page, Property, PropType, SelectOption } from '../store/types';
-import { Popover, Switch } from '../components/ui';
+import { Popover, Switch, pressable } from '../components/ui';
 import {
-  optionStyle, dotColor, optionById, fmtNumber, fmtDateValue, fmtTimestamp, fmtDate, parseYmd, ymd, todayYmd, monthLabel,
-  COLOR_LABEL, readPref, rawValue, dayOf, timeOf, withTime,
+  optionStyle, dotColor, optionById, fmtNumber, fmtDateValue, fmtTimestamp, fmtDate, parseYmd, ymd, todayYmd, shortMonthLabel, weekStartDay, weekdayName, getLocale, parseLooseDate, orderRange,
+  COLOR_LABEL, rawValue, dayOf, timeOf, withTime,
 } from './logic';
 import { createOption, updateOption, deleteOption } from './dbActions';
 import { useFocusLater } from './focus';
+import { openExternal, safeLinkUrl } from '../lib/url';
 
 /* ------------------------------------------------------------------ */
 /* Icons + pills                                                       */
@@ -45,7 +46,8 @@ export function OptionPill({ opt, status, onRemove }: { opt: SelectOption; statu
       {onRemove && (
         <span
           className="db-pill-x"
-          role="button"
+          {...pressable()}
+          aria-label={'Remove ' + opt.name}
           onMouseDown={e => e.preventDefault()}
           onClick={e => {
             e.stopPropagation();
@@ -71,8 +73,9 @@ export function CheckboxBox({ on, onToggle }: { on: boolean; onToggle?: () => vo
   return (
     <span
       className={'db-checkbox' + (on ? ' on' : '')}
-      role="checkbox"
+      {...(onToggle ? pressable(undefined, 'checkbox') : { role: 'checkbox' })}
       aria-checked={on}
+      aria-label="Checked"
       onClick={e => {
         if (!onToggle) return;
         e.stopPropagation();
@@ -90,10 +93,12 @@ export function CheckboxBox({ on, onToggle }: { on: boolean; onToggle?: () => vo
 
 export type ValueMode = 'table' | 'card' | 'list' | 'props';
 
-export function linkHref(prop: Property, v: string): string {
-  if (prop.type === 'email') return 'mailto:' + v;
-  if (prop.type === 'phone') return 'tel:' + v;
-  return /^[a-z]+:/i.test(v) ? v : 'https://' + v;
+/** Outbound link for a url, email or phone value; undefined when the scheme is not allowed. */
+export function linkHref(prop: Property, v: string): string | undefined {
+  const s = String(v ?? '').trim();
+  if (prop.type === 'email') return safeLinkUrl('mailto:' + s) ?? undefined;
+  if (prop.type === 'phone') return safeLinkUrl('tel:' + s.replace(/\s+/g, '')) ?? undefined;
+  return (/^[a-z][a-z0-9+.-]*:/i.test(s) ? safeLinkUrl(s) : safeLinkUrl('https://' + s.replace(/^\/+/, ''))) ?? undefined;
 }
 
 /** Read-only rendering of a property value. Returns null when empty. */
@@ -172,11 +177,11 @@ export function PropValue({ row, prop, mode }: { row: Page; prop: Property; mode
           {(mode === 'table' || mode === 'props') && (
             <span
               className="db-link-open"
-              role="button"
+              {...pressable()}
               title="Open link"
               onClick={e => {
                 e.stopPropagation();
-                window.open(linkHref(prop, s), '_blank', 'noreferrer');
+                openExternal(linkHref(prop, s));
               }}
             >
               <ArrowUpRight size={12} />
@@ -244,7 +249,7 @@ function TextEditor({ rowId, prop, anchor, width, onClose }: { rowId: string; pr
     const t = textRef.current;
     let val: any = t;
     if (prop.type === 'number') {
-      const n = parseFloat(t.replace(/[$€,%\s]/g, ''));
+      const n = parseFloat(t.replace(/[^\d.eE+-]/g, ''));
       val = t.trim() === '' || Number.isNaN(n) ? undefined : prop.numberFormat === 'percent' && /%/.test(t) ? n / 100 : n;
     } else if (t === '') val = undefined;
     if (val !== initial) setRowProp(rowId, prop.id, val);
@@ -332,7 +337,8 @@ export function SelectEditor({ dbId, rowId, propId, onClose }: { dbId: string; r
       {selected.includes(o.id) && !multi && <Check size={14} className="db-opt-check" />}
       <span
         className="db-opt-more"
-        role="button"
+        aria-label="Option menu"
+        {...pressable()}
         onClick={e => {
           e.stopPropagation();
           setOptMenu({ id: o.id, rect: e.currentTarget.getBoundingClientRect() });
@@ -358,7 +364,7 @@ export function SelectEditor({ dbId, rowId, propId, onClose }: { dbId: string; r
 
   return (
     <div className="db-select-editor">
-      <div className="db-sel-input" onClick={() => inputRef.current?.focus()}>
+      <div {...pressable()} className="db-sel-input" onClick={() => inputRef.current?.focus()}>
         {selected.map(id => {
           const o = optionById(prop, id);
           return o ? <OptionPill key={id} opt={o} status={status} onRemove={() => remove(id)} /> : null;
@@ -436,7 +442,7 @@ export function OptionMenu({ dbId, propId, opt, onClose }: { dbId: string; propI
         />
       </div>
       <div className="menu">
-        <div
+        <div {...pressable()}
           className="menu-item"
           onClick={() => {
             onClose();
@@ -449,7 +455,7 @@ export function OptionMenu({ dbId, propId, opt, onClose }: { dbId: string; propI
         <div className="menu-sep" />
         <div className="menu-label">Colors</div>
         {OPTION_COLORS.map((c: ColorName) => (
-          <div key={c} className="menu-item" onClick={() => updateOption(dbId, propId, opt.id, { color: c })}>
+          <div {...pressable()} key={c} className="menu-item" onClick={() => updateOption(dbId, propId, opt.id, { color: c })}>
             <span className="mi-icon"><span className="db-swatch" style={optionStyle(c)} /></span>
             <span className="mi-text">{COLOR_LABEL[c]}</span>
             {opt.color === c && <span className="mi-right"><Check size={14} /></span>}
@@ -472,7 +478,7 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
           <span key={id} className="db-person-chip">
             <Avatar name={id === 'me' ? userName : id} size={18} />
             {id === 'me' ? userName : id}
-            <span role="button" className="db-pill-x" onClick={() => setRowProp(rowId, propId, sel.filter(x => x !== id))}>
+            <span {...pressable()} aria-label="Remove" className="db-pill-x" onClick={() => setRowProp(rowId, propId, sel.filter(x => x !== id))}>
               <X size={12} />
             </span>
           </span>
@@ -481,7 +487,7 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
       </div>
       <div className="menu">
         <div className="menu-label">Select as many as you like</div>
-        <div className="menu-item" onClick={() => setRowProp(rowId, propId, has ? sel.filter(x => x !== 'me') : [...sel, 'me'])}>
+        <div {...pressable()} className="menu-item" onClick={() => setRowProp(rowId, propId, has ? sel.filter(x => x !== 'me') : [...sel, 'me'])}>
           <span className="mi-icon"><Avatar name={userName} /></span>
           <span className="mi-text">{userName}</span>
           {has && <span className="mi-right"><Check size={14} /></span>}
@@ -496,19 +502,22 @@ function PersonEditor({ rowId, propId }: { rowId: string; propId: string }) {
 /* ------------------------------------------------------------------ */
 
 export function weekStartsMonday() {
-  return readPref('on:week-monday') === '1';
+  return weekStartDay() === 1;
 }
 
 export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeEnd?: string; onPick: (d: string) => void }) {
   const init = parseYmd(value) || new Date();
   const [ym, setYm] = useState({ y: init.getFullYear(), m: init.getMonth() });
-  const monday = weekStartsMonday();
+  const weekStart = weekStartDay();
   const first = new Date(ym.y, ym.m, 1);
-  const lead = (first.getDay() - (monday ? 1 : 0) + 7) % 7;
+  const lead = (first.getDay() - weekStart + 7) % 7;
   const start = new Date(ym.y, ym.m, 1 - lead);
   const days: Date[] = [];
   for (let i = 0; i < 42; i++) days.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
-  const dows = monday ? ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const dows = Array.from({ length: 7 }, (_, i) => {
+    const n = weekdayName((weekStart + i) % 7, 'short');
+    return /^en/i.test(getLocale() || 'en') ? n.slice(0, 2) : n;
+  });
   const today = todayYmd();
   const shift = (n: number) => setYm(({ y, m }) => {
     const d = new Date(y, m + n, 1);
@@ -517,13 +526,13 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
   return (
     <div className="datepicker">
       <div className="dp-head">
-        <span>{monthLabel(ym.y, ym.m).replace(/^(\w{3})\w*/, '$1')}</span>
+        <span>{shortMonthLabel(ym.y, ym.m)}</span>
         <div className="nav">
-          <span className="db-dp-today" role="button" onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
+          <span className="db-dp-today" {...pressable()} onClick={() => setYm({ y: new Date().getFullYear(), m: new Date().getMonth() })}>
             Today
           </span>
-          <span className="icon-btn" role="button" onClick={() => shift(-1)}><ChevronLeft size={16} /></span>
-          <span className="icon-btn" role="button" onClick={() => shift(1)}><ChevronRight size={16} /></span>
+          <span className="icon-btn" {...pressable()} aria-label="Previous month" onClick={() => shift(-1)}><ChevronLeft size={16} /></span>
+          <span className="icon-btn" {...pressable()} aria-label="Next month" onClick={() => shift(1)}><ChevronRight size={16} /></span>
         </div>
       </div>
       <div className="dp-grid">
@@ -534,7 +543,7 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
           const k = ymd(d);
           const inRange = value && rangeEnd && k > value && k < rangeEnd;
           return (
-            <div
+            <div {...pressable()}
               key={k}
               className={
                 'dp-day' + (d.getMonth() !== ym.m ? ' other' : '') + (k === today ? ' today' : '') +
@@ -551,14 +560,7 @@ export function DatePicker({ value, rangeEnd, onPick }: { value?: string; rangeE
   );
 }
 
-function parseLoose(s: string): string | null {
-  const t = s.trim();
-  if (!t) return null;
-  const iso = parseYmd(t);
-  if (iso && /^\d{4}-\d{2}-\d{2}$/.test(t)) return ymd(iso);
-  const d = new Date(t);
-  return Number.isNaN(d.getTime()) ? null : ymd(d);
-}
+const parseLoose = (s: string): string | null => parseLooseDate(s);
 
 export function DateEditor({ rowId, propId }: { rowId: string; propId: string }) {
   const value = useDoc(d => d.pages[rowId]?.props?.[propId], Object.is) as { start: string; end?: string } | undefined;
@@ -579,7 +581,7 @@ export function DateEditor({ rowId, propId }: { rowId: string; propId: string })
       setRowProp(rowId, propId, undefined);
       return;
     }
-    if (e && e < s) [s, e] = [e, s];
+    [s, e] = orderRange(s, e);
     setRowProp(rowId, propId, e && e !== s ? { start: s, end: e } : { start: s });
   };
   const defStart = () => (timeOn ? '09:00' : '');
@@ -676,16 +678,16 @@ export function DateEditor({ rowId, propId }: { rowId: string; propId: string })
       </div>
       <DatePicker value={dayOf(start) || undefined} rangeEnd={dayOf(end) || undefined} onPick={pick} />
       <div className="db-date-foot">
-        <div className="menu-item" onClick={() => toggleEnd(!endOn)}>
+        <div {...pressable()} className="menu-item" onClick={() => toggleEnd(!endOn)}>
           <span className="mi-text">End date</span>
           <Switch on={endOn} onChange={toggleEnd} />
         </div>
-        <div className="menu-item" onClick={() => toggleTime(!timeOn)}>
+        <div {...pressable()} className="menu-item" onClick={() => toggleTime(!timeOn)}>
           <span className="mi-text">Include time</span>
           <Switch on={timeOn} onChange={toggleTime} />
         </div>
         <div className="menu-sep" />
-        <div
+        <div {...pressable()}
           className="menu-item"
           onClick={() => {
             write(undefined, undefined);

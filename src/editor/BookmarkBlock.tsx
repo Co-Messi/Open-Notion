@@ -3,6 +3,8 @@ import { Globe, Link2 } from 'lucide-react';
 import type { Block } from '../store/types';
 import { transact } from '../store/store';
 import { Popover } from '../components/ui';
+import { openExternal } from '../lib/url';
+import { pressable } from '../components/ui';
 
 export function BookmarkBlock({ block }: { block: Block }) {
   const [edit, setEdit] = useState<DOMRect | null>(null);
@@ -19,7 +21,7 @@ export function BookmarkBlock({ block }: { block: Block }) {
   if (!block.url) {
     return (
       <>
-        <div ref={ref} className="image-placeholder" onClick={e => setEdit(e.currentTarget.getBoundingClientRect())}>
+        <div {...pressable()} ref={ref} className="image-placeholder" onClick={e => setEdit(e.currentTarget.getBoundingClientRect())}>
           <Link2 size={18} strokeWidth={1.5} /> Add a web bookmark
         </div>
         {edit && (
@@ -53,7 +55,7 @@ export function BookmarkBlock({ block }: { block: Block }) {
     /* keep raw */
   }
   return (
-    <div className="bookmark" onClick={() => window.open(block.url, '_blank', 'noopener')}>
+    <div {...pressable()} className="bookmark" onClick={() => openExternal(block.url)}>
       <div className="bm-text">
         <div className="bm-title">{host}</div>
         <div className="bm-url" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

@@ -1,9 +1,11 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Maximize2, Plus } from 'lucide-react';
 import { usePage, useDoc } from '../store/store';
 import { openPage, setRowProp } from '../store/actions';
 import type { Page } from '../store/types';
-import { Tooltip } from '../components/ui';
+import { Tooltip, pressable } from '../components/ui';
+import { StoredImg } from '../components/StoredImage';
+import { isImageIcon } from '../lib/url';
 import { applyView, rawValue, readPref, writePref, isEmptyValue } from './logic';
 import { addRowAt, setDbTitle } from './dbActions';
 import { PropIcon, PropValue, CellEditor, isEditable } from './cells';
@@ -39,6 +41,13 @@ function DbShell({ dbId, inline, prefKey, isLink }: { dbId: string; inline: bool
   const [filterEdit, setFilterEdit] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
 
+  // Filtering and sorting walk every row, so only redo them when an input actually changed.
+  const filtered = useMemo(() => {
+    const vs = db?.views || [];
+    const v = vs.find(x => x.id === viewId) || vs[0];
+    return v && db ? applyView(allRows, db.schema || [], v, query) : allRows;
+  }, [allRows, db, viewId, query]);
+
   if (!db || db.trashed || !db.isDatabase) {
     return (
       <div className={'db db-missing' + (inline ? ' db-inline' : '')}>
@@ -55,7 +64,7 @@ function DbShell({ dbId, inline, prefKey, isLink }: { dbId: string; inline: bool
     setViewIdState(id);
     writePref('on:dbview:' + prefKey, id);
   };
-  const rows = applyView(allRows, schema, view, query);
+  const rows = filtered;
   const defaults = filterDefaults(view, schema);
   const startFilter = (propId: string) => {
     const prop = schema.find(p => p.id === propId);
@@ -113,7 +122,7 @@ function DbHeader({ db, isLink }: { db: Page; isLink?: boolean }) {
       {isLink && <ArrowUpRight size={16} className="db-link-arrow" />}
       {icon && (
         <span className="db-header-icon">
-          {icon.startsWith('data:') || icon.startsWith('http') ? <img src={icon} alt="" /> : icon}
+          {isImageIcon(icon) ? <StoredImg src={icon} /> : icon}
         </span>
       )}
       <div
@@ -137,7 +146,7 @@ function DbHeader({ db, isLink }: { db: Page; isLink?: boolean }) {
         }}
       />
       <Tooltip label="Open as full page">
-        <span className="icon-btn db-open-full" role="button" onClick={() => openPage(db.id)}>
+        <span className="icon-btn db-open-full" {...pressable()} onClick={() => openPage(db.id)}>
           <Maximize2 size={14} />
         </span>
       </Tooltip>
@@ -173,11 +182,11 @@ export function PageProperties({ pageId }: { pageId: string }) {
         const readOnly = p.type === 'created_time' || p.type === 'last_edited_time';
         return (
           <div className="pp-row" key={p.id}>
-            <div className="pp-name" role="button" onClick={e => setMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
+            <div className="pp-name" {...pressable()} onClick={e => setMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}>
               <span className="pp-icon"><PropIcon type={p.type} size={16} /></span>
               <span className="pp-label">{p.name}</span>
             </div>
-            <div
+            <div {...pressable()}
               className={'pp-value' + (readOnly ? ' readonly' : '') + (editor?.propId === p.id ? ' editing' : '')}
               onClick={e => {
                 if (p.type === 'checkbox') setRowProp(page.id, p.id, !rawValue(page, p));
@@ -189,7 +198,7 @@ export function PageProperties({ pageId }: { pageId: string }) {
           </div>
         );
       })}
-      <div className="pp-add" role="button" onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
+      <div className="pp-add" {...pressable()} onClick={e => setAdding(e.currentTarget.getBoundingClientRect())}>
         <Plus size={16} /> Add a property
       </div>
       <div className="pp-divider" />

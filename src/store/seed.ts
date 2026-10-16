@@ -2,7 +2,8 @@ import type { Block, BlockType, Doc, Page, Property } from './types';
 
 let n = 0;
 const sid = (p: string) => `${p}${(++n).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-const photo = (id: string) => `https://images.unsplash.com/${id}?w=1600&q=80&auto=format&fit=crop`;
+/** Seed images are small illustrations shipped in public/covers, so first launch fetches nothing. */
+const photo = (name: string) => `/covers/${name}.webp`;
 
 /** Builds the initial workspace shown on first launch. */
 export function createSeed(): Doc {
@@ -58,7 +59,7 @@ export function createSeed(): Doc {
       ['bulleted', 'Use <code>Tab</code> and <code>Shift+Tab</code> to indent and outdent blocks.'],
       ['bulleted', 'Type <code>[]</code> followed by a space to start a to-do list, <code>#</code> for a heading, <code>-</code> for a bulleted list.'],
       ['bulleted', 'Press <code>Esc</code> to select a block, then use arrow keys to move between blocks.'],
-      ['bulleted', 'Press <code>⌘K</code> or <code>⌘P</code> to search across all of your pages.'],
+      ['bulleted', 'Press <code>⌘K</code> to search across all of your pages.'],
     ]],
     ['divider'],
     ['h3', 'Things you can make'],
@@ -77,7 +78,7 @@ export function createSeed(): Doc {
     ['code', 'function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("world"));', { language: 'javascript' }],
     ['page', '', { pageId: sub.id }],
     ['text', 'See it in action:'],
-    ['image', '', { url: photo('photo-1484480974693-6ca0a78fb36b'), caption: 'A calm desk is a productive desk.' }],
+    ['image', '', { url: photo('desk'), caption: 'A calm desk is a productive desk.' }],
     ['text', ''],
   ]);
 
@@ -138,7 +139,7 @@ export function createSeed(): Doc {
   ]);
 
   /* ---------------- Trip ---------------- */
-  const trip = page({ title: 'Trip to Japan', icon: '🗾', cover: photo('photo-1454496522488-7a8e488e8606'), coverPos: 60, updatedAt: now - D });
+  const trip = page({ title: 'Trip to Japan', icon: '🗾', cover: photo('peaks'), coverPos: 60, updatedAt: now - D });
   setContent(trip, [
     ['callout', '<b>Dates:</b> April 3 to April 14 · <b>Budget:</b> ¥350,000', { icon: '✈️', color: 'blue_background' }],
     ['h2', 'Itinerary'],
@@ -175,7 +176,7 @@ export function createSeed(): Doc {
         ['todo', 'Suica card'],
       ],
     ),
-    ['image', '', { url: photo('photo-1500964757637-c85e8a162699'), caption: '' }],
+    ['image', '', { url: photo('coast'), caption: '' }],
     ['text', ''],
   ]);
 
@@ -189,7 +190,7 @@ export function createSeed(): Doc {
   };
   const tasks = page({
     title: 'Task List', icon: '✅', isDatabase: true, inline: false, updatedAt: now - 3 * H,
-    cover: photo('photo-1517694712202-14dd9538aa97'),
+    cover: photo('code'),
     schema: [
       { id: 'title', name: 'Name', type: 'title' },
       statusProp,
@@ -234,7 +235,7 @@ export function createSeed(): Doc {
   /* ---------------- Reading List (gallery) ---------------- */
   const reading = page({
     title: 'Reading List', icon: '📚', isDatabase: true, inline: false, updatedAt: now - D,
-    cover: photo('photo-1481627834876-b7833e8f5570'),
+    cover: photo('library'),
     schema: [
       { id: 'title', name: 'Name', type: 'title' },
       { id: 'type', name: 'Type', type: 'select', options: [
@@ -258,11 +259,11 @@ export function createSeed(): Doc {
     rows: [],
   });
   const readCovers = [
-    photo('photo-1456513080510-7bf3a84b82f8'),
-    photo('photo-1497436072909-60f360e1d4b1'),
-    photo('photo-1519681393784-d120267933ba'),
-    photo('photo-1507525428034-b723cf961d3e'),
-    photo('photo-1441974231531-c6227db76b6e'),
+    photo('books'),
+    photo('hills'),
+    photo('night-sky'),
+    photo('beach'),
+    photo('forest'),
   ];
   const readRows: [string, string, string, string, boolean, string][] = [
     ['The Design of Everyday Things', 'ty1', 'Don Norman', 'ra5', true, '📕'],
@@ -284,7 +285,7 @@ export function createSeed(): Doc {
   /* ---------------- Journal (list) ---------------- */
   const journal = page({
     title: 'Journal', icon: '📔', isDatabase: true, inline: false, updatedAt: now - 2 * D,
-    cover: photo('photo-1470071459604-3b5ec3a7fe05'),
+    cover: photo('woods'),
     schema: [
       { id: 'title', name: 'Name', type: 'title' },
       { id: 'created', name: 'Created', type: 'created_time' },
