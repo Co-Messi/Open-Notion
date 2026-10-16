@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { ChevronsRight, Maximize2, ChevronUp, ChevronDown, MoreHorizontal, MessageCircle, CalendarDays } from 'lucide-react';
 import { Sidebar, expandSidebarTo } from './components/Sidebar';
 import { Topbar, PageActionsMenu } from './components/Topbar';
@@ -26,6 +26,8 @@ import { storageGet, storageSet } from './lib/storage';
 import { isImageIcon } from './lib/url';
 import { StoredImg } from './components/StoredImage';
 import { pressable } from './components/ui';
+import { MOTION, afterTransition, prefersReducedMotion } from './lib/motion';
+import type { Page } from './store/types';
 
 function useTheme() {
   const theme = useSettings(s => s.theme);
@@ -91,7 +93,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      if (e.key === 'Escape' && getUi().peekRowId && !getUi().selectedBlocks.length && !document.querySelector('.popover, .modal-overlay')) {
+      if (e.key === 'Escape' && getUi().peekRowId && !getUi().selectedBlocks.length && !document.querySelector('.popover:not(.is-exiting), .modal-overlay')) {
         const ae = document.activeElement as HTMLElement | null;
         if (!ae || !(ae.isContentEditable || ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
           setUi({ peekRowId: null });
@@ -145,7 +147,7 @@ export function App() {
       <TabBar />
     <div className="app">
       <Sidebar />
-      <main className="main">
+      <MainView>
         <Topbar />
         {route.name === 'home' && <Home />}
         {route.name === 'page' && (
@@ -156,8 +158,7 @@ export function App() {
         {route.name === 'chat' && <ChatView />}
         {route.name === 'meetings' && <MeetingsView />}
         {route.name === 'library' && <LibraryView />}
-        <SidePeek />
-      </main>
+      </MainView>
       <SearchModal />
       <SettingsModal />
       <TrashPopover />
@@ -232,14 +233,102 @@ function LibraryView() {
   );
 }
 
-function SidePeek() {
+type PeekPhase = 'enter' | 'open' | 'closing' | 'expanding';
+
+/**
+ * The main view and its side peek. Measured on Notion 7.37: the peek pushes the main view
+ * instead of covering it. The panel slides between translateX(100%) and 0 while the main view
+ * width changes by the panel width, both 200ms ease; Open as full page widens the main view while
+ * the panel slides out by twice its width, then navigates. Every close path (close button,
+ * Escape, navigation) clears peekRowId in the store, so the panel keeps showing its last row
+ * until the slide out ends. The children never re-render for peek changes or resizing.
+ */
+export function MainView({ children }: { children: ReactNode }) {
   const rowId = useUi(u => u.peekRowId);
-  const page = useDoc(d => (rowId ? d.pages[rowId] : undefined), Object.is);
-  const [menu, setMenu] = useState<DOMRect | null>(null);
+  const [shown, setShown] = useState<{ id: string; phase: PeekPhase } | null>(null);
   const [width, setWidth] = useState(() => Number(storageGet('on:peek-w')) || 560);
+  const [resizing, setResizing] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  // Derived during render, so the first commit after a store change already has the right phase.
+  if (rowId && (!shown || (shown.phase !== 'expanding' && (shown.id !== rowId || shown.phase === 'closing')))) {
+    if (!shown) openerRef.current = document.activeElement as HTMLElement | null;
+    // Previous and next keep the phase: the content swaps in place with no slide.
+    const phase: PeekPhase = !shown ? (prefersReducedMotion() ? 'open' : 'enter') : shown.phase === 'closing' ? 'open' : shown.phase;
+    setShown({ id: rowId, phase });
+  } else if (!rowId && shown && shown.phase !== 'closing') {
+    setShown(shown.phase === 'expanding' || prefersReducedMotion() ? null : { id: shown.id, phase: 'closing' });
+  }
+  const page = useDoc(d => (shown ? own(d.pages, shown.id) : undefined), Object.is);
+  const phase = shown?.phase;
+  const shownId = shown?.id;
+
+  useLayoutEffect(() => {
+    if (phase !== 'enter') return;
+    // Commit the off screen start position so the change to open transitions from it.
+    panelRef.current?.getBoundingClientRect();
+    setShown(s => (s && s.phase === 'enter' ? { ...s, phase: 'open' } : s));
+  }, [phase]);
+
+  useLayoutEffect(() => {
+    if (phase !== 'closing') return;
+    // Focus returns when the close starts, not when the slide ends: to the control that opened
+    // the peek if focus was inside the panel (or already lost), as it was before the animation.
+    const panel = panelRef.current;
+    const a = document.activeElement as HTMLElement | null;
+    if (!panel || !(a === document.body || (a && panel.contains(a)))) return;
+    const opener = openerRef.current;
+    if (opener && opener.isConnected && !panel.contains(opener)) opener.focus({ preventScroll: true });
+    else a?.blur();
+  }, [phase]);
+
+  useEffect(() => {
+    if ((phase !== 'closing' && phase !== 'expanding') || !shownId) return;
+    return afterTransition(panelRef.current, 'transform', MOTION.panel, () => {
+      setShown(s => (s && s.phase === phase ? null : s));
+      if (phase === 'expanding') openPage(shownId);
+    });
+  }, [phase, shownId]);
+
+  const expand = () => {
+    if (!shownId) return;
+    if (prefersReducedMotion()) openPage(shownId);
+    else setShown(s => (s ? { ...s, phase: 'expanding' } : s));
+  };
+  const push = shown && page && shown.phase === 'open' ? width : 0;
+  return (
+    <main className={'main' + (resizing ? ' peek-resizing' : '')} style={{ '--peek-push': push + 'px' } as CSSProperties}>
+      {children}
+      {shown && page && (
+        <SidePeek
+          panelRef={panelRef}
+          page={page}
+          phase={shown.phase}
+          width={width}
+          setWidth={setWidth}
+          setResizing={setResizing}
+          onExpand={expand}
+        />
+      )}
+    </main>
+  );
+}
+
+function SidePeek({ panelRef, page, phase, width, setWidth, setResizing, onExpand }: {
+  panelRef: RefObject<HTMLDivElement | null>;
+  page: Page;
+  phase: PeekPhase;
+  width: number;
+  setWidth: (w: number) => void;
+  setResizing: (v: boolean) => void;
+  onExpand: () => void;
+}) {
+  const rowId = page.id;
+  const [menu, setMenu] = useState<DOMRect | null>(null);
   const widthRef = useRef(width);
   widthRef.current = width;
-  if (!rowId || !page) return null;
+  const leaving = phase === 'closing' || phase === 'expanding';
   const db = page.dbId ? getDoc().pages[page.dbId] : undefined;
   const stored = (db?.rows || []).filter(r => !getDoc().pages[r]?.trashed);
   const shown = Array.from(new Set(
@@ -249,17 +338,28 @@ function SidePeek() {
   const idx = rows.indexOf(rowId);
   const close = () => setUi({ peekRowId: null });
   return (
-    <div className="side-peek" role="complementary" aria-label="Side peek" style={{ width }} onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}>
+    <div
+      ref={panelRef}
+      className={'side-peek' + (phase === 'open' ? ' open' : '') + (phase === 'expanding' ? ' expanding' : '')}
+      role="complementary"
+      aria-label="Side peek"
+      aria-hidden={leaving || undefined}
+      inert={leaving || undefined}
+      style={{ width }}
+      onKeyDown={e => e.key === 'Escape' && !(e.target as HTMLElement).isContentEditable && close()}
+    >
       <div
         className="peek-resizer"
         onPointerDown={e => {
           e.preventDefault();
           const sx = e.clientX;
           const w0 = width;
+          setResizing(true);
           const move = (ev: PointerEvent) => setWidth(Math.max(380, Math.min(window.innerWidth - 300, w0 + (sx - ev.clientX))));
           const up = () => {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
+            setResizing(false);
             storageSet('on:peek-w', String(widthRef.current));
           };
           window.addEventListener('pointermove', move);
@@ -268,19 +368,20 @@ function SidePeek() {
       />
       <div className="peek-top">
         <Tooltip label="Close" shortcut="Esc">
-          <div {...pressable()} className="icon-btn" onClick={close}>
+          <div {...pressable()} className="icon-btn peek-nav" onClick={close}>
             <ChevronsRight size={18} />
           </div>
         </Tooltip>
         <Tooltip label="Open as full page">
-          <div {...pressable()} className="icon-btn" onClick={() => openPage(rowId)}>
+          <div {...pressable()} className="icon-btn peek-nav" onClick={onExpand}>
             <Maximize2 size={15} />
           </div>
         </Tooltip>
-        <div {...pressable()} aria-label="Previous page" aria-disabled={idx <= 0} className="icon-btn" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
+        <span className="peek-gap" />
+        <div {...pressable()} aria-label="Previous page" aria-disabled={idx <= 0} className="icon-btn peek-nav" style={{ opacity: idx > 0 ? 1 : 0.4 }} onClick={() => idx > 0 && setUi({ peekRowId: rows[idx - 1] })}>
           <ChevronUp size={18} />
         </div>
-        <div {...pressable()} aria-label="Next page" aria-disabled={idx >= rows.length - 1} className="icon-btn" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
+        <div {...pressable()} aria-label="Next page" aria-disabled={idx >= rows.length - 1} className="icon-btn peek-nav" style={{ opacity: idx < rows.length - 1 ? 1 : 0.4 }} onClick={() => idx < rows.length - 1 && setUi({ peekRowId: rows[idx + 1] })}>
           <ChevronDown size={18} />
         </div>
         <span style={{ flex: 1 }} />

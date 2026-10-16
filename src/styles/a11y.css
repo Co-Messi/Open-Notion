@@ -80,3 +80,23 @@
 .pp-value:focus-visible .db-link-open {
   display: flex;
 }
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion: one rule for every animation and transition, so    */
+/* everything lands in its end state at once. Zero rather than a tiny */
+/* duration: a tiny one would turn every property change of every     */
+/* element (transition-property defaults to all) into a transition.   */
+/* The scripts that drive the side peek, the sidebar and the exit     */
+/* animations check the same preference and skip their waits.         */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}

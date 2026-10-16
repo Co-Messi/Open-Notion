@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { slashState, editableFor } from './controller';
 import { slashItems, type SlashItem } from './BlockMenu';
@@ -7,6 +7,7 @@ import { transact } from '../store/store';
 import { sanitizeInline } from '../lib/html';
 import { splitAtSelection } from './caret';
 import { SLASH_CHARS, asciiShortcut } from './ops';
+import { MOTION, playExit } from '../lib/motion';
 
 function readQuery(): { q: string; valid: boolean } {
   const s = slashState.get();
@@ -37,8 +38,17 @@ export function SlashMenu() {
   const [active, setActive] = useState(0);
   const missRef = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ left: -999, top: -999 });
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState({ left: -999, top: -999, transformOrigin: '0% 0%' });
+  // The box leaves with the menu exit animation; React runs a ref cleanup before it detaches the node.
+  const attachBox = useCallback((el: HTMLDivElement | null) => {
+    boxRef.current = el;
+    if (!el) return;
+    return () => {
+      boxRef.current = null;
+      playExit(el, MOTION.menu);
+    };
+  }, []);
   const all = useMemo(() => slashItems(), []);
 
   const results = useMemo(() => {
@@ -149,7 +159,8 @@ export function SlashMenu() {
     if (top + h > window.innerHeight - 8) top = Math.max(8, s.rect.top - h - 6);
     let left = s.rect.left - 2;
     if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
-    setPos({ left, top });
+    // Scale from the corner nearest the caret: below and left aligned, or flipped above it.
+    setPos({ left, top, transformOrigin: `${left + w <= s.rect.left ? '100%' : '0%'} ${top < s.rect.top ? '100%' : '0%'}` });
   }, [s, results.length]);
 
   useEffect(() => {
@@ -172,7 +183,7 @@ export function SlashMenu() {
   if (!s || results.length === 0) return null;
   let last = '';
   return createPortal(
-    <div ref={boxRef} className="popover" style={{ ...pos, width: 324 }} onMouseDown={e => e.preventDefault()}>
+    <div ref={attachBox} className="popover" style={{ ...pos, width: 324 }} onMouseDown={e => e.preventDefault()}>
       <div className="menu" ref={listRef} id="slash-listbox" role="listbox" aria-label="Insert a block" style={{ maxHeight: 340 }}>
         {results.map((item, idx) => {
           const head = !q && item.section !== last ? item.section : q && idx === 0 ? 'Results' : null;

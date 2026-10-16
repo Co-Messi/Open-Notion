@@ -8,6 +8,23 @@
 }
 
 /* ---------------- Sidebar ---------------- */
+/*
+ * Notion 7.37 docked collapse and expand: the container width goes to and from 0 over 200ms
+ * ease, clipping the panel, and the main view follows in the same frame. The container is never
+ * positioned, so the collapsed hover peek panel (absolute, placed against .app) escapes its
+ * clipping. It clips only while animating, so the resize handle can overhang the edge.
+ */
+.sidebar-container {
+  flex-shrink: 0;
+  height: 100%;
+  transition: width 200ms ease;
+}
+.sidebar-container.animating {
+  overflow: hidden;
+}
+.sidebar-container.resizing {
+  transition: none;
+}
 .sidebar {
   position: relative;
   flex-shrink: 0;
@@ -20,7 +37,8 @@
   font-size: 14px;
   user-select: none;
   z-index: 10;
-  transition: width 0ms;
+  /* On expand the panel fades in and slides from its collapsed position, 200ms ease. */
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 .sidebar.collapsed {
   position: absolute;
@@ -29,8 +47,12 @@
   height: auto;
   bottom: 0;
   transform: translateX(-100%);
-  transition: transform 200ms ease, opacity 200ms ease;
+  transition: none;
   opacity: 0;
+}
+.sidebar.collapsed.peek,
+.sidebar.collapsed.was-peek {
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 .sidebar.collapsed.peek {
   transform: translateX(0);
@@ -389,6 +411,18 @@
   flex-direction: column;
   position: relative;
   background: var(--bg-primary);
+  /* Clips the side peek while it is off screen without becoming a scroll container, so focus
+     inside the sliding panel can never scroll the app sideways. */
+  overflow: clip;
+}
+/* An open side peek pushes the main view: its width shrinks by the panel width (--peek-push,
+   set by MainView) over 200ms ease, in step with the panel (Notion 7.37). */
+.main > :not(.side-peek) {
+  width: calc(100% - var(--peek-push, 0px));
+  transition: width 200ms ease;
+}
+.main.peek-resizing > * {
+  transition: none;
 }
 
 .topbar {
@@ -799,6 +833,8 @@
 }
 
 /* ---------------- Side peek ---------------- */
+/* Notion 7.37: the panel slides in from translateX(100%) and back out over 200ms ease, and
+   by twice its width when it opens as a full page. It stays mounted until the slide out ends. */
 .side-peek {
   position: absolute;
   top: 0;
@@ -809,23 +845,27 @@
   z-index: 20;
   display: flex;
   flex-direction: column;
-  animation: peek-in 180ms ease-out;
+  transform: translateX(100%) translateZ(0);
+  transition: width 200ms ease, transform 200ms ease;
 }
+.side-peek.open {
+  transform: translateX(0) translateZ(0);
+}
+.side-peek.expanding {
+  transform: translateX(200%) translateZ(0);
+}
+/* Measured dark panel: #202020 with a 1px #383836 ring and a soft drop shadow (shadow-2). */
 .theme-dark .side-peek {
   background: var(--theme-gray-wash-1);
+  box-shadow: var(--theme-shadow-2);
 }
-@keyframes peek-in {
-  from {
-    transform: translateX(40px);
-    opacity: 0;
-  }
-}
+/* A 12px wide resize handle on the leading edge. */
 .peek-resizer {
   position: absolute;
-  left: -4px;
+  left: -6px;
   top: 0;
   bottom: 0;
-  width: 8px;
+  width: 12px;
   cursor: col-resize;
   z-index: 2;
 }
@@ -841,6 +881,22 @@
   width: 28px;
   height: 28px;
   color: var(--icon-secondary);
+}
+/* Close, Open as full page, a gap, Previous, Next: 24px icon buttons, radius 6px, background
+   transition 100ms ease-in-out, pressed at twice the hover alpha. */
+.peek-top .icon-btn.peek-nav {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  transition: background 100ms ease-in-out;
+}
+.peek-top .icon-btn.peek-nav:active {
+  background: var(--icon-pressed);
+}
+/* The gap size was not measured; 8px reuses an existing spacing value. */
+.peek-gap {
+  width: 8px;
+  flex-shrink: 0;
 }
 .peek-scroll {
   flex: 1;
@@ -870,12 +926,13 @@
   height: auto;
 }
 .tabbar {
-  height: 38px;
+  /* Notion 7.37 tab strip: 36px tall, no transitions; tabs and buttons sized as measured below. */
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: stretch;
   background: var(--sidebar-bg);
-  box-shadow: inset 0 -1px 0 var(--border-secondary-translucent);
+  box-shadow: inset 0 -1px 0 var(--tab-line);
   font-size: 14px;
   user-select: none;
   position: relative;
@@ -925,9 +982,14 @@
   height: 28px;
   color: var(--icon-secondary);
 }
+/* Back and forward are 24px; the sidebar toggle stays 28px. */
+.tabbar-nav .icon-btn.tb-history {
+  width: 24px;
+  height: 24px;
+}
 .tabbar-nav .icon-btn.disabled {
   color: var(--icon-tertiary);
-  opacity: 0.5;
+  opacity: 0.4;
   pointer-events: none;
 }
 .tabs {
@@ -947,29 +1009,18 @@
   color: var(--text-secondary);
   cursor: default;
   position: relative;
-  transition: background 80ms ease;
-}
-.tab::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 9px;
-  bottom: 9px;
-  width: 1px;
-  background: var(--border-secondary-translucent);
+  /* Inactive tabs sit on the sunken surface with 1px inset leading and bottom borders. */
+  box-shadow: inset 1px 0 0 var(--tab-line), inset 0 -1px 0 var(--tab-line);
 }
 .tab:hover {
   background: var(--hover);
 }
+/* The active tab takes the page background and has no borders, so it joins the page below. */
 .tab.active {
   background: var(--bg-primary);
   color: var(--text-primary);
-  box-shadow: inset 1px 0 0 var(--border-secondary-translucent), inset -1px 0 0 var(--border-secondary-translucent);
+  box-shadow: none;
   z-index: 1;
-}
-.tab.active::before,
-.tab.active + .tab::before {
-  display: none;
 }
 .tab-icon {
   width: 16px;
@@ -995,7 +1046,7 @@
 .tab-close {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1010,9 +1061,9 @@
 .tab-close:hover {
   background: var(--theme-gray-tint-2);
 }
-.tab-new {
-  width: 30px !important;
-  height: 30px !important;
+.tabs .tab-new {
+  width: 24px;
+  height: 24px;
   align-self: center;
   margin-inline-start: 4px;
   color: var(--icon-secondary);

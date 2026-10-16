@@ -25,6 +25,7 @@
   --theme-line: #e6e5e3;
   --theme-line-alpha: rgba(28,19,1,.11);
   --theme-line-alpha-soft: rgba(42,28,0,.07);
+  --theme-tab-line: rgba(42,28,0,.07);
   --theme-brown-wash-2: #f5ede9;
   --theme-brown-ink: #9f765a;
   --theme-button-hover: rgba(55,53,47,.06);
@@ -82,6 +83,7 @@
   --theme-sidebar-active: rgba(0,0,0,.03);
   --theme-hover: rgba(55,53,47,.04);
   --theme-press: rgba(55,53,47,.1);
+  --theme-icon-press: rgba(55,53,47,.1);
   --theme-switch-track: rgba(135,131,120,.4);
   --theme-table-header: #f7f6f3;
   --theme-table-row-hover: rgba(55,53,47,.024);
@@ -142,6 +144,7 @@
   --theme-line: #383836;
   --theme-line-alpha: rgba(255,255,235,.1);
   --theme-line-alpha-soft: rgba(255,255,243,.082);
+  --theme-tab-line: #2c2c2b;
   --theme-brown-wash-2: #45362d;
   --theme-brown-ink: #9f765a;
   --theme-button-hover: rgba(255,255,255,.055);
@@ -199,6 +202,7 @@
   --theme-sidebar-active: rgba(255,255,255,.055);
   --theme-hover: rgba(255,255,255,.055);
   --theme-press: rgba(255,255,255,.13);
+  --theme-icon-press: rgba(255,255,255,.11);
   --theme-switch-track: rgba(120,129,135,.4);
   --theme-table-header: rgba(255,255,255,.03);
   --theme-table-row-hover: rgba(255,255,255,.055);

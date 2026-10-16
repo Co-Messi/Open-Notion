@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   House, MessageCircle, CalendarDays, SquarePen, Library, ChevronRight, ChevronDown, Plus, MoreHorizontal,
   Settings, Trash2, SlidersHorizontal, LayoutTemplate, CircleHelp, Grid2x2, ChevronsLeft, CalendarPlus, Users,
@@ -9,6 +9,7 @@ import { childPagesOf, createPage, openPage, pageTitle, updatePage, movePage, go
 import { PageIconView } from './PageIcon';
 import { SidebarPageMenu } from './PageMenus';
 import { Popover, Menu, SearchIcon, Tooltip, MOD, type Anchor, pressable } from './ui';
+import { MOTION, afterTransition, prefersReducedMotion } from '../lib/motion';
 
 const OPEN_KEY = 'on:sb-open';
 function loadOpen(): Record<string, boolean> {
@@ -365,6 +366,38 @@ export function Sidebar() {
   const [resizing, setResizing] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Docked collapse and expand animate the container width (Notion 7.37: 200ms ease) while the
+  // main view follows in the same frame. Collapsing keeps the panel docked and clipped until the
+  // width reaches 0; expanding slides and fades it in from its collapsed position. Derived during
+  // render so the first commit after a toggle already has the right phase.
+  // Docking the hover peek panel (already on screen) stays instant, as before; that path was not
+  // measured.
+  const [phase, setPhase] = useState<'idle' | 'closing' | 'opening' | 'docking'>('idle');
+  const [wasOpen, setWasOpen] = useState(sbOpen);
+  const peekingNow = !sbOpen && hoverPeek;
+  const [wasPeeking, setWasPeeking] = useState(peekingNow);
+  if (wasOpen !== sbOpen) {
+    setWasOpen(sbOpen);
+    setPhase(prefersReducedMotion() ? 'idle' : sbOpen && wasPeeking ? 'docking' : sbOpen ? 'opening' : 'closing');
+  }
+  if (wasPeeking !== peekingNow) setWasPeeking(peekingNow);
+  useLayoutEffect(() => {
+    if (phase !== 'docking') return;
+    // Apply the new width with transitions off, then turn them back on.
+    containerRef.current?.getBoundingClientRect();
+    setPhase('idle');
+  }, [phase]);
+  // Leaving the hover peek animates; settling into the collapsed state after a collapse does not.
+  const [peeked, setPeeked] = useState(false);
+  if (!sbOpen && hoverPeek && !peeked) setPeeked(true);
+  if (sbOpen && peeked) setPeeked(false);
+  useEffect(() => {
+    if (phase !== 'closing' && phase !== 'opening') return;
+    return afterTransition(containerRef.current, 'width', MOTION.panel, () => setPhase('idle'));
+  }, [phase]);
+  const docked = sbOpen || phase === 'closing';
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -403,9 +436,14 @@ export function Sidebar() {
   const shownPrivate = showAll ? privatePages : privatePages.slice(0, 12);
 
   return (
+    <div
+      ref={containerRef}
+      className={'sidebar-container' + (phase === 'closing' || phase === 'opening' ? ' animating' : '') + (resizing || phase === 'docking' ? ' resizing' : '')}
+      style={{ width: sbOpen ? width : 0 }}
+    >
     <nav
       aria-label="Sidebar"
-      className={'sidebar' + (sbOpen ? '' : ' collapsed') + (!sbOpen && hoverPeek ? ' peek' : '')}
+      className={'sidebar' + (docked ? '' : ' collapsed') + (!docked && hoverPeek ? ' peek' : '') + (!docked && peeked ? ' was-peek' : '')}
       style={{ width }}
       onMouseLeave={() => !sbOpen && setUi({ sidebarHover: false })}
     >
@@ -522,6 +560,7 @@ export function Sidebar() {
 
       {switcher && <WorkspaceSwitcherMenu anchor={switcher} onClose={() => setSwitcher(null)} />}
     </nav>
+    </div>
   );
 }
 

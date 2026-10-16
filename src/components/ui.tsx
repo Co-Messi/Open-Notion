@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { attrSel } from '../lib/dom';
+import { MOTION, playExit } from '../lib/motion';
 
 export type Anchor = DOMRect | { x: number; y: number; width?: number; height?: number } | HTMLElement | null;
 
@@ -11,6 +12,19 @@ function rectOf(a: Anchor): { left: number; top: number; right: number; bottom: 
   const w = a.width || 0;
   const h = a.height || 0;
   return { left: a.x, top: a.y, right: a.x + w, bottom: a.y + h, width: w, height: h };
+}
+
+/**
+ * transform-origin at the corner of a placed box nearest its anchor (Notion scales a menu that is
+ * aligned to its trigger's right edge from "100% top", a left aligned one from "0% top").
+ * Works on the final position, after flipping above the anchor or to its other side.
+ */
+function originNear(r: ReturnType<typeof rectOf>, left: number, top: number, w: number, h: number): string {
+  const startGap = Math.abs(left - r.left);
+  const endGap = Math.abs(left + w - r.right);
+  const x = left >= r.right - 0.5 ? '0%' : left + w <= r.left + 0.5 ? '100%' : endGap < startGap - 0.5 ? '100%' : startGap < endGap - 0.5 ? '0%' : '50%';
+  const y = top + h <= r.top + 0.5 && top < r.top ? '100%' : '0%';
+  return `${x} ${y}`;
 }
 
 
@@ -172,7 +186,7 @@ export function Popover({
   label,
 }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; origin: string } | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -208,7 +222,7 @@ export function Popover({
       if (top < 8) top = 8;
       if (left + w > vw - 8) left = vw - w - 8;
       if (left < 8) left = 8;
-      setPos({ left, top });
+      setPos({ left, top, origin: placement === 'center' ? 'center' : originNear(r, left, top, w, h) });
     };
     place();
     // autoFocus fires while the popover is still hidden on its first frame; focus once it is placed.
@@ -220,6 +234,12 @@ export function Popover({
     ro.observe(el);
     return () => ro.disconnect();
   }, [anchor, placement, offset]);
+
+  // Focus returns as soon as the close starts (useFocusReturn); the exit animation plays on a copy.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    return () => playExit(el, MOTION.menu);
+  }, []);
 
   useFocusReturn();
   useLayer(onClose, ref);
@@ -244,7 +264,7 @@ export function Popover({
         className={'popover ' + className}
         role={label ? 'dialog' : undefined}
         aria-label={label}
-        style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width, visibility: pos ? 'visible' : 'hidden', ...style }}
+        style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width, visibility: pos ? 'visible' : 'hidden', transformOrigin: pos?.origin, ...style }}
         onMouseDown={e => e.stopPropagation()}
       >
         {children}
@@ -513,6 +533,11 @@ export function Tooltip({ label, shortcut, children }: { label: string; shortcut
 function TooltipBubble({ rect, label, shortcut }: { rect: DOMRect; label: string; shortcut?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: -999, top: -999 });
+  // Tooltips fade out over 50ms ease-out (Notion 7.37); the fade plays on a copy.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    return () => playExit(el, MOTION.tooltip);
+  }, []);
   useLayoutEffect(() => {
     const el = ref.current!;
     let left = rect.left + rect.width / 2 - el.offsetWidth / 2;

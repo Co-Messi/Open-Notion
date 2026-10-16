@@ -170,7 +170,7 @@ function SearchInner() {
   const sel = results[active];
   let lastGroup = '';
   return (
-    <div className="modal-overlay light" onMouseDown={close}>
+    <div className="modal-overlay light search-overlay" onMouseDown={close}>
       <div ref={box} className="modal search-modal" role="dialog" aria-modal="true" aria-label="Search" onMouseDown={e => e.stopPropagation()}>
         <div className="search-input-row">
           <SearchIcon size={18} />

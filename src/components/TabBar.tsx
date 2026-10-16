@@ -109,12 +109,12 @@ export function TabBar() {
           </div>
         </Tooltip>
         <Tooltip label="Go back" shortcut={`${MOD}[`}>
-          <div className={'icon-btn' + (canBack() ? '' : ' disabled')} {...pressable()} aria-disabled={!canBack()} onClick={back}>
+          <div className={'icon-btn tb-history' + (canBack() ? '' : ' disabled')} {...pressable()} aria-disabled={!canBack()} onClick={back}>
             <ChevronLeft size={18} />
           </div>
         </Tooltip>
         <Tooltip label="Go forward" shortcut={`${MOD}]`}>
-          <div className={'icon-btn' + (canForward() ? '' : ' disabled')} {...pressable()} aria-disabled={!canForward()} onClick={forward}>
+          <div className={'icon-btn tb-history' + (canForward() ? '' : ' disabled')} {...pressable()} aria-disabled={!canForward()} onClick={forward}>
             <ChevronRight size={18} />
           </div>
         </Tooltip>
